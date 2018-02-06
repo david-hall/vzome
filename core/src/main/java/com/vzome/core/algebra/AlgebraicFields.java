@@ -90,12 +90,50 @@ public class AlgebraicFields {
             coefficients = HeptagonField.getFieldCoefficients();
             break;
             
+        case PlasticNumberField.FIELD_NAME:
+            coefficients = PlasticNumberField.getFieldCoefficients();
+            break;
+            
+        case SnubCubeField.FIELD_NAME:
+            coefficients = SnubCubeField.getFieldCoefficients();
+            break;
+            
         case SnubDodecField.FIELD_NAME:
             coefficients = SnubDodecField.getFieldCoefficients();
             break;
 
-        default:
+        case SnubDodecahedronField.FIELD_NAME:
+            coefficients = SnubDodecahedronField.getFieldCoefficients();
             break;
+
+        case SqrtPhiField.FIELD_NAME:
+            coefficients = SqrtPhiField.getFieldCoefficients();
+            break;
+            
+        default:
+            // evaluate ParameterizedFields here...
+            if( fieldName.startsWith( PolygonField.FIELD_PREFIX ) ) {
+                try {
+                    int polygonSides = Integer.parseInt(fieldName.substring(PolygonField.FIELD_PREFIX.length()));
+                    coefficients = PolygonField.getFieldCoefficients(polygonSides);
+                } catch( Exception ex) {
+                    // ignore
+                }
+            } else if( fieldName.startsWith( SqrtField.FIELD_PREFIX ) ) {
+                try {
+                    int radicand = Integer.parseInt(fieldName.substring(SqrtField.FIELD_PREFIX.length()));
+                    coefficients = SqrtField.getFieldCoefficients(radicand);
+                } catch( Exception ex) {
+                    // ignore
+                }                
+            } else if( fieldName.startsWith( PhiPlusSqrtField.FIELD_PREFIX ) ) {
+                try {
+                    int radicand = Integer.parseInt(fieldName.substring(PhiPlusSqrtField.FIELD_PREFIX.length()));
+                    coefficients = PhiPlusSqrtField.getFieldCoefficients(radicand);
+                } catch( Exception ex) {
+                    // ignore
+                }                
+            }
         }
         return coefficients;
     }
