@@ -36,10 +36,10 @@ public class SqrtField extends ParameterizedField<Integer> {
         super(name, 2, radicand);
     }
     
-    /** 
-     * MAX_VALUE is limited to a Short because multiplierMatrix is of type Short 
-     */ 
-    public final static int MAX_VALUE = Short.MAX_VALUE; 
+    /**
+     * MAX_VALUE is limited to a Short because multiplierMatrix is of type Short
+     */
+    public final static int MAX_VALUE = Short.MAX_VALUE;
 
     @Override
     protected void validate() {
@@ -92,7 +92,7 @@ public class SqrtField extends ParameterizedField<Integer> {
         short u = 0;
         short r = 1;
         if (isPerfectSquare()) {
-                u = 1;
+            u = 1;
             r = 0;
         }
         short[][][] mm = {

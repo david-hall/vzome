@@ -106,7 +106,7 @@ public class RenderedModelTest
 	public void testZoneConsistency()
 	{
 		HeptagonFieldApplication app = new HeptagonFieldApplication();
-		HeptagonField field = (HeptagonField) app .getField();
+		HeptagonField field = app .getField();
 		AlgebraicVector origin = field .origin( 3 );
 
 		SymmetryPerspective perspective = app .getDefaultSymmetryPerspective();

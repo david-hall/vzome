@@ -14,7 +14,7 @@ import com.vzome.core.math.symmetry.Symmetry;
 import com.vzome.core.math.symmetry.WythoffConstruction;
 import com.vzome.core.render.Shapes;
 
-public interface FieldApplication
+public interface FieldApplication<T extends AlgebraicField>
 {
 	public interface SymmetryPerspective
 	{
@@ -35,7 +35,7 @@ public interface FieldApplication
 		String getModelResourcePath();
 	}
 	
-	AlgebraicField getField();
+	T getField();
 	
 	void constructPolytope( String groupName, int index, int edgesToRender, AlgebraicNumber[] edgeScales, WythoffConstruction.Listener listener );
 

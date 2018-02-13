@@ -33,7 +33,7 @@ import com.vzome.core.render.RenderedModel;
 public class GenerateLinearMaps
 {
 	private Application app;
-	private FieldApplication kind;
+	private FieldApplication<?> kind;
 	private AlgebraicField field;
 	private IcosahedralSymmetry symmetry;
 	private Connector origin;

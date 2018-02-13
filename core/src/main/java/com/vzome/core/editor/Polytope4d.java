@@ -35,10 +35,10 @@ public class Polytope4d extends ChangeManifestations
     private int edgesToRender = 0xF;
     private AlgebraicNumber[] edgeScales = new AlgebraicNumber[4];
     private String renderGroupName;
-	private final FieldApplication fieldApp;
+	private final FieldApplication<?> fieldApp;
 
     public Polytope4d( Selection selection, RealizedModel realized,
-    		FieldApplication fieldApp,
+    		FieldApplication<?> fieldApp,
             AlgebraicVector quaternion, int index, String groupName,
             int edgesToRender, AlgebraicNumber[] edgeScales,
             String renderGroupName, boolean groupInSelection )
@@ -63,7 +63,7 @@ public class Polytope4d extends ChangeManifestations
     }
 
     public Polytope4d( Selection selection, RealizedModel realized,
-    		FieldApplication fieldApp,
+    		FieldApplication<?> fieldApp,
     		Segment symmAxis, int index, String groupName, boolean groupInSelection )
     {
         this( selection, realized, fieldApp,

@@ -8,7 +8,6 @@ import java.util.Map;
 
 import com.vzome.api.Tool;
 import com.vzome.api.Tool.Factory;
-import com.vzome.core.algebra.AlgebraicField;
 import com.vzome.core.algebra.AlgebraicNumber;
 import com.vzome.core.algebra.SnubDodecField;
 import com.vzome.core.commands.Command;
@@ -18,7 +17,6 @@ import com.vzome.core.commands.CommandTetrahedralSymmetry;
 import com.vzome.core.editor.AxialStretchTool;
 import com.vzome.core.editor.AxialSymmetryToolFactory;
 import com.vzome.core.editor.BookmarkTool;
-import com.vzome.core.editor.FieldApplication;
 import com.vzome.core.editor.IcosahedralToolFactory;
 import com.vzome.core.editor.InversionTool;
 import com.vzome.core.editor.LinearMapTool;
@@ -47,32 +45,22 @@ import com.vzome.core.viewing.ExportedVEFShapes;
  * @author vorth
  *
  */
-public class SnubDodecFieldApplication implements FieldApplication
+public class SnubDodecFieldApplication extends DefaultFieldApplication<SnubDodecField>
 {
-	private final AlgebraicField field = new SnubDodecField();
-
-	@Override
-	public String getName()
-	{
-		return this .field .getName();
-	}
-
-	@Override
-	public AlgebraicField getField()
-	{
-		return this .field;
-	}
+    public SnubDodecFieldApplication() {
+        super( new SnubDodecField() );
+    }
 
     private final SymmetryPerspective icosahedralPerspective = new SymmetryPerspective()
     {
-        private final IcosahedralSymmetry symmetry = new IcosahedralSymmetry( field, "solid connectors" )
+        private final IcosahedralSymmetry symmetry = new IcosahedralSymmetry( getField(), "solid connectors" )
         {
-        	@Override
-        	protected void createOtherOrbits()
-        	{
-        		super .createOtherOrbits();
-        		/*
-        		 * 
+            @Override
+            protected void createOtherOrbits()
+            {
+        	super .createOtherOrbits();
+        	/*
+        	* 
 
           PENTAGON
           4 + phi*-4 + xi*0 + phi*xi*0 + xi^2*-2 + phi*xi^2*2, -4 + phi*0 + xi*0 + phi*xi*0 + xi^2*2 + phi*xi^2*0, 0 + phi*0 + xi*0 + phi*xi*0 + xi^2*0 + phi*xi^2*2
@@ -91,12 +79,12 @@ public class SnubDodecFieldApplication implements FieldApplication
           8 0 0 4 -4 0 0 -4 0 0 0 0 0 0 0 0 0 0
           (0,-4,4,0,0,8) (0,0,0,0,-4,0) (0,0,0,0,0,0)
 
-        		 */      
-        		AlgebraicNumber scale = mField .createPower( -3 );
-        		createZoneOrbit( "snubPentagon", 0, NO_ROTATION, rationalVector( new int[]{ 4,-4,0,0,-2,2,  -4,0,0,0,2,0,  0,0,0,0,0,2 } ), false, false, scale );
-        		createZoneOrbit( "snubTriangle", 0, NO_ROTATION, rationalVector( new int[]{ 0,-4,-2,0,0,2,  -4,4,0,-2,2,-2,  -4,0,-2,-2,2,0 } ), false, false, scale );
-        		createZoneOrbit( "snubDiagonal", 0, NO_ROTATION, rationalVector( new int[]{ 8,0,0,4,-4,0,  0,-4,0,0,0,0,  0,0,0,0,0,0 } ), false, false, scale );
-        	}
+        	*/      
+        	AlgebraicNumber scale = mField .createPower( -3 );
+        	createZoneOrbit( "snubPentagon", 0, NO_ROTATION, rationalVector( new int[]{ 4,-4,0,0,-2,2,  -4,0,0,0,2,0,  0,0,0,0,0,2 } ), false, false, scale );
+        	createZoneOrbit( "snubTriangle", 0, NO_ROTATION, rationalVector( new int[]{ 0,-4,-2,0,0,2,  -4,4,0,-2,2,-2,  -4,0,-2,-2,2,0 } ), false, false, scale );
+        	createZoneOrbit( "snubDiagonal", 0, NO_ROTATION, rationalVector( new int[]{ 8,0,0,4,-4,0,  0,-4,0,0,0,0,  0,0,0,0,0,0 } ), false, false, scale );
+            }
         };
         
         private final AbstractShapes defaultShapes = new ExportedVEFShapes( null, "default", "solid connectors", symmetry );

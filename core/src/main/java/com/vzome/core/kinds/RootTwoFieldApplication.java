@@ -40,38 +40,38 @@ import com.vzome.core.viewing.ExportedVEFShapes;
  * @author Scott Vorthmann
  *
  */
-public class RootTwoFieldApplication extends DefaultFieldApplication
+public class RootTwoFieldApplication extends DefaultFieldApplication<RootTwoField>
 {
-	public RootTwoFieldApplication()
-	{
-		super( new RootTwoField() );
+    public RootTwoFieldApplication()
+    {
+        super( new RootTwoField() );
 		
-		OctahedralSymmetryPerspective octahedralPerspective = (OctahedralSymmetryPerspective) super .getDefaultSymmetryPerspective();
+        OctahedralSymmetryPerspective octahedralPerspective = (OctahedralSymmetryPerspective) super .getDefaultSymmetryPerspective();
 		
-		AbstractSymmetry symmetry = (AbstractSymmetry) octahedralPerspective .getSymmetry();
+        AbstractSymmetry symmetry = (AbstractSymmetry) octahedralPerspective .getSymmetry();
 		
-		symmetry .createZoneOrbit( "yellow", 0, 4, new int[][] { {1,1, 0,1}, {1,1, 0,1}, {1,1, 0,1} }, true );
-		symmetry .createZoneOrbit( "green",  1, 8, new int[][] { {0,1, 1,2}, {0,1, 1,2}, {0,1, 0,1} }, true );
-		symmetry .createZoneOrbit( "brown",  0, Symmetry .NO_ROTATION, new int[][] { {1,1, 0,1}, {1,1, 0,1}, {2,1, 0,1} }, true );
+        symmetry .createZoneOrbit( "yellow", 0, 4, new int[][] { {1,1, 0,1}, {1,1, 0,1}, {1,1, 0,1} }, true );
+        symmetry .createZoneOrbit( "green",  1, 8, new int[][] { {0,1, 1,2}, {0,1, 1,2}, {0,1, 0,1} }, true );
+        symmetry .createZoneOrbit( "brown",  0, Symmetry .NO_ROTATION, new int[][] { {1,1, 0,1}, {1,1, 0,1}, {2,1, 0,1} }, true );
 
-		AbstractShapes defaultShapes = new ExportedVEFShapes( null, "rootTwoSmall", "small octahedra", "small connectors", symmetry );
-		octahedralPerspective .setDefaultGeometry( defaultShapes );
-		octahedralPerspective .addShapes( defaultShapes );
-		octahedralPerspective .addShapes( new ExportedVEFShapes( null, "rootTwo", "Tesseractix", symmetry, defaultShapes ) );
-		octahedralPerspective .addShapes( new ExportedVEFShapes( null, "rootTwoBig", "ornate", symmetry, defaultShapes ) );
-	}
+        AbstractShapes defaultShapes = new ExportedVEFShapes( null, "rootTwoSmall", "small octahedra", "small connectors", symmetry );
+        octahedralPerspective .setDefaultGeometry( defaultShapes );
+        octahedralPerspective .addShapes( defaultShapes );
+        octahedralPerspective .addShapes( new ExportedVEFShapes( null, "rootTwo", "Tesseractix", symmetry, defaultShapes ) );
+        octahedralPerspective .addShapes( new ExportedVEFShapes( null, "rootTwoBig", "ornate", symmetry, defaultShapes ) );
+    }
 
-	/*
-	 * This is not really a different symmetry, but it uses different colors and default shapes for the orbits.
-	 * 
-	 * Actually, it may be a different field, even, since I've learned that Synestructics does not really
-	 * scale by root-two, but by doubling!  That means that octagons are still irregular in this system.
-	 * It also raises some interesting questions about algebraic fields, and vZome's assumptions about them.
-	 * Unlike the golden field, one cannot scale down in this field without using fractions; basically, this
-	 * field is just the Integers!
-	 */
+    /*
+     * This is not really a different symmetry, but it uses different colors and default shapes for the orbits.
+     * 
+     * Actually, it may be a different field, even, since I've learned that Synestructics does not really
+     * scale by root-two, but by doubling!  That means that octagons are still irregular in this system.
+     * It also raises some interesting questions about algebraic fields, and vZome's assumptions about them.
+     * Unlike the golden field, one cannot scale down in this field without using fractions; basically, this
+     * field is just the Integers!
+     */
 
-	private final SymmetryPerspective synestructicsPerspective = new SymmetryPerspective()
+    private final SymmetryPerspective synestructicsPerspective = new SymmetryPerspective()
     {
     	private final OctahedralSymmetry symmetry = new OctahedralSymmetry( getField(), "orange", "Synestructics" )
     	{

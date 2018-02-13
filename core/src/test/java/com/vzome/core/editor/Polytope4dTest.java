@@ -20,7 +20,7 @@ public class Polytope4dTest
 	@Test
 	public void testOldestConstructor()
 	{
-		FieldApplication app = new GoldenFieldApplication();
+		FieldApplication<?> app = new GoldenFieldApplication();
 		AlgebraicField field = app .getField();
 		AlgebraicVector x = field .basisVector( 3, 0 );
 		AlgebraicVector y = field .basisVector( 3, 1 );

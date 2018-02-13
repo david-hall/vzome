@@ -37,12 +37,12 @@ import com.vzome.core.math.symmetry.F4Group;
 import com.vzome.core.math.symmetry.QuaternionicSymmetry;
 import com.vzome.core.math.symmetry.WythoffConstruction;
 
-public class DefaultFieldApplication implements FieldApplication
+public class DefaultFieldApplication<T extends AlgebraicField> implements FieldApplication<T>
 {
-	private final AlgebraicField field;
-	private SymmetryPerspective octahedralPerspective;
-	
-	private Map<String, CoxeterGroup> groups4d = new HashMap<String, CoxeterGroup>();
+    private final T field;
+    private SymmetryPerspective octahedralPerspective;
+
+    private Map<String, CoxeterGroup> groups4d = new HashMap<String, CoxeterGroup>();
 
     private final Command pointsymm = new CommandCentralSymmetry();
     private final Command mirrorsymm = new CommandMirrorSymmetry();
@@ -54,7 +54,7 @@ public class DefaultFieldApplication implements FieldApplication
     private final Command tauDivide = new CommandTauDivision();
     private final Command midpoint = new CommandMidpoint();
 
-	public DefaultFieldApplication( AlgebraicField field )
+	public DefaultFieldApplication( T field )
 	{
 		super();
 		this .field = field;
@@ -67,7 +67,7 @@ public class DefaultFieldApplication implements FieldApplication
 	}
 
 	@Override
-	public AlgebraicField getField()
+	public T getField()
 	{
 		return this .field;
 	}

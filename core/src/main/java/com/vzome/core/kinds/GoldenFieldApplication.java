@@ -49,7 +49,7 @@ import com.vzome.core.viewing.ExportedVEFShapes;
  * @author vorth
  *
  */
-public class GoldenFieldApplication extends DefaultFieldApplication
+public class GoldenFieldApplication extends DefaultFieldApplication<PentagonField>
 {
 	public GoldenFieldApplication()
 	{

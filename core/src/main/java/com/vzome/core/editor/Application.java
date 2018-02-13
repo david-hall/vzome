@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
@@ -21,6 +22,8 @@ import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 import com.vzome.core.algebra.AlgebraicField;
+import com.vzome.core.algebra.PolygonField;
+import com.vzome.core.algebra.SqrtField;
 import com.vzome.core.commands.Command;
 import com.vzome.core.commands.XmlSaveFormat;
 import com.vzome.core.exporters.DaeExporter;
@@ -45,18 +48,46 @@ import com.vzome.core.exporters.VsonExporter;
 import com.vzome.core.exporters.WebviewJsonExporter;
 import com.vzome.core.kinds.GoldenFieldApplication;
 import com.vzome.core.kinds.HeptagonFieldApplication;
+import com.vzome.core.kinds.PolygonFieldApplication;
 import com.vzome.core.kinds.RootThreeFieldApplication;
 import com.vzome.core.kinds.RootTwoFieldApplication;
 import com.vzome.core.kinds.SnubDodecFieldApplication;
+import com.vzome.core.kinds.SqrtFieldApplication;
 import com.vzome.core.render.Color;
 import com.vzome.core.render.Colors;
 import com.vzome.core.viewing.Lights;
 import com.vzome.fields.sqrtphi.SqrtPhiFieldApplication;
 
-public class Application
-{
-    private final Map<String, Supplier<FieldApplication> > fieldAppSuppliers = new HashMap<>();
+public class Application {
+    private abstract class FieldApplicationFunction<T extends FieldApplication<?>> implements Function<Integer, T> {
+        public final int minimum;
+        public final int maximum;
 
+        public FieldApplicationFunction(int min, int max) {
+            minimum = min;
+            maximum = max;
+        }
+
+        /**
+         * 
+         * @param operand
+         * @return a FieldApplication. An IllegalArgumentException is thrown if limits
+         *         are not null and the operand is out of range. Use
+         *         {@code apply(operand)} directly to bypass the range checks
+         */
+        public T get(Integer operand) {
+            if (operand < minimum) {
+                throw new IllegalArgumentException("operand " + operand + " must be greater than " + minimum);
+            }
+            if (operand > maximum) {
+                throw new IllegalArgumentException("operand " + operand + " must be less than " + maximum);
+            }
+            return apply(operand);
+        }
+    }
+
+    private final Map<String, Supplier<FieldApplication<?>>> fieldAppSuppliers = new HashMap<>();
+    private final Map<String, FieldApplicationFunction<?>> fieldAppFunctions = new HashMap<>();
     private final Colors mColors;
 
     private final Command.FailureChannel failures;
@@ -67,28 +98,26 @@ public class Application
 
     private final Lights mLights = new Lights();
 
-    private static final Logger logger = Logger.getLogger( "com.vzome.core.editor" );
+    private static final Logger logger = Logger.getLogger("com.vzome.core.editor");
 
-    public Application( boolean enableCommands, Command.FailureChannel failures, Properties overrides )
-    {
-        this .failures = failures;
+    public Application(boolean enableCommands, Command.FailureChannel failures, Properties overrides) {
+        this.failures = failures;
 
         properties = loadDefaults();
-        if ( overrides != null )
-        {
-        	properties .putAll( overrides );
+        if (overrides != null) {
+            properties.putAll(overrides);
         }
-        properties .putAll( loadBuildProperties() );
+        properties.putAll(loadBuildProperties());
 
-        mColors = new Colors( properties );
+        mColors = new Colors(properties);
 
-        for ( int i = 1; i <= 3; i++ ) {
-            Color color = mColors .getColorPref( "light.directional." + i );
-            Vector3f dir = new Vector3f( mColors .getVectorPref( "direction.light." + i ) );
-            mLights.addDirectionLight( color, dir );
+        for (int i = 1; i <= 3; i++) {
+            Color color = mColors.getColorPref("light.directional." + i);
+            Vector3f dir = new Vector3f(mColors.getVectorPref("direction.light." + i));
+            mLights.addDirectionLight(color, dir);
         }
-        mLights .setAmbientColor( mColors .getColorPref( "light.ambient" ) );
-        mLights .setBackgroundColor( mColors .getColor( Colors.BACKGROUND ) );
+        mLights.setAmbientColor(mColors.getColorPref("light.ambient"));
+        mLights.setBackgroundColor(mColors.getColor(Colors.BACKGROUND));
 
         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -113,6 +142,7 @@ public class Application
         this .exporters .put( "history", new HistoryExporter( null, this .mColors, this .mLights, null ) );
 
         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        // add all of the parameterless FieldApplication suppliers
         this.fieldAppSuppliers.put("golden", GoldenFieldApplication::new);
         this.fieldAppSuppliers.put("rootTwo", RootTwoFieldApplication::new);
 		this.fieldAppSuppliers.put("rootThree", RootThreeFieldApplication::new);
@@ -120,138 +150,191 @@ public class Application
         this.fieldAppSuppliers.put("heptagon", HeptagonFieldApplication::new);
         this.fieldAppSuppliers.put("snubDodec", SnubDodecFieldApplication::new);
         this.fieldAppSuppliers.put( "sqrtPhi", SqrtPhiFieldApplication::new);
+
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        // Now add all of the parameterized FieldApplication functions
+        this.fieldAppFunctions.put(PolygonField.FIELD_PREFIX, new FieldApplicationFunction<PolygonFieldApplication>(
+                PolygonField.MIN_SIDES, PolygonFieldApplication.MAX_SIDES) {
+            @Override
+            public PolygonFieldApplication apply(Integer operand) {
+                return new PolygonFieldApplication(operand);
+            }
+        });
+        // radicand must be positive
+        this.fieldAppFunctions.put(SqrtField.FIELD_PREFIX,
+                new FieldApplicationFunction<SqrtFieldApplication>(1, SqrtField.MAX_VALUE) {
+                    @Override
+                    public SqrtFieldApplication apply(Integer operand) {
+                        return new SqrtFieldApplication(operand);
+                    }
+                });
     }
 
-    public DocumentModel loadDocument( InputStream bytes ) throws Exception
-    {
+    public DocumentModel loadDocument(InputStream bytes) throws Exception {
         Document xml = null;
 
         // parse the bytes as XML
         try {
-        	DocumentBuilderFactory factory = DocumentBuilderFactory .newInstance();
-        	factory .setNamespaceAware( true );
-        	DocumentBuilder builder = factory .newDocumentBuilder();
-        	xml = builder .parse( bytes );
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            xml = builder.parse(bytes);
             bytes.close();
-        } catch ( SAXException e ) {
-//            String errorCode = "XML is bad:  " + e.getMessage() + " at line " + e.getLineNumber() + ", column "
-//                    + e.getColumnNumber();
-            logger .severe( e .getMessage() );
+        } catch (SAXException e) {
+            // String errorCode = "XML is bad: " + e.getMessage() + " at line " +
+            // e.getLineNumber() + ", column "
+            // + e.getColumnNumber();
+            logger.severe(e.getMessage());
             throw e;
         }
 
-        Element element = xml .getDocumentElement();
-        String tns = element .getNamespaceURI();
-        XmlSaveFormat format = XmlSaveFormat .getFormat( tns );
+        Element element = xml.getDocumentElement();
+        String tns = element.getNamespaceURI();
+        XmlSaveFormat format = XmlSaveFormat.getFormat(tns);
 
-        if ( format == null )
-        {
-            String version = element.getAttribute( "version" );
-            String edition = element.getAttribute( "edition" );
-            if ( edition .isEmpty() )
+        if (format == null) {
+            String version = element.getAttribute("version");
+            String edition = element.getAttribute("edition");
+            if (edition.isEmpty())
                 edition = "vZome";
             String error = "Unknown " + edition + " file format.";
-            if ( ! version .isEmpty() )
+            if (!version.isEmpty())
                 error += "\n Cannot open files created by " + edition + " " + version;
-            logger .severe( error );
-            throw new IllegalStateException( error );
-        }
-        else
-            logger .fine( "supported format: " + tns );
+            logger.severe(error);
+            throw new IllegalStateException(error);
+        } else
+            logger.fine("supported format: " + tns);
 
-        String fieldName = element .getAttribute( "field" );
-        if ( fieldName .isEmpty() )
+        String fieldName = element.getAttribute("field");
+        if (fieldName.isEmpty())
             // field is qualified in the Zome interchange format
-            fieldName = element .getAttributeNS( XmlSaveFormat.CURRENT_FORMAT, "field" );
-        if ( fieldName .isEmpty() )
+            fieldName = element.getAttributeNS(XmlSaveFormat.CURRENT_FORMAT, "field");
+        if (fieldName.isEmpty())
             fieldName = "golden";
-        FieldApplication kind = this .getDocumentKind( fieldName );
+        FieldApplication<?> kind = this.getDocumentKind(fieldName);
 
-        return new DocumentModel( kind, failures, element, this );
+        return new DocumentModel(kind, failures, element, this);
     }
 
-	public DocumentModel createDocument( String fieldName )
-	{
-		FieldApplication kind = this .getDocumentKind( fieldName );
-		return new DocumentModel( kind, failures, null, this );
-	}
+    public DocumentModel createDocument(String fieldName) {
+        FieldApplication<?> kind = this.getDocumentKind(fieldName);
+        return new DocumentModel(kind, failures, null, this);
+    }
 
-	public DocumentModel importDocument( String content, String extension )
-	{
-		String fieldName = "golden";
-		// TODO: use fieldName from VEF input
-		FieldApplication kind = this .getDocumentKind( fieldName );
-		DocumentModel result = new DocumentModel( kind, failures, null, this );
-		result .doScriptAction( extension, content );
-		return result;
-	}
+    public DocumentModel importDocument(String content, String extension) {
+        String fieldName = "golden";
+        // TODO: use fieldName from VEF input
+        FieldApplication<?> kind = this.getDocumentKind(fieldName);
+        DocumentModel result = new DocumentModel(kind, failures, null, this);
+        result.doScriptAction(extension, content);
+        return result;
+    }
 
-	public AlgebraicField getField( String name )
-	{
-		return this .getDocumentKind( name ) .getField();
-	}
+    public AlgebraicField getField(String name) {
+        return this.getDocumentKind(name).getField();
+    }
 
-	public FieldApplication getDocumentKind( String name )
-	{
-        Supplier<FieldApplication> supplier = fieldAppSuppliers.get(name);
-        if( supplier != null ) {
-            return supplier.get();
+    public FieldApplication<?> getDocumentKind(String name) {
+        if (name.contains(".")) {
+            // parameterized
+            String[] args = name.split("\\.", 2);
+            if (args.length == 2) {
+                FieldApplicationFunction<?> function = fieldAppFunctions.get(args[0]);
+                if (function != null) {
+                    // we could use apply() instead of get() if we want to ignore the range tests
+                    return function.get(Integer.parseInt(args[1]));
+                }
+            }
+        } else {
+            // parameterless
+            Supplier<FieldApplication<?>> supplier = fieldAppSuppliers.get(name);
+            if (supplier != null) {
+                return supplier.get();
+            }
         }
+
         throw new IllegalArgumentException("Unknown Application Type " + name);
-	}
+    }
 
-	public Set<String> getFieldNames()
-	{
+    public Set<String> getFieldNames() 
+    {
         return fieldAppSuppliers.keySet();
-	}
+    }
 
-	public static Properties loadDefaults()
-	{
+    public Set<String> getParameterizedFieldNames()
+    {
+        return fieldAppFunctions.keySet();
+    }
+
+    /**
+     *
+     * @param fieldName
+     * @return a String indicating the minimum acceptable value for the FieldApplication's operand.
+     * If {@code fieldName} is not found, then the empty string will be returned,
+     */
+    public String getFieldMinimum(String fieldName)
+    {
+    FieldApplicationFunction<?> factory = fieldAppFunctions.get(fieldName);
+    return (factory == null)
+            ? ""
+            : Integer.toString(factory.minimum);
+    }
+
+    /**
+     *
+     * @param fieldName
+     * @return a String indicating the maximum acceptable value for the FieldApplication's operand.
+     * If {@code fieldName} is not found, then the empty string will be returned,
+     */
+    public String getFieldMaximum(String fieldName)
+    {
+    FieldApplicationFunction<?> factory = fieldAppFunctions.get(fieldName);
+    return (factory == null)
+            ? ""
+            : Integer.toString(factory.maximum);
+    }
+
+    public static Properties loadDefaults() {
         String defaultRsrc = "com/vzome/core/editor/defaultPrefs.properties";
         Properties defaults = new Properties();
         try {
             ClassLoader cl = Application.class.getClassLoader();
-            InputStream in = cl.getResourceAsStream( defaultRsrc );
-            if ( in != null )
-            	defaults .load( in );
-        } catch ( IOException ioe ) {
-            System.err.println( "problem reading default preferences: " + defaultRsrc );
+            InputStream in = cl.getResourceAsStream(defaultRsrc);
+            if (in != null)
+                defaults.load(in);
+        } catch (IOException ioe) {
+            System.err.println("problem reading default preferences: " + defaultRsrc);
         }
         return defaults;
-	}
+    }
 
-	public static Properties loadBuildProperties()
-	{
+    public static Properties loadBuildProperties() {
         String defaultRsrc = "vzome-core-build.properties";
         Properties defaults = new Properties();
         try {
             ClassLoader cl = Application.class.getClassLoader();
-            InputStream in = cl.getResourceAsStream( defaultRsrc );
-            if ( in != null )
-            	defaults .load( in );
-        } catch ( IOException ioe ) {
-            logger.warning( "problem reading build properties: " + defaultRsrc );
+            InputStream in = cl.getResourceAsStream(defaultRsrc);
+            if (in != null)
+                defaults.load(in);
+        } catch (IOException ioe) {
+            logger.warning("problem reading build properties: " + defaultRsrc);
         }
         return defaults;
-	}
-
-	public Colors getColors()
-	{
-		return this .mColors;
-	}
-
-    public Exporter3d getExporter( String format )
-    {
-        return this .exporters .get( format );
     }
 
-	public Lights getLights()
-	{
-		return this .mLights;
-	}
+    public Colors getColors() {
+        return this.mColors;
+    }
 
-	public String getCoreVersion()
-	{
-		return this .properties .getProperty( "version" );
-	}
+    public Exporter3d getExporter(String format) {
+        return this.exporters.get(format);
+    }
+
+    public Lights getLights() {
+        return this.mLights;
+    }
+
+    public String getCoreVersion() {
+        return this.properties.getProperty("version");
+    }
 }

@@ -35,23 +35,23 @@ import com.vzome.core.viewing.ExportedVEFShapes;
  * @author Scott Vorthmann
  *
  */
-public class RootThreeFieldApplication extends DefaultFieldApplication
+public class RootThreeFieldApplication extends DefaultFieldApplication<RootThreeField>
 {
-	public RootThreeFieldApplication()
-	{
-		super( new RootThreeField() );
-		OctahedralSymmetryPerspective octahedralPerspective = (OctahedralSymmetryPerspective) super .getDefaultSymmetryPerspective();
-		AbstractSymmetry symm = (AbstractSymmetry) octahedralPerspective .getSymmetry();
+    public RootThreeFieldApplication()
+    {
+        super( new RootThreeField() );
+        OctahedralSymmetryPerspective octahedralPerspective = (OctahedralSymmetryPerspective) super .getDefaultSymmetryPerspective();
+        AbstractSymmetry symm = (AbstractSymmetry) octahedralPerspective .getSymmetry();
 		
-		symm .createZoneOrbit( "red",   0, Symmetry .NO_ROTATION, new int[][] { {1,1, 1,2}, {1,2, 0,1}, {0,1, 0,1} }, true );
-		symm .createZoneOrbit( "brown", 0, Symmetry .NO_ROTATION, new int[][] { {1,1, 0,1}, {1,1, 0,1}, {2,1, 0,1} } );
+        symm .createZoneOrbit( "red",   0, Symmetry .NO_ROTATION, new int[][] { {1,1, 1,2}, {1,2, 0,1}, {0,1, 0,1} }, true );
+        symm .createZoneOrbit( "brown", 0, Symmetry .NO_ROTATION, new int[][] { {1,1, 0,1}, {1,1, 0,1}, {2,1, 0,1} } );
 
-		AbstractShapes defaultShapes = new ExportedVEFShapes( null, "rootThreeOctaSmall", "small octahedra", "small connectors", symm );
-		octahedralPerspective .addShapes( defaultShapes );
-		octahedralPerspective .setDefaultGeometry( defaultShapes );
-	}
+        AbstractShapes defaultShapes = new ExportedVEFShapes( null, "rootThreeOctaSmall", "small octahedra", "small connectors", symm );
+        octahedralPerspective .addShapes( defaultShapes );
+        octahedralPerspective .setDefaultGeometry( defaultShapes );
+    }
 
-	final SymmetryPerspective dodecagonalPerspective = new SymmetryPerspective()
+    final SymmetryPerspective dodecagonalPerspective = new SymmetryPerspective()
     {
         private final DodecagonalSymmetry symmetry = new DodecagonalSymmetry( getField(), "prisms" );
         

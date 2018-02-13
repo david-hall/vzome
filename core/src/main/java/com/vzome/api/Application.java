@@ -58,7 +58,7 @@ public class Application
     
     public Polyhedron getBallShape( String fieldName, String symmetryName, String style )
     {
-		FieldApplication fieldApp = this .delegate .getDocumentKind( fieldName );
+		FieldApplication<?> fieldApp = this .delegate .getDocumentKind( fieldName );
 		SymmetryPerspective symmPer = fieldApp .getSymmetryPerspective( symmetryName );
 		for ( Shapes shapes : symmPer .getGeometries() ) {
 			if ( shapes .getName() .equals( style ) )
