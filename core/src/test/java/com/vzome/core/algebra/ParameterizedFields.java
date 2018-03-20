@@ -1,9 +1,5 @@
 package com.vzome.core.algebra;
 
-import static com.vzome.core.algebra.AlgebraicField.DEFAULT_FORMAT;
-import static com.vzome.core.algebra.AlgebraicField.EXPRESSION_FORMAT;
-import static com.vzome.core.algebra.AlgebraicField.VEF_FORMAT;
-import static com.vzome.core.algebra.AlgebraicField.ZOMIC_FORMAT;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 
@@ -74,42 +70,75 @@ public class ParameterizedFields {
 		return buf.toString();
 	}
 
-	public static String factorsMultipliedToString(AlgebraicField field, int format) {
-		// int padLen = 0;
-		// for( int n = 0; n < field.getOrder(); n++) {
-		// padLen += (2 + field.getIrrational(n, format).length());
-		// }
-		// final String padding = new String(new char[padLen]).replace('\0', ' ');
-		StringBuffer buf = new StringBuffer();
-		buf.append("{\n");
-		int n = field.getOrder();
-		for (int i = 0; i < n; i++) {
-			BigRational[] factors1 = field.createRational(0).getFactors();
-			factors1[i] = BigRational.ONE;
-			AlgebraicNumber n1 = new AlgebraicNumber(field, factors1);
-			buf.append("  { ");
-			for (int j = 0; j < n; j++) {
-				BigRational[] factors2 = field.createRational(0).getFactors();
-				factors2[j] = BigRational.ONE;
-				AlgebraicNumber n2 = new AlgebraicNumber(field, factors2);
-				AlgebraicNumber product1 = n1.times(n2);
-				AlgebraicNumber product2 = n2.times(n1);
-				String s = product1.toString(format).replace(" ", "");
-				buf.append(s);
-				buf.append(",");
-				buf.append("\t");
-				// buf.append( padding.substring(0, padLen - s.length() ) );
-				assertEquals(product1, product2);
-			}
-			buf.append("},\n");
-		}
-		buf.append("}\n");
-		// TODO: recalc columns with spaces to replace tabs after all has been generated
-		// and spaces can be minimized
-		return buf.toString();
-	}
+    public static String factorsMultipliedToString(AlgebraicField field, int format) {
+        // int padLen = 0;
+        // for( int n = 0; n < field.getOrder(); n++) {
+        // padLen += (2 + field.getIrrational(n, format).length());
+        // }
+        // final String padding = new String(new char[padLen]).replace('\0', ' ');
+        StringBuffer buf = new StringBuffer();
+        buf.append("{\n");
+        int n = field.getOrder();
+        for (int i = 0; i < n; i++) {
+            BigRational[] factors1 = field.createRational(0).getFactors();
+            factors1[i] = BigRational.ONE;
+            AlgebraicNumber n1 = new AlgebraicNumber(field, factors1);
+            buf.append("  { ");
+            for (int j = 0; j < n; j++) {
+                BigRational[] factors2 = field.createRational(0).getFactors();
+                factors2[j] = BigRational.ONE;
+                AlgebraicNumber n2 = new AlgebraicNumber(field, factors2);
+                AlgebraicNumber product1 = n1.times(n2);
+                AlgebraicNumber product2 = n2.times(n1);
+                String s = product1.toString(format).replace(" ", "");
+                buf.append(s);
+                buf.append(",");
+                buf.append("\t");
+                // buf.append( padding.substring(0, padLen - s.length() ) );
+                assertEquals(product1, product2);
+            }
+            buf.append("},\n");
+        }
+        buf.append("}\n");
+        // TODO: recalc columns with spaces to replace tabs after all has been generated
+        // and spaces can be minimized
+        return buf.toString();
+    }
 
-	public static String hullToVefString(ParameterizedField<?> field) {
+    public static String factorsDividedToString(AlgebraicField field, int format) {
+        // int padLen = 0;
+        // for( int n = 0; n < field.getOrder(); n++) {
+        // padLen += (2 + field.getIrrational(n, format).length());
+        // }
+        // final String padding = new String(new char[padLen]).replace('\0', ' ');
+        StringBuffer buf = new StringBuffer();
+        buf.append("{\n");
+        int n = field.getOrder();
+        for (int i = 0; i < n; i++) {
+            BigRational[] factors1 = field.createRational(0).getFactors();
+            factors1[i] = BigRational.ONE;
+            AlgebraicNumber n1 = new AlgebraicNumber(field, factors1);
+            buf.append("  { ");
+            for (int j = 0; j < n; j++) {
+                BigRational[] factors2 = field.createRational(0).getFactors();
+                factors2[j] = BigRational.ONE;
+                AlgebraicNumber n2 = new AlgebraicNumber(field, factors2);
+                AlgebraicNumber quotient = n1.dividedBy(n2);
+                String s = quotient.toString(format).replace(" ", "");
+                buf.append(s);
+                buf.append(",");
+                buf.append("\t");
+                // buf.append( padding.substring(0, padLen - s.length() ) );
+            }
+            buf.append("},\n");
+        }
+        buf.append("}\n");
+        // TODO: recalc columns with spaces to replace tabs after all has been generated
+        // and spaces can be minimized
+        return buf.toString();
+    }
+
+    public static String hullToVefString(ParameterizedField<?> field) {
 		StringBuffer buf = new StringBuffer();
 		buf.append(VEF_HEADER);
 
@@ -212,20 +241,24 @@ public class ParameterizedFields {
 	}
 
 	public static void printMatrices(ParameterizedField<?> field) {
-		assertNotNull(field);
-		String name = "( " + field.toString() + " ) = \n";
-		// System.out.println("coefficients" + name + coefficientsToString(field));
-		System.out.println("coefficientsMultiplied" + name + coefficientsMultipliedToString(field));
-		System.out.println("multiplierMatrix" + name + multiplierMatrixToString(field));
-		System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, DEFAULT_FORMAT));
-		 System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, EXPRESSION_FORMAT));
-		 System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, ZOMIC_FORMAT));
-		// VEF_FORMAT order is reversed from other formats
-		 System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, VEF_FORMAT)); 
-		 System.out.println("VEF" + name + multiplierMatrixToVefString(field));
-		 System.out.println("hull" + name + hullToVefString(field));
-		 System.out.println("axes" + name + axesToVefString(field));
-		System.out.println();
+        assertNotNull(field);
+        String name = "( " + field.toString() + " ) = \n";
+//        System.out.println("coefficients" + name + coefficientsToString(field));
+        System.out.println("coefficientsMultiplied" + name + coefficientsMultipliedToString(field));
+        System.out.println("multiplierMatrix" + name + multiplierMatrixToString(field));
+        
+        System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.DEFAULT_FORMAT));
+//      System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.EXPRESSION_FORMAT));
+//      System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.ZOMIC_FORMAT));
+//		// VEF_FORMAT order is reversed from other formats
+//      System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.VEF_FORMAT));
+		 
+        System.out.println("factorsDivided" + name + factorsDividedToString(field, AlgebraicField.DEFAULT_FORMAT));
+		 
+//        System.out.println("VEF" + name + multiplierMatrixToVefString(field));
+//        System.out.println("hull" + name + hullToVefString(field));
+//        System.out.println("axes" + name + axesToVefString(field));
+        System.out.println();
 	}
 
 	@Test

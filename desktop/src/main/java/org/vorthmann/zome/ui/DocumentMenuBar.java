@@ -25,6 +25,8 @@ import javax.swing.KeyStroke;
 import org.vorthmann.j3d.Platform;
 import org.vorthmann.ui.Controller;
 
+import com.vzome.core.algebra.PolygonField;
+
 public class DocumentMenuBar extends JMenuBar implements PropertyChangeListener
 {
     private static final int COMMAND = Platform.getKeyModifierMask();
@@ -79,6 +81,9 @@ public class DocumentMenuBar extends JMenuBar implements PropertyChangeListener
         boolean isHeptagon = "heptagon" .equals( fieldName );
 
         boolean isSqrtPhi = "sqrtPhi" .equals( fieldName );
+        boolean isPolygonField = fieldName.startsWith( PolygonField.FIELD_PREFIX );
+
+        boolean isSnubDodec = "snubDodec" .equals( fieldName );
 
         boolean isRootTwo = "rootTwo" .equals( fieldName );
 
@@ -101,11 +106,34 @@ public class DocumentMenuBar extends JMenuBar implements PropertyChangeListener
 
             String[] fieldNames = controller .getCommandList( "fields" );
             for ( String fName : fieldNames ) {
+		if ( controller .propertyIsTrue( "enable." + fName + ".field" ) ) {
+		    String label = controller .getProperty( "field.label." + fName );
+		    submenu .add( createMenuItem( label + " Field", "new-" + fName ) );
+		}
+            }
+            
+            fieldNames = controller .getCommandList( "parameterizedFields" );
+            for ( String fName : fieldNames ) {
                 if ( controller .propertyIsTrue( "enable." + fName + ".field" ) ) {
                     String label = controller .getProperty( "field.label." + fName );
-                    submenu .add( createMenuItem( label + " Field", "new-" + fName ) );
+                    String strMin = controller .getProperty( fName + ".field.minimum" );
+                    String strMax = controller .getProperty( fName + ".field.maximum" );
+                    try {
+                        int min = Integer.parseInt(strMin);
+                        int max = Integer.parseInt(strMax);
+                        min = Math.max(min, 1);
+                        // TODO: eventually bring up a dialog here 
+                        // Be sure that max - min is not outrageous
+                        max = Math.min(max, min + 20);
+                        for(int i = min; i <=max; i++) {
+                            submenu .add( createMenuItem( label + i + " Field", "new-" + fName + "." + i) );
+                        }
+                    } catch(NumberFormatException ex) {
+                        // just ignore it for now and don't add any more menu items
+                    }
                 }
             }
+
             menu.add( submenu );
         }
         else
@@ -424,6 +452,13 @@ public class DocumentMenuBar extends JMenuBar implements PropertyChangeListener
             group.add( rbMenuItem );
             // DISABLED until the symmetry group has been properly implemented
             // menu.add( rbMenuItem );
+        } 
+        else if ( isPolygonField ) {
+            rbMenuItem = actions .setMenuAction( "setSymmetry.antiprism", controller, new JRadioButtonMenuItem( "Antiprism System" ) );
+            rbMenuItem .setSelected( "antiprism".equals( initSystem ) );
+            rbMenuItem .setEnabled( fullPower );
+            group.add( rbMenuItem );
+            menu.add( rbMenuItem );            
         }
 
         rbMenuItem = actions .setMenuAction( "setSymmetry.octahedral", controller, new JRadioButtonMenuItem( "Octahedral System" ) );

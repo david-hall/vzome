@@ -428,9 +428,21 @@ public class ApplicationController extends DefaultController
 		default:
 			if ( propName .startsWith( "field.label." ) )
 			{
-				String fieldName = propName .substring( "field.label." .length() );
-	            // TODO implement AlgebraicField.getLabel()
-	            switch ( fieldName ) {
+			    String fieldName = propName .substring( "field.label." .length() );
+                // TODO implement AlgebraicField.getLabel()
+                    switch (fieldName) {
+   
+                        case "golden":
+                        return "Zome (Golden)";
+    
+                    case "rootTwo":
+                        return "\u221A2";
+    
+                    case "rootThree":
+                        return "\u221A3";
+    
+                    case "snubDodec":
+                        return "Snub Dodec";
 
 	            case "golden":
 					return "Zome (Golden)";
@@ -456,6 +468,20 @@ public class ApplicationController extends DefaultController
 				    }
 				}
 			}
+            if (propName.endsWith(".field.minimum")) {
+                // prefs file overrides modelApp
+                String prefs = properties.getProperty(propName);
+                return (prefs == null || prefs.trim() == "")
+                        ? this.modelApp.getFieldMinimum(propName.replace(".field.minimum", ""))
+                        : prefs;
+            }
+            if (propName.endsWith(".field.maximum")) {
+                // prefs file overrides modelApp
+                String prefs = properties.getProperty(propName);
+                return (prefs == null || prefs.trim() == "")
+                        ? this.modelApp.getFieldMaximum(propName.replace(".field.maximum", ""))
+                        : prefs;
+            }
 			if ( propName .startsWith( "enable." ) && propName .endsWith( ".field" ) )
 			{
 				String fieldName = propName .substring( "enable." .length() );
@@ -561,6 +587,22 @@ public class ApplicationController extends DefaultController
             Set<String> names = modelApp .getFieldNames();
             SortedSet<String> sorted = new TreeSet<String>( names );
             return sorted .toArray( new String[]{} );
+        }
+        else if ( listName .equals( "parameterizedFields" ) )
+        {
+            Set<String> names = modelApp .getParameterizedFieldNames();
+            SortedSet<String> sorted = new TreeSet<String>( names );
+            return sorted .toArray( new String[sorted.size()] );
+        }
+        else if ( listName .startsWith( "field.minimum." ) )
+        {
+            // TODO: Return the greater of the value in the prefs file and that specified by the modelApp
+            return new String[] { modelApp .getFieldMinimum( listName.substring("field.minimum.".length()) ) };
+        }
+        else if ( listName .startsWith( "field.maximum." ) )
+        {
+            // TODO: Return the lesser of the value in the prefs file and that specified by the modelApp
+            return new String[] { modelApp .getFieldMaximum( listName.substring("field.maximum.".length()) ) };
         }
         else if ( listName .startsWith( "symmetries." ) )
         {

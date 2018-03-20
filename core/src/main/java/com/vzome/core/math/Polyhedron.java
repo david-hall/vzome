@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,7 +23,7 @@ import com.vzome.core.math.symmetry.Direction;
 
 public class Polyhedron implements Cloneable
 {
-	private static Logger logger = Logger .getLogger( "com.vzome.core.math.Polyhedron" );
+    private static Logger logger = Logger .getLogger( "com.vzome.core.math.Polyhedron" );
     
     @JsonIgnore
 	protected int numVertices = 0;
@@ -34,7 +35,8 @@ public class Polyhedron implements Cloneable
 	protected List<AlgebraicVector> m_vertexList = new ArrayList<>();
 
     @JsonIgnore
-	protected Set<Face> m_faces = new HashSet<>();
+    // HashSet would be adequate here, but maintaining insertion order with a LinkedHashSet helps debugging.
+    protected Set<Face> m_faces = new LinkedHashSet<>();
     
     @JsonIgnore
     private final AlgebraicField field;
