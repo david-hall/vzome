@@ -123,8 +123,14 @@ public class ParameterizedFields {
                 BigRational[] factors2 = field.createRational(0).getFactors();
                 factors2[j] = BigRational.ONE;
                 AlgebraicNumber n2 = new AlgebraicNumber(field, factors2);
-                AlgebraicNumber quotient = n1.dividedBy(n2);
-                String s = quotient.toString(format).replace(" ", "");
+                String s = "";
+                try {
+                    AlgebraicNumber quotient = n1.dividedBy(n2);
+                    s = quotient.toString(format).replace(" ", "");
+                }
+                catch(IllegalArgumentException ex) {
+                    s = "?";
+                }
                 buf.append(s);
                 buf.append(",");
                 buf.append("\t");

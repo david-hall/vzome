@@ -4,6 +4,9 @@ import static com.vzome.core.algebra.PentagonField.PHI_VALUE;
 import static java.lang.Math.PI;
 import static java.lang.Math.sin;
 
+import java.math.BigInteger;
+import java.util.Arrays;
+
 /**
  * @author David Hall
  */
@@ -88,18 +91,70 @@ public class PolygonField extends ParameterizedField<Integer> {
     }
     
     public static final String FIELD_PREFIX = "polygon";
-
-    private final boolean isEven;
-        
-    public PolygonField(int polygonSides) {
-        this( FIELD_PREFIX + polygonSides, polygonSides );
+    
+    /**
+     * 
+     * @return a pre-sorted array of the standard number of sides to be used 
+     * as parameters to the PolygonField c'tor. This is intended to be a 
+     * convenient pre-calculated way for applications to know which values 
+     * should commonly be used without having to check individual values.
+     * This array should be sorted and should include all values up to an 
+     * arbitrary limit for which mayBeNonInvertable() will return false.
+     * Initially, we'll use all values up to and incuding 64.
+     */
+    public static int[] getStandardPolygonSides() {
+        final int[] std = new int[] {4, 5, 6, 7, 8, 11, 13, 16, 17, 19, 23, 29, 31, 32, 37, 41, 43, 47, 53, 59, 61, 64};
+        return Arrays.copyOf(std, std.length); // return a copy so the original array is immutable
     }
 
-    // this c'tor is only intended to allow PolygonField and HeptagonField
-    // to be derived from PolygonField and still maintain their original legacy name
+    private final boolean isEven;
+    private final boolean mayBeNonInvertable;
+    
+    public PolygonField(int polygonSides) {
+        this( FIELD_PREFIX + polygonSides, polygonSides);
+    }
+
+    // this protected c'tor is intended to allow PentagonField and HeptagonField classes to be refactored
+    // so they are derived from PolygonField and still maintain their original legacy names
     protected PolygonField(String name, int polygonSides) {
         super( name, polygonSides/2, polygonSides );
         isEven = operand % 2 == 0;
+        mayBeNonInvertable = mayBeNonInvertable(polygonSides);
+    }
+
+    /**
+     * 
+     * @param nSides
+     * @return true if the terms of an AlgebraicNumber in the PolygonField with 
+     * specified nSides could possibly be non-invertable, hence no reciprocal.
+     * Even in fields where the terms could possibly be non-invertable, 
+     * it's possible that some specific AlgebraicNumbers could be invertable.
+     * This property allows the field to still be used for those specific AlgebraicNumbers    
+     * Reciprocals are always valid for polygon fields where nSides == 6, 
+     * where nSides is prime, or where nSides is an exact power of 2. 
+     * This method will return false for all of these values.
+     * See the series at https://oeis.org/A067133. 
+     * Note that phi(n) mentioned there refers to Euler's totient function, not the golden ratio.
+     */
+    public static boolean mayBeNonInvertable(int nSides) {
+        if (nSides < MIN_SIDES) {
+            String msg = "polygon sides = " + nSides + ". It must be at least " + MIN_SIDES + ".";
+            throw new IllegalArgumentException(msg);
+        }
+        if (nSides == 6) {
+            return false; // no validation required
+        }
+        // positive powers of two
+        if ((nSides & (nSides - 1)) == 0) {
+            return false; // no validation required
+        }
+        // prime
+        final int certainty = 100; // TODO: Determine the min reliable certainty here for any valid Integer nSides 
+        return ! BigInteger.valueOf(nSides).isProbablePrime(certainty);
+    }
+    
+    public boolean mayBeNonInvertable() {
+        return mayBeNonInvertable;
     }
 
     public final static int MIN_SIDES = 4;
@@ -750,6 +805,21 @@ public class PolygonField extends ParameterizedField<Integer> {
 
     public final boolean isOdd() {
         return !isEven;
+    }
+    
+    @Override
+    protected BigRational[] reciprocal( BigRational[] terms )
+    {
+        BigRational[] reciprocalTerms = super.reciprocal( terms );
+        if(mayBeNonInvertable) {
+            AlgebraicNumber num = createAlgebraicNumber( terms ); 
+            AlgebraicNumber recip = createAlgebraicNumber( reciprocalTerms ); 
+            if(! num.times(recip) .isOne()) {
+                String msg = "The AlgebraicNumber '" + num.toString() + "' is non-invertable in the " + getName() + " field.";
+                throw new IllegalArgumentException(msg);
+            }
+        }
+        return reciprocalTerms;
     }
 
     @Override

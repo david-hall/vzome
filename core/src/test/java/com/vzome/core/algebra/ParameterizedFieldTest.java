@@ -51,13 +51,14 @@ public class ParameterizedFieldTest {
 
     @Test
     public void printPolygonFieldMatrices() {
-        for (int i = 4; i <= 16; i++) {
+        for (int i = 4; i <= 25; i++) {
             ParameterizedFields.printMatrices( new PolygonField(i) );
         }
     }
 
     @Test
     public void scalingBugTest() {
+        System.out.println("scalingBugTest");
         AlgebraicField field = new PolygonField(8);
 
         AlgebraicNumber x = field.createAlgebraicNumber(new int[] { 0, 1, 0, 0} );
@@ -94,6 +95,7 @@ public class ParameterizedFieldTest {
 
     @Test
     public void scalingBugTest2() {
+        System.out.println("scalingBugTest2");
         AlgebraicField field = new PolygonField(8);
         AlgebraicNumber scalar = field .createPower( -1 );
         Double dScalar = scalar.evaluate();

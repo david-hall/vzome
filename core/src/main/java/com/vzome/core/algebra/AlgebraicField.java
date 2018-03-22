@@ -42,7 +42,7 @@ public abstract class AlgebraicField
     protected final AlgebraicNumber one;
 
     protected final AlgebraicNumber zero;
-
+    
     /**
      * Positive powers of the first irrational.
      */
@@ -268,6 +268,21 @@ public abstract class AlgebraicField
         return createAlgebraicNumber(factors);
     }
 
+    /**
+     * @return an AlgebraicNumber with all terms set to one.
+     */
+    public final AlgebraicNumber getUnitPolynomial() {
+        // TODO: Is this the same as the characteristic polynomial or the minimal polynomial? 
+        // If so, we should rename this method appropriately.
+        // See https://en.wikipedia.org/wiki/Characteristic_polynomial
+        // and https://en.wikipedia.org/wiki/Minimal_polynomial_(linear_algebra)
+        BigRational[] factors = new BigRational[order];
+        for(int i=0; i < order; i++) {
+            factors[i] = BigRational.ONE;
+        }
+        return createAlgebraicNumber(factors);
+    }
+
     public BigRational[] negate( BigRational[] array )
     {
         BigRational[] result = new BigRational[ array.length ];
@@ -286,7 +301,7 @@ public abstract class AlgebraicField
         }
         return true;
     }
-
+    
     public BigRational[] add( BigRational[] v1, BigRational[] v2 )
     {
         if ( v1.length != v2.length )
@@ -345,19 +360,19 @@ public abstract class AlgebraicField
     // number operations
     // ======================================================================================
 
-    protected BigRational[] reciprocal( BigRational[] fieldElement )
+    protected BigRational[] reciprocal( BigRational[] terms )
     {
-        int length = fieldElement .length;
+        int length = terms .length;
         BigRational[][] representation = new BigRational[ length ][ length ];
         boolean isZero = true;
         for ( int i = 0; i < length; i++ ) {
-        		isZero = isZero && fieldElement[ i ] .isZero();
-            representation[ 0 ][ i ] = fieldElement[ i ];
+        	isZero = isZero && terms[ i ] .isZero();
+            representation[ 0 ][ i ] = terms[ i ];
         }
         if ( isZero )
         		throw new RuntimeException( "Denominator is zero" );
         for ( int j = 1; j < length; j++ ) {
-            BigRational[] column = this .scaleBy( fieldElement, j );
+            BigRational[] column = this .scaleBy( terms, j );
             System.arraycopy(column, 0, representation[ j ], 0, length);
         }
         BigRational[][] reciprocal = new BigRational[ length ][ length ];
