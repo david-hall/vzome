@@ -26,11 +26,21 @@ public class AlgebraicFieldTest {
         fields.add (new RootThreeField());
         fields.add (new HeptagonField());
         fields.add (new SnubDodecField());
+        fields.add (new SnubDodecahedronField());
         fields.add (new SnubCubeField());
         fields.add (new SqrtPhiField());
         fields.add (new PhiPlusSqrtField(2));
         fields.add (new PhiPlusSqrtField(3));
         fields.add (new PlasticNumberField());
+    }
+    
+    @Test
+    public void printParameterizedFieldMatrices() {
+        for (AlgebraicField field : fields) {
+            if(field instanceof ParameterizedField<?>) {
+                ParameterizedFields.printMatrices( (ParameterizedField<?>) field );    
+            }
+        }
     }
     
     @Test

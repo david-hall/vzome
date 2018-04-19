@@ -76,3 +76,45 @@ public class PlasticNumberField  extends ParameterizedField<Integer> {
         irrationalLabels[2] = new String[]{"\u03A6\u00B2", "P^2"};
     }
 }
+
+/*
+coefficientsMultiplied( plasticNumber ) = 
+{
+  {     1.00000000000000,     1.32471795724475,     1.75487766624670, },
+  {     1.32471795724475,     1.75487766624670,     2.32471795724477, },
+  {     1.75487766624670,     2.32471795724477,     3.07959562349148, },
+}
+
+multiplierMatrix( plasticNumber ) = 
+{
+  {
+    { 1, 0, 0, },
+    { 0, 0, 1, },
+    { 0, 1, 0, },
+  },
+  {
+    { 0, 1, 0, },
+    { 1, 0, 1, },
+    { 0, 1, 1, },
+  },
+  {
+    { 0, 0, 1, },
+    { 0, 1, 0, },
+    { 1, 0, 1, },
+  },
+}
+
+factorsMultiplied( plasticNumber ) = 
+{
+  { 1,  Φ,  Φ², },
+  { Φ,  Φ², 1+Φ,    },
+  { Φ², 1+Φ,    Φ+Φ²,   },
+}
+
+factorsDivided( plasticNumber ) = 
+{
+  { 1,  -1+Φ²,  1+Φ-Φ², },
+  { Φ,  1,  -1+Φ²,  },
+  { Φ², Φ,  1,  },
+}
+*/
