@@ -70,6 +70,30 @@ public class ParameterizedFields {
 		return buf.toString();
 	}
 
+    public static String wolframAlphaTestString(AlgebraicField field) {
+        final int format = AlgebraicField.DEFAULT_FORMAT;
+        StringBuffer buf1 = new StringBuffer();
+        StringBuffer buf2 = new StringBuffer();
+        int order = field.getOrder();
+        String delim = "";
+        for (int i = 1; i < order; i++) {
+            AlgebraicNumber term = field.getUnitTerm(i);
+                term.getNumberExpression(buf1, format);
+                buf1.append("^2 = ");
+                AlgebraicNumber termSquared = term.times(term);
+                termSquared.getNumberExpression(buf1, format);
+                buf1.append("; ");
+
+                buf2.append(delim);
+                delim = "; "; // we don't want to end up with a trailing delimier on buf2
+                term.getNumberExpression(buf2, format);
+                buf2.append(" > 0");
+        }
+        buf1.append(buf2.toString());
+        buf1.append("\n");
+        return buf1.toString();
+    }
+
     public static String factorsMultipliedToString(AlgebraicField field, int format) {
         // int padLen = 0;
         // for( int n = 0; n < field.getOrder(); n++) {
@@ -80,14 +104,10 @@ public class ParameterizedFields {
         buf.append("{\n");
         int n = field.getOrder();
         for (int i = 0; i < n; i++) {
-            BigRational[] factors1 = field.createRational(0).getFactors();
-            factors1[i] = BigRational.ONE;
-            AlgebraicNumber n1 = new AlgebraicNumber(field, factors1);
+            AlgebraicNumber n1 = field.getUnitTerm(i);
             buf.append("  { ");
             for (int j = 0; j < n; j++) {
-                BigRational[] factors2 = field.createRational(0).getFactors();
-                factors2[j] = BigRational.ONE;
-                AlgebraicNumber n2 = new AlgebraicNumber(field, factors2);
+                AlgebraicNumber n2 = field.getUnitTerm(j);
                 AlgebraicNumber product1 = n1.times(n2);
                 AlgebraicNumber product2 = n2.times(n1);
                 String s = product1.toString(format).replace(" ", "");
@@ -115,14 +135,10 @@ public class ParameterizedFields {
         buf.append("{\n");
         int n = field.getOrder();
         for (int i = 0; i < n; i++) {
-            BigRational[] factors1 = field.createRational(0).getFactors();
-            factors1[i] = BigRational.ONE;
-            AlgebraicNumber n1 = new AlgebraicNumber(field, factors1);
+            AlgebraicNumber n1 = field.getUnitTerm(i);
             buf.append("  { ");
             for (int j = 0; j < n; j++) {
-                BigRational[] factors2 = field.createRational(0).getFactors();
-                factors2[j] = BigRational.ONE;
-                AlgebraicNumber n2 = new AlgebraicNumber(field, factors2);
+                AlgebraicNumber n2 = field.getUnitTerm(j);
                 String s = "";
                 try {
                     AlgebraicNumber quotient = n1.dividedBy(n2);
@@ -252,6 +268,8 @@ public class ParameterizedFields {
 //        System.out.println("coefficients" + name + coefficientsToString(field));
         System.out.println("coefficientsMultiplied" + name + coefficientsMultipliedToString(field));
         System.out.println("multiplierMatrix" + name + multiplierMatrixToString(field));
+
+        System.out.println( "wolfram alpha test query" + name + ParameterizedFields.wolframAlphaTestString( field ));
         
         System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.DEFAULT_FORMAT));
 //      System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.EXPRESSION_FORMAT));

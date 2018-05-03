@@ -51,7 +51,7 @@ public class ParameterizedFieldTest {
 
     @Test
     public void printPolygonFieldMatrices() {
-        for (int i = 4; i <= 25; i++) {
+        for (int i = 7; i <= 15; i++) {
             ParameterizedFields.printMatrices( new PolygonField(i) );
         }
     }

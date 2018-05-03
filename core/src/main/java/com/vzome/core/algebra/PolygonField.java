@@ -117,7 +117,12 @@ public class PolygonField extends ParameterizedField<Integer> {
     // this protected c'tor is intended to allow PentagonField and HeptagonField classes to be refactored
     // so they are derived from PolygonField and still maintain their original legacy names
     protected PolygonField(String name, int polygonSides) {
-        super( name, polygonSides/2, polygonSides );
+        super( name, 
+//                polygonSides == 6 ? 2 : // TODO: Make this work for hexagon field ... 
+                polygonSides == 9 ? 3 : 
+                polygonSides == 10 ? 4 : 
+                polygonSides == 12 ? 4 : 
+                polygonSides/2, polygonSides );
         isEven = operand % 2 == 0;
         mayBeNonInvertable = mayBeNonInvertable(polygonSides);
     }
@@ -183,6 +188,7 @@ public class PolygonField extends ParameterizedField<Integer> {
 
             case 6:
                 irrationalLabels[1] = new String[]{ "\u221A" + "3", "sqrtThree" };
+                if(getOrder() > 2)
                 irrationalLabels[2] = new String[]{ "Two", "two" };
                 break;
 
@@ -194,6 +200,7 @@ public class PolygonField extends ParameterizedField<Integer> {
             case 9:
                 irrationalLabels[1] = new String[]{ "\u03B1", "alpha" };
                 irrationalLabels[2] = new String[]{ "\u03B2", "beta" };
+                if(getOrder() > 3)
                 irrationalLabels[3] = new String[]{ "\u03B3", "gamma" };
                 break;
 
@@ -248,6 +255,7 @@ public class PolygonField extends ParameterizedField<Integer> {
         double[] temp = getCoefficients();
         int i = 0;
         for(double coefficient : temp) {
+            if(i < coefficients.length)
             coefficients[i++] = coefficient;
         }
     }
@@ -704,6 +712,89 @@ public class PolygonField extends ParameterizedField<Integer> {
         }
 */
         // </editor-fold>
+        if(polygonSides() == 9 && getOrder() == 3) {
+            multiplierMatrix = new short[][][] 
+                {
+                  {
+                    { 1, 0, 0, },
+                    { 0, 1, 1, },
+                    { 0, 1, 2, },
+                  },
+                  {
+                    { 0, 1, 0, },
+                    { 1, 0, 2, },
+                    { 0, 2, 1, },
+                  },
+                  {
+                    { 0, 0, 1, },
+                    { 0, 1, 0, },
+                    { 1, 0, 1, },
+                  },
+                };
+            return;
+        }
+        
+        if(polygonSides() == 10 && getOrder() == 4) {
+            multiplierMatrix = new short[][][] // D = -2 + 2B
+                    {                       // { // D is truncated ... $ = to be modified
+                      { // units            //   {  // units
+                        { 1, 0, 0, 0, },    //     { 1, 0, 0, 0, },
+                        { 0, 1, 0,-2, },    //     { 0, 1, 0,$0, },
+                        { 0, 0,-1, 0, },    //     { 0, 0,$1, 0, },
+                        { 0,-2, 0,-1, },    //     { 0,$0, 0,$1, },
+                      },                    //   },
+                      { // A                //   {  // A = no change
+                        { 0, 1, 0, 0, },    //     { 0, 1, 0, 0, },
+                        { 1, 0, 1, 0, },    //     { 1, 0, 1, 0, },
+                        { 0, 1, 0, 1, },    //     { 0, 1, 0, 1, },
+                        { 0, 0, 1, 0, },    //     { 0, 0, 1, 0, },
+                      },                    //   },
+                      { // B                //   {  // B
+                        { 0, 0, 1, 0, },    //     { 0, 0, 1, 0, },
+                        { 0, 1, 0, 3, },    //     { 0, 1, 0,$1, },
+                        { 1, 0, 3, 0, },    //     { 1, 0,$1, 0, },
+                        { 0, 3, 0, 4, },    //     { 0,$1, 0,$2, },
+                      },                    //   },
+                      { // C                //   {  // C = no change
+                        { 0, 0, 0, 1, },    //     { 0, 0, 0, 1, },
+                        { 0, 0, 1, 0, },    //     { 0, 0, 1, 0, },
+                        { 0, 1, 0, 2, },    //     { 0, 1, 0, 2, },
+                        { 1, 0, 2, 0, },    //     { 1, 0, 2, 0, },
+                      },                    //   },
+                    };                      // };
+            return;
+        }
+
+        if(polygonSides() == 12 && getOrder() == 4) {
+            multiplierMatrix = new short[][][] // D = 1 + B; E = 2A
+              {                       // { // D & E  are truncated ... $ = to be modified
+                { // units
+                    { 1, 0, 0, 0, },
+                    { 0, 1, 0, 1, },
+                    { 0, 0, 2, 0, },
+                    { 0, 1, 0, 3, },
+                  },
+                  {
+                    { 0, 1, 0, 0, },
+                    { 1, 0, 1, 0, },
+                    { 0, 1, 0, 3, },
+                    { 0, 0, 3, 0, },
+                  },
+                  {
+                    { 0, 0, 1, 0, },
+                    { 0, 1, 0, 2, },
+                    { 1, 0, 2, 0, },
+                    { 0, 2, 0, 3, },
+                  },
+                  {
+                    { 0, 0, 0, 1, },
+                    { 0, 0, 1, 0, },
+                    { 0, 1, 0, 3, },
+                    { 1, 0, 3, 0, },
+                  },
+                };
+            return;
+        }
 
         int order = getOrder();
 
@@ -783,7 +874,7 @@ public class PolygonField extends ParameterizedField<Integer> {
 
     @Override
         protected void initializeNormalizer() {
-        if(polygonSides() == 6) {
+        if(polygonSides() == 6 && getOrder() > 2) {
                 normalizer = PolygonField::normalizeHexagon; 
         }
     }

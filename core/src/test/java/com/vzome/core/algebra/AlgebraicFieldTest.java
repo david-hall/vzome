@@ -100,6 +100,15 @@ public class AlgebraicFieldTest {
     }
     
     @Test
+    public void testReciprocalsOfHackedFields()
+    {
+        verifyReciprocals( new PolygonField(12) );
+        verifyReciprocals( new PolygonField(10) );
+        verifyReciprocals( new PolygonField(9) );
+        return;
+    }
+    
+    @Test
     public void testReciprocals()
     {
         for( AlgebraicField field : fields ) {
@@ -112,6 +121,7 @@ public class AlgebraicFieldTest {
         for( Integer i = PolygonField.MIN_SIDES; i <= 64; i++) {
             if(verifyReciprocals( new PolygonField(i) )) {
                 list.add(i);
+                if(i != 9 && i != 10 && i != 12)
                 assertFalse(PolygonField.mayBeNonInvertable(i));
             } else {
                 assertTrue(PolygonField.mayBeNonInvertable(i));

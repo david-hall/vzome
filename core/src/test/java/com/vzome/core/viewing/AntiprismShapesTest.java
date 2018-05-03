@@ -90,6 +90,9 @@ public class AntiprismShapesTest {
             AntiprismShapes antiprismShapes = new AntiprismShapes(name, symm);
             Polyhedron antiprism = antiprismShapes.buildConnectorShape(null);
 
+            if(nSides != 9 && PolygonField.mayBeNonInvertable(nSides)) {
+                continue;
+            }
             verifyAntiprism(antiprism, nSides, true);
         }
     }
