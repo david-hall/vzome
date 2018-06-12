@@ -364,13 +364,15 @@ public abstract class AlgebraicField
         // create an identity matrix
         for ( int j = 0; j < length; j++ ) {
             for ( int i = 0; i < length; i++ ) {
-                if ( i == j )
-                    reciprocal[ j ][ i ] = new BigRational( 1 );
-                else
-                    reciprocal[ j ][ i ] = new BigRational( 0 );
+                reciprocal[ j ][ i ] = ( i == j ) ? BigRational.ONE : BigRational.ZERO;
             }
         }
-        Fields .gaussJordanReduction( representation, reciprocal );
+        int rank = Fields .gaussJordanReduction( representation, reciprocal );
+        if(rank != length) {
+            // TODO: What should we do here?
+            System.err.println((new Throwable()).getStackTrace()[0].getMethodName() 
+                    + " expects matrix rank to be " + length + ", but it is " + rank + "."); 
+        }
         BigRational[] reciprocalFactors = new BigRational[ length ];
         System.arraycopy(reciprocal[ 0 ], 0, reciprocalFactors, 0, length);
         return reciprocalFactors;

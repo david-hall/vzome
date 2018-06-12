@@ -97,7 +97,12 @@ public class AlgebraicMatrix
         AlgebraicField field = this .matrix[ 0 ][ 0 ] .getField();
         AlgebraicMatrix result = new AlgebraicMatrix( field, this .matrix .length );
 
-        Fields .gaussJordanReduction( this .matrix, result .matrix );
+        int rank = Fields .gaussJordanReduction( this .matrix, result .matrix );
+        if(rank != matrix.length) {
+            // TODO: What should we do here?
+            System.err.println((new Throwable()).getStackTrace()[0].getMethodName() 
+                    + " expects matrix rank to be " + matrix.length + ", but it is " + rank + "."); 
+        }
         return result;
 	}
 
