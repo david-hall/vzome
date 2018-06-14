@@ -55,6 +55,39 @@ public class ParameterizedFieldTest {
             ParameterizedFields.printMatrices( new PolygonField(i) );
         }
     }
+    
+    @Test 
+    public void printGcdTable() {
+        // this is an experiment to see if I can calculate the correct order for a polygonField with nSides
+        // so that it is an AlgebraicField, not just an AlgebraicRing.
+        // This may or may not indicate which diags to remove, but at least I hope it gets the order correct.
+        StringBuilder all = new StringBuilder();
+        String delim = "";
+        for(long nSides = 2; nSides <= 36; nSides++) {
+            System.out.print(nSides);
+            int order = 0;
+            for(long k = 1; k <= nSides/2; k++) {
+                long gcd = BigRational.Gcd.gcd(nSides, k);
+                BigRational br = new BigRational(nSides, gcd);
+                String marker = " ";
+                if (k >= nSides/gcd) {
+                    marker = "*";
+                } else {
+                    order++;
+                }
+                System.out.print("\t" + marker + k + "/" + br);
+            }
+            all.append(delim);
+            all.append(order);
+            delim = ", ";
+            if(order != nSides/2) {
+                System.out.println("\t\t// order(" + nSides + ") = " + order);
+            } else {
+                System.out.println("\t\t// prime -----------------"); // prime
+            }
+        }
+        System.out.println("\nOEIS? " + all);
+    }
 
     @Test
     public void scalingBugTest() {
