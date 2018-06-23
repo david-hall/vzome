@@ -54,7 +54,7 @@ import com.vzome.core.viewing.OctahedralShapes;
  * @author vorth
  *
  */
-public class SqrtPhiFieldApplication extends DefaultFieldApplication
+public class SqrtPhiFieldApplication extends DefaultFieldApplication<SqrtPhiField>
 {
 	public SqrtPhiFieldApplication()
 	{

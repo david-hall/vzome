@@ -924,29 +924,6 @@ public class PolygonField extends ParameterizedField<Integer> {
         }
     }
 
-    private AlgebraicNumber defaultStrutScaling;
-    @Override
-    public AlgebraicNumber getDefaultStrutScaling() {
-        if(defaultStrutScaling == null) {
-            switch(polygonSides()) {
-            case 5: // legacy PentagonField
-                defaultStrutScaling = createAlgebraicNumber(-1, 1, 2, 0);
-                break;
-
-            case 4:
-            case 6:
-                // we start with this value just because we did in RootTwoField and RootThreeField
-                defaultStrutScaling = createAlgebraicNumber(1, 0, 2, -3);
-                break;
-                
-            default:
-                defaultStrutScaling = super.getDefaultStrutScaling();
-                break;
-            }
-        }
-        return defaultStrutScaling;
-    }
-
 //  protected static final String[] GREEK_ALPHABET = {
 //  "\u03B1", // alpha
 //  "\u03B2", // beta

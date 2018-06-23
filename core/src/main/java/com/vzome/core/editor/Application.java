@@ -127,7 +127,7 @@ public class Application
         this .exporters .put( "opengl", new OpenGLExporter( null, this .mColors, this .mLights, null ) );
         this .exporters .put( "dae", new DaeExporter( null, this .mColors, this .mLights, null ) );
         this .exporters .put( "LiveGraphics", new LiveGraphicsExporter( null, this .mColors, this .mLights, null ) );
-        this .exporters .put( "json", new JsonExporter( null, this .mColors, this .mLights, null ) );
+        this .exporters .put( "json", new WebviewJsonExporter( null, this .mColors, this .mLights, null ) );
         this .exporters .put( "step", new STEPExporter( null, this .mColors, this .mLights, null ) );
         this .exporters .put( "vrml", new VRMLExporter( null, this .mColors, this .mLights, null ) );
         this .exporters .put( "off", new OffExporter( null, this .mColors, this .mLights, null ) );

@@ -430,21 +430,8 @@ public class ApplicationController extends DefaultController
 			{
 			    String fieldName = propName .substring( "field.label." .length() );
                 // TODO implement AlgebraicField.getLabel()
-                    switch (fieldName) {
-   
-                        case "golden":
-                        return "Zome (Golden)";
-    
-                    case "rootTwo":
-                        return "\u221A2";
-    
-                    case "rootThree":
-                        return "\u221A3";
-    
-                    case "snubDodec":
-                        return "Snub Dodec";
-
-	            case "golden":
+                switch (fieldName) {
+   	            case "golden":
 					return "Zome (Golden)";
 
 	            case "rootTwo":

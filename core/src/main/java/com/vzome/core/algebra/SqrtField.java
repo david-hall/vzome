@@ -119,14 +119,4 @@ public class SqrtField extends ParameterizedField<Integer> {
     public short radicand() {
         return operand.shortValue();
     }
-
-    private AlgebraicNumber defaultStrutScaling;
-    @Override
-    public AlgebraicNumber getDefaultStrutScaling() {
-        if(defaultStrutScaling == null) {
-            // we start with this value just because we did in RootTwoField and RootThreeField
-            defaultStrutScaling = createAlgebraicNumber(1, 0, 2, -3);
-        }
-        return defaultStrutScaling;
-    }
 }

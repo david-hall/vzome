@@ -67,7 +67,6 @@ public class AlgebraicFieldTest {
     private void compareFields(boolean same, AlgebraicField f1, AlgebraicField f2 ) {
         String msg = "Expected " + f1.toString() + (same ? " == " : " != ") + f2.toString() + " at " + getSourceCodeLine(2);
         if(same) {
-            assertEquals( msg, f1.getDefaultStrutScaling(), f2.getDefaultStrutScaling() );
             assertEquals( msg, f1.hashCode(), f2.hashCode() );
             assertEquals( msg, f1, f2 );
         } else {
