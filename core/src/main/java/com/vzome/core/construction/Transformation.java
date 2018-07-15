@@ -46,6 +46,7 @@ public abstract class Transformation extends Construction
     // state variables
     private AlgebraicMatrix mTransform;
     protected AlgebraicVector mOffset; // this lets us avoid doing matrix arithmetic for the offsets
+    protected Boolean preservesChirality = true; // calculated and cached on first use unless assigned in subclass c'tor.
     
     protected Transformation( AlgebraicField field )
     {
@@ -101,6 +102,22 @@ public abstract class Transformation extends Construction
         return true;
     }
 
+	/**
+	 * 
+	 * @return true if this transformation preserves chirality (e.g. translation, rotation or skew) 
+	 * or false if chirality is reversed (e.g. reflection).
+	 * Note that when chirality is reversed, then the winding order of vertices in a transformed polygon 
+	 * should be reversed from the original sequence in order to correctly "reflect" the polarity of the normal vector.
+	 * Subclasses with a null transformation are assumed to preserve chirality. 
+	 * Otherwise, they must specifically set preservesChirality to false, typically in their constructor. 
+	 */
+    public boolean preservesChirality() {
+        if(preservesChirality == null) {
+            preservesChirality = mTransform != null && mTransform.isSquare() &&  mTransform. determinant() .evaluate() < 0.0D;
+        }
+	    return preservesChirality;
+	}
+	
     public AlgebraicVector transform( AlgebraicVector arg )
     {
         arg = arg .minus( mOffset );

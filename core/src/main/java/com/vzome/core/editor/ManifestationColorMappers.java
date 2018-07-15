@@ -271,7 +271,7 @@ public class ManifestationColorMappers {
     protected static Color mapPolarity(AlgebraicVector vector, int alpha) {
         final int polarity = vector.compareTo(vector.negate());
         int mid = 128;
-        int diff = 64;
+        int diff = 96;
         int shade = polarity < 0 ? mid - diff :
                     polarity > 0 ? mid + diff : mid;
         return new Color(shade, shade, shade, alpha); 
@@ -496,6 +496,12 @@ public class ManifestationColorMappers {
      * Polarity info is the ONLY basis for this mapping 
      */
     public static class NormalPolarityColorMap extends RadialStandardBasisColorMap {
+        
+        @Override
+        protected Color applyTo(Panel panel, int alpha) {
+            return applyTo(panel.getWindingNormal3D(), alpha);
+        }
+        
         @Override
         protected Color applyTo(AlgebraicVector vector, int alpha) {
             return mapPolarity(vector, alpha);

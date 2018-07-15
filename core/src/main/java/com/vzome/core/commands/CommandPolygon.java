@@ -60,8 +60,17 @@ public class CommandPolygon extends AbstractCommand
                             failed = true;
                         } else {
                             // DJH: As far as I can tell, the only problem with any of vertices being collinear
-                            // is that Panel.getNormal and Face.getNormal both use the first three vertices 
-                            // to calculate their normals. At this point, even if they were changed 
+                            // is that Panel.getNormal(), Polyhedron.Face.computeNormal(),
+                            // RenderedModel.resetAttributes(), and ShowNormals.perform()
+                            // all used the first three vertices of each panel to calculate their normals.
+                            // Other places also do their own cross product calculation 
+                            // inline similarly using the first three vertices without calling getNormal()
+                            // so they would need to be identified as well. 
+                            // TODO: Refactor these (and any other) places to use AlgebraicVectors.get3DNormal() instead.
+                            // Note that point reflection and plane reflection commands that reverse chirality of panels
+                            // could also generate a polygon with the first three vertices being collinear 
+                            // if the last three verticies of the polygon being transformed are collinear.  
+                            // At this point, even if they were changed 
                             // to use any three points that are non-collinear (rather than just the first three points),
                             // they would generate files that are not readable by older versions of vzome
                             // unless we also automatically "rotate" the points around the perimeter 

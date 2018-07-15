@@ -2,12 +2,12 @@
 
 package com.vzome.core.model;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import com.vzome.core.algebra.AlgebraicVector;
 import com.vzome.core.algebra.AlgebraicVectors;
-import java.util.ArrayList;
 
 public class Panel extends Manifestation implements Iterable<AlgebraicVector>
 {
@@ -147,12 +147,26 @@ public class Panel extends Manifestation implements Iterable<AlgebraicVector>
         return true;
     }
 
+	// Primarily used to get an orthogonal vector
+    // Assumes that the first three vertices are not collinear.
+	// This is not a mathematical requirement, but lots of code depends on this assumption. 
+    // The magnitude and sign are pretty much meaningless.
+	// Technically, it's the signed area of the paralellagon formed by the first two edges
+	// of the polygon, but the order in which its vertices are determined is arbitrary.
+	// the polygon may be non-convex or self-intersecting which we can't tell from this vector.
+    // For a more meaningful magnitude and sign, use getWindingNormal3D() 
     public AlgebraicVector getNormal( )
     {
         AlgebraicVector v0 = mVertices.get( 0 );
         AlgebraicVector v1 = mVertices.get( 1 );
         AlgebraicVector v2 = mVertices.get( 2 );
         return AlgebraicVectors.getNormal(v0, v1, v2);
+    }
+
+    // See comments at AlgebraicVector.get3DNormal()
+    public AlgebraicVector getWindingNormal3D( )
+    {
+         return AlgebraicVectors.get3DNormal(mVertices);
     }
 
 	@Override

@@ -26,7 +26,7 @@ public class PlaneReflection extends Transformation
         mNormal = mirror .getNormal();
         mBase = mirror .getBase();
         mNormDotReciprocal = mNormal .dot( mNormal ) .reciprocal(); // do the matrix inversion just once
-        
+        preservesChirality = false;
         mapParamsToState();
     }
     

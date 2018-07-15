@@ -21,6 +21,7 @@ public class PointReflection extends Transformation
     {
         super( center .field );
         mCenter = center;
+        preservesChirality = false;
         mapParamsToState();
     }
     

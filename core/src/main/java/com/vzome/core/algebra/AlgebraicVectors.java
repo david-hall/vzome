@@ -1,6 +1,7 @@
 package com.vzome.core.algebra;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.TreeSet;
 
 /**
@@ -11,6 +12,77 @@ public class AlgebraicVectors {
 
     public static AlgebraicVector getNormal(final AlgebraicVector v0, final AlgebraicVector v1, final AlgebraicVector v2) {
         return v1.minus(v0).cross(v2.minus(v0));
+    }
+    
+    /**
+     * 
+     * @return a 3D normal vector based on all vertices. 
+     * The absolute value of the vector's length is the area of the polygon.
+     * The sign of the vector indicates the the polygon's winding direction,
+     * with a negative value indicating a clockwise winding direction. 
+     * A self intersecting polygon will have the sign of the area with the larger winding direction.
+     * 
+     * The Newell algorithm works with convex as well as non-convex polygons
+     * including those with self-intersections or consecutive collinear vertices.
+     * 
+     * If the vertices are not coplanar (which should never happen with a polygon or panel),
+     * then the algorithm implicitly returns a normal vector to a "best-fit" plane. 
+     * The sign and length of the vector is then based on the projection of the vertices onto that plane.
+     * No special test or code is required to handle this condition.
+     * It is a natural behavior of the algorithm.   
+     * 
+     * See https://blog.element84.com/polygon-winding-post.html
+     *  and http://geomalgorithms.com/a01-_area.html#3D%20Polygons
+     */
+    public static AlgebraicVector get3DNormal(final List<AlgebraicVector> vertices)
+    {
+        if(vertices.size() < 3) {
+            throw new IllegalArgumentException("3 vertices are required to calculate a normal. Found " + vertices.size());
+        }
+        AlgebraicNumber xNormal = null;
+        AlgebraicNumber yNormal = null;
+        AlgebraicNumber zNormal = null;
+        AlgebraicNumber x0 = null;
+        AlgebraicNumber y0 = null;
+        AlgebraicNumber z0 = null;
+        AlgebraicNumber xBeg = null;
+        AlgebraicNumber yBeg = null;
+        AlgebraicNumber zBeg = null;
+        
+        for(AlgebraicVector vertex : vertices) {
+            vertex = vertex.projectTo3d(true); // just to be safe
+            // get the 3 individual coordinates
+            AlgebraicNumber xEnd = vertex.getComponent( AlgebraicVector.X );
+            AlgebraicNumber yEnd = vertex.getComponent( AlgebraicVector.Y );
+            AlgebraicNumber zEnd = vertex.getComponent( AlgebraicVector.Z );
+
+            if(xNormal == null) {
+                // first time around so initialize the accumulators
+                xNormal = yNormal = zNormal = vertex.getField().zero();
+                // save these first coordinates for use after we finish the loop
+                x0 = xEnd;
+                y0 = yEnd;
+                z0 = zEnd;
+            } else {
+                // accumulate the projections of the current edge onto each axis
+                xNormal = xNormal .plus( yBeg.minus(yEnd) .times ( zBeg.plus(zEnd ) ) );
+                yNormal = yNormal .plus( zBeg.minus(zEnd) .times ( xBeg.plus(xEnd ) ) );
+                zNormal = zNormal .plus( xBeg.minus(xEnd) .times ( yBeg.plus(yEnd ) ) );                
+            }
+            
+            // prep for next iteration
+            xBeg = xEnd;
+            yBeg = yEnd;
+            zBeg = zEnd;
+        }
+
+        // don't forget the final edge which is between the last and first vertex
+        xNormal = xNormal .plus( yBeg.minus(y0) .times ( zBeg.plus(z0 ) ) );
+        yNormal = yNormal .plus( zBeg.minus(z0) .times ( xBeg.plus(x0 ) ) );
+        zNormal = zNormal .plus( xBeg.minus(x0) .times ( yBeg.plus(y0 ) ) );                
+        
+        // scaling by 1/2 results in the absolute value of the length equaling the polygon's area
+        return new AlgebraicVector(xNormal, yNormal, zNormal).scale( xNormal.getField().createRational(1, 2));
     }
 
     public static boolean areCollinear(final AlgebraicVector v0, final AlgebraicVector v1, final AlgebraicVector v2) {

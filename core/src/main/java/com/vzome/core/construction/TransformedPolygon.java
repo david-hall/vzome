@@ -30,8 +30,14 @@ public class TransformedPolygon extends Polygon
 //          return setStateVariables( null, null, true );
         AlgebraicVector [] protoLocs = mPrototype .getVertices();
         AlgebraicVector [] locs = new AlgebraicVector[ protoLocs .length ];
-        for ( int i = 0; i < locs .length; i++ )
-            locs[ i ] = mTransform .transform( protoLocs[ i ] );
+        // TODO: Fix calculation of normal to a panel so the first three verticees can be collinear
+        // or else this may fail to reverse the panel when the last three vertices of the original are collinear
+        int j = locs.length - 1;
+        boolean reverseVertexOrder = !mTransform .preservesChirality();
+        for ( int i = 0; i < locs .length; i++ ) {
+            locs[ reverseVertexOrder ? j : i ] = mTransform .transform( protoLocs[ i ] );
+            j--;
+        }
         return setStateVariable( locs, false );
     }
 }
