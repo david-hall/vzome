@@ -444,7 +444,8 @@ public abstract class AlgebraicField
     }
 
     /**
-     * Create a matrix from integer data.
+     * Create a 3x3 square matrix from integer data.
+     * TODO: Generalize this method to create a matrix with dimensions matching the dimensions of the data array
      * Sample input data for an order-4 field:
      *   {{{7,5,0,1,-4,5,0,1},{-2,5,0,1,4,5,0,1},{0,1,-8,5,0,1,6,5}},
      *    {{-2,5,0,1,4,5,0,1},{7,5,0,1,-4,5,0,1},{0,1,8,5,0,1,-6,5}},
