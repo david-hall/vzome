@@ -385,8 +385,8 @@ public abstract class AlgebraicField
         int rank = Fields .gaussJordanReduction( representation, reciprocal );
         if(rank != length) {
             // TODO: What should we do here?
-            System.err.println((new Throwable()).getStackTrace()[0].getMethodName() 
-                    + " expects matrix rank to be " + length + ", but it is " + rank + "."); 
+//            System.err.println((new Throwable()).getStackTrace()[0].getMethodName() 
+//                    + " expects matrix rank to be " + length + ", but it is " + rank + "."); 
         }
         BigRational[] reciprocalFactors = new BigRational[ length ];
         System.arraycopy(reciprocal[ 0 ], 0, reciprocalFactors, 0, length);

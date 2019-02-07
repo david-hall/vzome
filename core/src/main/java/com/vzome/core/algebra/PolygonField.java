@@ -119,9 +119,10 @@ public class PolygonField extends ParameterizedField<Integer> {
     protected PolygonField(String name, int polygonSides) {
         super( name, 
 //                polygonSides == 6 ? 2 : // TODO: Make this work for hexagon field ... 
-                polygonSides == 9 ? 3 : 
-                polygonSides == 10 ? 4 : 
-                polygonSides == 12 ? 4 : 
+//                polygonSides == 9 ? 3 : 
+//                polygonSides == 10 ? 4 : 
+//                polygonSides == 12 ? 4 : 
+//                polygonSides == 15 ? 4 : 
                 polygonSides/2, polygonSides );
         isEven = operand % 2 == 0;
         mayBeNonInvertable = mayBeNonInvertable(polygonSides);
@@ -146,9 +147,9 @@ public class PolygonField extends ParameterizedField<Integer> {
             String msg = "polygon sides = " + nSides + ". It must be at least " + MIN_SIDES + ".";
             throw new IllegalArgumentException(msg);
         }
-        if (nSides == 6) {
-            return false; // no validation required
-        }
+//        if (nSides == 6) {
+//            return false; // no validation required
+//        }
         // positive powers of two
         if ((nSides & (nSides - 1)) == 0) {
             return false; // no validation required
@@ -212,6 +213,7 @@ public class PolygonField extends ParameterizedField<Integer> {
                 break;
 
             default:
+                // TODO: Move this default behavior into the base class, possibly with an option for the subscripted variable name
                 final String alphabet = "abcdefghijklmnopqrstuvwxyz";
                 int order = getOrder();
                 if(order -1 <= alphabet.length()) {
@@ -843,7 +845,7 @@ public class PolygonField extends ParameterizedField<Integer> {
         // so that "carry" must be transferred to the units position
         // much like the situation for perfect squares in SqrtField.
         // We could hard code the values, but the code below makes the reasoning a little clearer.
-        if(polygonSides() == 6) {
+        if(polygonSides() == 6 && getOrder() == 2) {
             for(int x=0; x<order; x++) {
                 for(int y=0; y<order; y++) {
                     int xfer = 2 * multiplierMatrix[2][x][y];
@@ -873,19 +875,144 @@ public class PolygonField extends ParameterizedField<Integer> {
     }
 
     @Override
-        protected void initializeNormalizer() {
-        if(polygonSides() == 6 && getOrder() > 2) {
-                normalizer = PolygonField::normalizeHexagon; 
+    protected void initializeNormalizer() {
+        if(polygonSides() / 2 == getOrder()) {
+            switch(polygonSides()) {
+            case 6: 
+                normalizer = PolygonField::normalize6;
+                break;
+            case 9:
+                normalizer = PolygonField::normalize9;
+                break;
+            case 10:
+                normalizer = PolygonField::normalize10;
+                break;
+            case 12:
+                normalizer = PolygonField::normalize12;
+                break;
+            case 15:
+                normalizer = PolygonField::normalize15;
+                break;
+//              case 18:
+//              normalizer = PolygonField::normalize18;
+//              break;
+//              case 21:
+//              normalizer = PolygonField::normalize21;
+//              break;
+              case 24:
+              normalizer = PolygonField::normalize24;
+              break;
+//              case 27:
+//              normalizer = PolygonField::normalize27;
+//              break;
+//              case 30:
+//                  normalizer = PolygonField::normalize30;
+//                  break;
+              case 48:
+              normalizer = PolygonField::normalize48;
+              break;
+            default:
+                normalizer = ParameterizedField::doNothing; // unchanged
+                break;
+            }
         }
     }
     
-    private static void normalizeHexagon(AlgebraicField field, BigRational[] factors) {
-        if(!factors[2].isZero()) {
-            factors[0] = factors[0].plus(factors[2].times(2));
-            factors[2] = BigRational.ZERO;
-        }
+    // this pattern seems to work for 3 times any even power of 2 (e.g. 3 * 2 = 6)
+    private static void normalize6(AlgebraicField field, BigRational[] factors) {
+        normalizeFactor(factors, 2, 0, 0); // B = 1 + 1
     }
 
+    private static void normalize9(AlgebraicField field, BigRational[] factors) {
+        normalizeFactor(factors, 3, 0, 1); // C = 1 + A
+    }
+
+    private static void normalize10(AlgebraicField field, BigRational[] factors) {
+        normalizeFactor(factors, 4, -2L, 0, 2L, 2); // D = -2(1) + 2B
+    }
+
+    // this pattern seems to work for 3 times any even power of 2 (e.g. 3 * 4 = 12)
+    private static void normalize12(AlgebraicField field, BigRational[] factors) {
+        normalizeFactor(factors, 4, 0, 2); // D = 1 + B
+        normalizeFactor(factors, 5, 1, 1); // E = A + A
+    }
+
+    private static void normalize15(AlgebraicField field, BigRational[] factors) {
+    	BigRational factor = factors[4]; // D = 1 + 2A + B - C 
+        if(!factor.isZero()) {
+            factors[0] = factors[0].plus(factor); 	// units
+            factors[1] = factors[1].plus(factor); 	// A
+            factors[1] = factors[1].plus(factor); 	// A again = 2A
+            factors[2] = factors[2].plus(factor); 	// B
+            factors[3] = factors[3].minus(factor);	// C
+            factors[4] = BigRational.ZERO;
+        }
+        normalizeFactor(factors, 5, 0, 3); // E = 1 + C
+        normalizeFactor(factors, 6, 1, 2); // F = A + B
+        
+        // TODO: Any others D = ?
+    }
+//
+//    private static void normalize18(AlgebraicField field, BigRational[] factors) {
+//        normalizeFactor(factors, 6, 0, 4); // F = 1 + D
+//        // TODO: Any others?
+//    }
+//
+//    private static void normalize21(AlgebraicField field, BigRational[] factors) {
+//        normalizeFactor(factors, 7, 0, 5); // G = 1 + E
+//        // TODO: Any others?
+//    }
+//
+    // this pattern seems to work for 3 times any even power of 2 (e.g. 3 * 8 = 24)
+    private static void normalize24(AlgebraicField field, BigRational[] factors) {
+        normalizeFactor(factors,  8, 0, 6); // H = 1 + F
+        normalizeFactor(factors,  9, 1, 5); // I = A + E
+        normalizeFactor(factors, 10, 2, 4); // J = B + D
+        normalizeFactor(factors, 11, 3, 3); // K = C + C
+    }
+
+//    private static void normalize27(AlgebraicField field, BigRational[] factors) {
+//        normalizeFactor(factors, 9, 0, 7); // I = 1 + G
+//        // TODO: Any others?
+//    }
+    
+//    private static void normalize30(AlgebraicField field, BigRational[] factors) {
+//        normalizeFactor(factors, 10, 0, 8); // J = 1 + H
+//        // TODO: Any others?
+//    }
+//
+    // this pattern seems to work for 3 times any even power of 2 (e.g. 3 * 16 = 48)
+    private static void normalize48(AlgebraicField field, BigRational[] factors) {
+        normalizeFactor(factors, 16, 0, 14); // P = 1 + N
+        normalizeFactor(factors, 17, 1, 13); // Q = A + M
+        normalizeFactor(factors, 18, 2, 12); // R = B + L
+        normalizeFactor(factors, 19, 3, 11); // S = C + K
+        normalizeFactor(factors, 20, 4, 10); // T = D + J
+        normalizeFactor(factors, 21, 5,  9); // U = E + I
+        normalizeFactor(factors, 22, 6,  8); // V = F + H
+        normalizeFactor(factors, 23, 7,  7); // W = G + G
+    }
+
+    // TODO: Refactor this method into the base class, then use it in SqrtField.normalizePerfectSquare()
+    private static void normalizeFactor(BigRational[] factors, int i, int j, int k) {
+        BigRational factor = factors[i]; 
+        if(!factor.isZero()) {
+            factors[j] = factors[j].plus(factor);
+            factors[k] = factors[k].plus(factor);
+            factors[i] = BigRational.ZERO;
+        }        
+    }
+    
+    // TODO: Refactor this method into the base class, then use it in SqrtField.normalizePerfectSquare()
+    private static void normalizeFactor(BigRational[] factors, int i, long nj, int j, long nk, int k) {
+        BigRational factor = factors[i]; 
+        if(!factor.isZero()) {
+            factors[j] = factors[j].plus(factor.times(new BigRational(nj)));
+            factors[k] = factors[k].plus(factor.times(new BigRational(nk)));
+            factors[i] = BigRational.ZERO;
+        }        
+    }
+    
     public Integer polygonSides() {
         return operand;
     }

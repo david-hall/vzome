@@ -45,20 +45,65 @@ public class ParameterizedFields {
 		return buf.toString();
 	}
 
-	public static String coefficientsMultipliedToString(ParameterizedField<?> field) {
-		StringBuffer buf = new StringBuffer();
-		buf.append("{\n");
-		for (Double c1 : field.coefficients) {
-			buf.append("  { ");
-			for (Double c2 : field.coefficients) {
-				buf.append(String.format("%1$20.14f, ", c1 * c2)); // show one less decimal point because we're also
-																	// multiplying any ulp error
-			}
-			buf.append("},\n");
-		}
-		buf.append("}\n");
-		return buf.toString();
-	}
+    public static String coefficientsMultipliedToString(ParameterizedField<?> field) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("{\n");
+        for (Double c1 : field.coefficients) {
+            buf.append("  { ");
+            for (Double c2 : field.coefficients) {
+                buf.append(String.format("%1$20.14f, ", c1 * c2)); // show one less decimal point because we're also
+                                                                    // including any ulp error
+            }
+            buf.append("},\n");
+        }
+        buf.append("}\n");
+        return buf.toString();
+    }
+
+    public static String coefficientsScaledToString(ParameterizedField<?> field) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("{\n");
+        for (Double c1 : field.coefficients) {
+            buf.append("  { ");
+            for (Double c2 = 1.0d; c2 < field.getOrder(); c2++) {
+                buf.append(String.format("%1$20.14f, ", c1 * c2)); // show one less decimal point because we're also
+                                                                    // including any ulp error
+            }
+            buf.append("},\n");
+        }
+        buf.append("}\n");
+        return buf.toString();
+    }
+
+    public static String coefficientsAddedToString(ParameterizedField<?> field) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("{\n");
+        for (Double c1 : field.coefficients) {
+            buf.append("  { ");
+            for (Double c2 : field.coefficients) {
+                buf.append(String.format("%1$20.14f, ", c1 + c2)); // show one less decimal point because we're also
+                                                                    // including any ulp error
+            }
+            buf.append("},\n");
+        }
+        buf.append("}\n");
+        return buf.toString();
+    }
+
+    public static String coefficientsSubtractedToString(ParameterizedField<?> field) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("{\n");
+        for (Double c1 : field.coefficients) {
+            buf.append("  { ");
+            for (Double c2 : field.coefficients) {
+                buf.append(String.format("%1$20.14f, ", c1 - c2)); // show one less decimal point because we're also
+                                                                    // including any ulp error
+            }
+            buf.append("},\n");
+        }
+        buf.append("}\n");
+        return buf.toString();
+    }
 
 	public static String coefficientsToString(ParameterizedField<?> field) {
 		StringBuffer buf = new StringBuffer();
@@ -145,7 +190,7 @@ public class ParameterizedFields {
                     s = quotient.toString(format).replace(" ", "");
                 }
                 catch(IllegalArgumentException ex) {
-                    s = "?";
+                    s = "\t?";
                 }
                 buf.append(s);
                 buf.append(",");
@@ -157,6 +202,39 @@ public class ParameterizedFields {
         buf.append("}\n");
         // TODO: recalc columns with spaces to replace tabs after all has been generated
         // and spaces can be minimized
+        return buf.toString();
+    }
+
+    public static String factorsReducedToString(AlgebraicField field, int format) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("{ ");
+        int order = field.getOrder();
+        for (int i = 0; i < order; i++) {
+            AlgebraicNumber n1 = field.getUnitTerm(i);
+            BigRational[] factors = n1.getFactors();
+            BigRational[][] representation = new BigRational[ order ][ order ];
+            for ( int j = 0; j < order; j++ ) {
+                BigRational[] column = field .scaleBy( factors, j );
+                System.arraycopy(column, 0, representation[ j ], 0, order);
+            }
+            BigRational[][] reciprocal = new BigRational[ order ][ order ];
+            for (int j = 0; j < order; j++) {
+                for (int k = 0; k < order; k++) {
+                    reciprocal[j][k] = j == k ? BigRational.ONE : BigRational.ZERO;
+                }
+            }
+            int rank = Fields .gaussJordanReduction( representation, reciprocal );
+            if(rank != order) {
+                buf.append("[");
+                buf.append(i);
+                buf.append("]-->");
+                buf.append(rank);
+                buf.append("/");
+                buf.append(order);
+                buf.append(",  ");
+            }    
+        }
+        buf.append("}\n");
         return buf.toString();
     }
 
@@ -199,6 +277,9 @@ public class ParameterizedFields {
 			for (short[] inner : outer) {
 				buf.append("    { ");
 				for (short i : inner) {
+				    if(i < 10) {
+				        buf.deleteCharAt(buf.length()-1);
+				    }
 					buf.append(i).append(", ");
 				}
 				buf.append("},\n");
@@ -266,19 +347,23 @@ public class ParameterizedFields {
         assertNotNull(field);
         String name = "( " + field.toString() + " ) = \n";
 //        System.out.println("coefficients" + name + coefficientsToString(field));
+//        System.out.println("coefficientsAdded" + name + coefficientsAddedToString(field));
+//        System.out.println("coefficientsSubtracted" + name + coefficientsSubtractedToString(field));
+//        System.out.println("coefficientsScaled" + name + coefficientsScaledToString(field));
         System.out.println("coefficientsMultiplied" + name + coefficientsMultipliedToString(field));
-        System.out.println("multiplierMatrix" + name + multiplierMatrixToString(field));
-
+//        System.out.println("multiplierMatrix" + name + multiplierMatrixToString(field));
+//
         System.out.println( "wolfram alpha test query" + name + ParameterizedFields.wolframAlphaTestString( field ));
-        
-        System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.DEFAULT_FORMAT));
+//        
+//        System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.DEFAULT_FORMAT));
 //      System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.EXPRESSION_FORMAT));
 //      System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.ZOMIC_FORMAT));
 //		// VEF_FORMAT order is reversed from other formats
-//      System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.VEF_FORMAT));
-		 
-        System.out.println("factorsDivided" + name + factorsDividedToString(field, AlgebraicField.DEFAULT_FORMAT));
-		 
+      System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.VEF_FORMAT));
+//		 
+//        System.out.println("factorsDivided" + name + factorsDividedToString(field, AlgebraicField.DEFAULT_FORMAT));
+        System.out.println("factorsReduced" + name + factorsReducedToString(field, AlgebraicField.DEFAULT_FORMAT));
+//		 
 //        System.out.println("VEF" + name + multiplierMatrixToVefString(field));
 //        System.out.println("hull" + name + hullToVefString(field));
 //        System.out.println("axes" + name + axesToVefString(field));

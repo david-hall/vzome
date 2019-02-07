@@ -51,9 +51,42 @@ public class ParameterizedFieldTest {
 
     @Test
     public void printPolygonFieldMatrices() {
-        for (int i = 7; i <= 15; i++) {
+        int[] sides = {
+                // I have a pattern that seems to work for 3 times any integer power of 2
+                // but so far I have only hard coded it for specific cases:
+                // TODO: generalize for all applicable cases
+//                3 * 2,  // 6
+//                3 * 4,  // 12
+//                3 * 8,  // 24
+//                3 * 16, // 48
+                
+                // I have a normalizer that works for 10 too... TODO: generalize to other multiples of 5 or 10 
+                // or possibly 5 * any integer powers of 2? What's possible?
+//                5 * 2, // 10
+                
+//                9, 
+//                10,
+//                12,
+                14, 
+//                15, 
+//                18, 
+//                20, 
+//                21, 
+//                22, 
+//                25, 
+//                26, 
+//                27, 
+//                28, 
+//                30, 
+                }; 
+        for (int i : sides) {
             ParameterizedFields.printMatrices( new PolygonField(i) );
         }
+        
+//        ParameterizedFields.printMatrices( new PlasticNumberField() );
+//        ParameterizedFields.printMatrices( new SnubCubeField() );
+//        ParameterizedFields.printMatrices( new SuperGoldenField() );
+//        ParameterizedFields.printMatrices( new EdPeggField() );
     }
     
     @Test 

@@ -86,6 +86,8 @@ public class Fields
         	matrix[i] = Arrays.copyOf( m[i], m[i].length );
         }
         
+        StringBuffer buf = new StringBuffer();
+        
         // now the real work...
         for ( int upleft = 0; upleft < matrix.length; upleft++ ) {
             int pivot = -1;
@@ -107,6 +109,7 @@ public class Fields
 
             // exchange pivot and top rows
             if ( pivot != upleft ) {
+                buf.append("pivot( ").append(pivot).append(", ").append(upleft).append(" )\n");
                 for ( int j = upleft; j < matrix[0].length; j++ ) {
                     T temp = (T) matrix[ upleft ][ j ];
                     matrix[ upleft ][ j ] = matrix[ pivot ][ j ];
@@ -157,6 +160,32 @@ public class Fields
                 }
             }
         }
+        
+        if(matrix.length != rank) {
+            System.out.print(buf.toString());
+            showMatrix(m);
+            System.out.println("rank " + matrix.length + " matrix reduces to rank " + rank + ":");
+            showMatrix(matrix);
+            System.out.println("adjoined (result):");
+            showMatrix(adjoined);
+            System.out.println();
+        }
+        
         return rank;
+    }
+    
+    static void showMatrix(Object[][] matrix) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("{\n");
+        for(int i = 0; i < matrix.length; i++) {
+            buf.append("    { ");
+            for(int j = 0; j < matrix[i].length; j++) {
+                buf.append(matrix[i][j]);
+                buf.append(", ");
+            }
+            buf.append("},\n");
+        }
+        buf.append("}");
+        System.out.println(buf.toString());
     }
 }
