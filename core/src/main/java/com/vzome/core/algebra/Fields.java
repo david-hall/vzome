@@ -161,15 +161,15 @@ public class Fields
             }
         }
         
-        if(matrix.length != rank) {
-            System.out.print(buf.toString());
-            showMatrix(m);
-            System.out.println("rank " + matrix.length + " matrix reduces to rank " + rank + ":");
-            showMatrix(matrix);
-            System.out.println("adjoined (result):");
-            showMatrix(adjoined);
-            System.out.println();
-        }
+//        if(matrix.length != rank) {
+//            System.out.print(buf.toString());
+//            showMatrix(m);
+//            System.out.println("rank " + matrix.length + " matrix reduces to rank " + rank + ":");
+//            showMatrix(matrix);
+//            System.out.println("adjoined (result):");
+//            showMatrix(adjoined);
+//            System.out.println();
+//        }
         
         return rank;
     }

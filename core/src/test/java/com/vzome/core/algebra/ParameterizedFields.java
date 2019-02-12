@@ -1,7 +1,11 @@
 package com.vzome.core.algebra;
 
+import static com.vzome.core.generic.Utilities.thisSourceCodeLine;
+
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
+
+import java.math.BigInteger;
 
 import org.junit.Test;
 
@@ -113,6 +117,145 @@ public class ParameterizedFields {
 		}
 		buf.append("}\n");
 		return buf.toString();
+	}
+	
+	public static void printNormalization(PolygonField field) {
+		final int sides = field.polygonSides();
+		// positive powers of two
+        if ((sides & (sides - 1)) == 0) {
+//        	System.out.print(field.getName() + ": Powers of two do not require normalization. " + thisSourceCodeLine());
+            return;
+        }
+        // prime
+        final int certainty = 100; // TODO: Determine the min reliable certainty here for any valid Integer nSides 
+        if(BigInteger.valueOf(sides).isProbablePrime(certainty)) {
+//			System.out.println(field.getName() + ": Prime Numbers do not require normalization. " + thisSourceCodeLine());
+			return;
+		}
+		final int order = field.getOrder();
+		if(order == sides/2) {
+			int normalizedOrder = getNormalizedOrder(field);
+			if(order > normalizedOrder) {
+				System.out.println("\n" + field.getName() + " is not normalized. order = " + order + " should be " + normalizedOrder + ". " + thisSourceCodeLine());
+				System.out.println(coefficientsToString(field));
+	
+				int[] scalars = new int[normalizedOrder+1]; // native types are all initialized to 0.
+				for(int q = order-1; q >= normalizedOrder; q--) {
+					double candidate = field.getCoefficient(q);
+					String sq = field.getIrrational(q);
+					System.out.println("\n try " + sq + " [" + q + "]: " + candidate);
+					int maxScalar = 3;
+					if(field.polygonSides() == 22) {
+						maxScalar = 100;
+						System.out.println("   adjusting maxScalar to " + maxScalar + " to evaluate " + field.getName() + " normalization.");
+					}
+					if(consider(field, candidate, scalars, maxScalar, 0)) {
+						printScalars(scalars);
+					}
+					if(field.polygonSides() == 22) {
+						System.out.println("   intentional early exit for evaluating " + field.getName() + " normalization.");
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	private static void printScalars(int[] scalars) {
+		for(int scalar : scalars) {
+			System.out.print((scalar < 0 ? "" : "+") + scalar);
+		}
+		System.out.println();
+	}
+
+	private static boolean testScalars(PolygonField field, double candidate, int[] scalars) {
+		double total = 0.0d;
+		int count = 0;
+		int mult = 0;
+		for(int i = 0; i < scalars.length; i++) {
+			int scalar = scalars[i];
+			if(scalar != 0) {
+				count++;
+				if(scalar != 1) {
+					mult++;
+				}
+				double coefficient = field.getCoefficient(i);
+				total += coefficient * scalar;
+			}
+		}
+		if((count > 1 || mult > 0) && nearEqual(candidate, total)) {
+			for(int i = scalars.length-1; i >= 0; i--) {
+				int scalar = scalars[i];
+				if(scalar != 0) {
+					String irr = field.getIrrational(i);
+					System.out.print((scalar < 0 ? " " : " +") + scalar + irr);
+				}
+			}
+			System.out.println(" = ");
+			
+//			for(int i = scalars.length-1; i >= 0; i--) {
+//				int scalar = scalars[i];
+////				if(scalar != 0) {
+//					double coefficient = field.getCoefficient(i);
+//					System.out.print((scalar < 0 ? " " : " +") + scalar + "(" + coefficient + ")");
+////				}
+//			}
+//			System.out.println(" = " + total);
+
+//			return true;
+		}
+		return false;
+	}
+
+	private static boolean consider(PolygonField field, double candidate, int[] scalars, int maxScalar, int depth) {
+		if(depth == scalars.length) {
+			// evaluate
+			return testScalars(field, candidate, scalars);
+		} else {
+			for(int i = 0; i <= maxScalar; i++) {
+				scalars[depth] = i;
+				if(consider(field, candidate, scalars, maxScalar, depth+1)) {
+					return false;
+				}
+				if(i > 0) {
+					scalars[depth] = -i;
+					consider(field, candidate, scalars, maxScalar, depth+1);
+				}
+			}
+			return false;
+		}
+	}
+	
+	private static boolean nearEqual(double d1, double d2) {
+		double delta = 0.00000000000001d; // 14 0's after the .
+		return Math.abs(d1 - d2) < delta;
+	}
+	
+	private static int getNormalizedOrder(PolygonField field) {
+		return (field.polygonSides() / 4)+1;
+		// TODO: Optimize this using the number of non-invertible terms
+//		int order = field.getOrder();
+//		int normalizedOrder = field.getOrder();
+//		for(int i = order-1; i > 0; i--) {
+//			AlgebraicNumber n1 = field.getUnitTerm(i);
+//			BigRational[] factors = n1.getFactors();
+//            BigRational[][] representation = new BigRational[ order ][ order ];
+//            for ( int j = 0; j < order; j++ ) {
+//                BigRational[] column = field .scaleBy( factors, j );
+//                System.arraycopy(column, 0, representation[ j ], 0, order);
+//            }
+//            BigRational[][] reciprocal = new BigRational[ order ][ order ];
+//            for (int j = 0; j < order; j++) {
+//                for (int k = 0; k < order; k++) {
+//                    reciprocal[j][k] = j == k ? BigRational.ONE : BigRational.ZERO;
+//                }
+//            }
+//            int rank = Fields .gaussJordanReduction( representation, reciprocal );
+//            if(rank != order) {
+//				normalizedOrder--;
+//			}
+//		}
+//		return normalizedOrder;
 	}
 
     public static String wolframAlphaTestString(AlgebraicField field) {

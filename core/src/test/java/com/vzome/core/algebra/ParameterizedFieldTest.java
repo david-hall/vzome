@@ -50,6 +50,13 @@ public class ParameterizedFieldTest {
     }
 
     @Test
+    public void printPolygonFieldNormalization() {
+        for(int i = 22; i <= 22; i++) {
+            ParameterizedFields.printNormalization( new PolygonField(i) );
+        }
+    }
+
+    @Test
     public void printPolygonFieldMatrices() {
         int[] sides = {
                 // I have a pattern that seems to work for 3 times any integer power of 2
@@ -63,17 +70,20 @@ public class ParameterizedFieldTest {
                 // I have a normalizer that works for 10 too... TODO: generalize to other multiples of 5 or 10 
                 // or possibly 5 * any integer powers of 2? What's possible?
 //                5 * 2, // 10
-                
+
 //                9, 
 //                10,
 //                12,
                 14, 
 //                15, 
 //                18, 
-//                20, 
+//                20,         		
 //                21, 
-//                22, 
-//                25, 
+
+                // TODO: Confirm that up thru 21 are all working
+                22, // TODO No obvious simple normalization for 22 yet. 
+//                24
+                25, // TODO? normalization for 25 is not adequate for making it invertible yet.
 //                26, 
 //                27, 
 //                28, 
