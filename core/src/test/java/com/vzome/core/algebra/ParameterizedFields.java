@@ -144,17 +144,9 @@ public class ParameterizedFields {
 					double candidate = field.getCoefficient(q);
 					String sq = field.getIrrational(q);
 					System.out.println("\n try " + sq + " [" + q + "]: " + candidate);
-					int maxScalar = 3;
-					if(field.polygonSides() == 22) {
-						maxScalar = 100;
-						System.out.println("   adjusting maxScalar to " + maxScalar + " to evaluate " + field.getName() + " normalization.");
-					}
+					int maxScalar = 2;
 					if(consider(field, candidate, scalars, maxScalar, 0)) {
 						printScalars(scalars);
-					}
-					if(field.polygonSides() == 22) {
-						System.out.println("   intentional early exit for evaluating " + field.getName() + " normalization.");
-						break;
 					}
 				}
 			}
@@ -232,6 +224,20 @@ public class ParameterizedFields {
 	}
 	
 	private static int getNormalizedOrder(PolygonField field) {
+		switch(field.polygonSides()) {
+		case 22:
+			return (field.polygonSides() / 2) - 1;
+			
+		case 25:
+			return (field.polygonSides() / 2) - 2;
+			
+		case 26:
+			return (field.polygonSides() / 2) - 2;
+			
+		case 28:
+			return (field.polygonSides() / 2) - 3;
+			
+		}
 		return (field.polygonSides() / 4)+1;
 		// TODO: Optimize this using the number of non-invertible terms
 //		int order = field.getOrder();
@@ -504,7 +510,7 @@ public class ParameterizedFields {
 //		// VEF_FORMAT order is reversed from other formats
       System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.VEF_FORMAT));
 //		 
-//        System.out.println("factorsDivided" + name + factorsDividedToString(field, AlgebraicField.DEFAULT_FORMAT));
+        System.out.println("factorsDivided" + name + factorsDividedToString(field, AlgebraicField.DEFAULT_FORMAT));
         System.out.println("factorsReduced" + name + factorsReducedToString(field, AlgebraicField.DEFAULT_FORMAT));
 //		 
 //        System.out.println("VEF" + name + multiplierMatrixToVefString(field));

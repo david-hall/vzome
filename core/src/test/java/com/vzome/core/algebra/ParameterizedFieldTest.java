@@ -51,7 +51,7 @@ public class ParameterizedFieldTest {
 
     @Test
     public void printPolygonFieldNormalization() {
-        for(int i = 22; i <= 22; i++) {
+        for(int i = 33; i <= 33; i++) {
             ParameterizedFields.printNormalization( new PolygonField(i) );
         }
     }
@@ -74,20 +74,22 @@ public class ParameterizedFieldTest {
 //                9, 
 //                10,
 //                12,
-                14, 
+//                14, 
 //                15, 
 //                18, 
 //                20,         		
 //                21, 
-
-                // TODO: Confirm that up thru 21 are all working
-                22, // TODO No obvious simple normalization for 22 yet. 
-//                24
-                25, // TODO? normalization for 25 is not adequate for making it invertible yet.
-//                26, 
-//                27, 
-//                28, 
-//                30, 
+//                22, 
+//                24,
+//                25,
+//                26,
+//                27,
+//        		  28,
+//        		  30,
+//        		  32,
+                // TODO: Confirm that up thru 32 are all working
+                33,
+//                48,
                 }; 
         for (int i : sides) {
             ParameterizedFields.printMatrices( new PolygonField(i) );
