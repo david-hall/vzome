@@ -70,7 +70,48 @@ public class ParameterizedFieldTest {
                 // I have a normalizer that works for 10 too... TODO: generalize to other multiples of 5 or 10 
                 // or possibly 5 * any integer powers of 2? What's possible?
 //                5 * 2, // 10
-
+        		
+        		// another pattern for nSides = 2 * any odd prime:
+//				2 *  1 =  2 @  0:~ = -already normalized units only
+//				2 *  3 =  6 @  2:B = +2
+//				2 *  5 = 10 @  4:D = -2 +2B
+//				2 *  7 = 14 @  6:F = +2 -2B +2D
+//				2 *  9 = 18 @  8:H = -
+//				2 * 11 = 22 @ 10:J = +2 -2B +2D -2F +2H
+//				2 * 13 = 26 @ 12:L = -2 +2B -2D +2F -2H +2J
+//				2 * 15 = 30 @ 14:N = +
+//				2 * 17 = 34 @ 16:P = -2 +2B -2D +2F -2H +2J -2L +2N
+//				2 * 19 = 38 @ 18:R = +2 -2B +2D -2F +2H -2J +2L -2N +2P
+//				2 * 21 = 42 @ 20:T = -
+//				2 * 23 = 46 @ 22:V = +2 -2B +2D -2F +2H -2J +2L -2N +2P -2R +2T
+//				2 * 25 = 50 @ 24:X = -
+//				2 * 27 = 54 @ 26:Z = +
+//				2 * 29 = 58 @ 28:_ = -2 +2B -2D +2F -2H +2J -2L +2N -2P +2R -2T +2V -2X +2Z
+        		
+//        		I think that if nSides = a prime * 2 to any integer power (e.g. 2^1=2, 2^2=4 2^3=8), 
+//        		then the number of diags removed by normalization is 2 to that power.
+//        		The number replaced when the exponent is 1 seems to be the order/2.
+//        		TODO: The numbers replaced when the exponent > 1 should be explored.
+        		
+//        		3 * (2^1) =  6-gon removes 1 replaced by 3/2 = 1 term
+//        		3 * (2^2) = 12-gon removes 2
+//        		3 * (2^3) = 24-gon removes 4
+//        		3 * (2^4) = 48-gon removes 8
+        		
+//        		5 * (2^1) = 10-gon removes 1 replaced by 5/2 = 2 terms
+//        		5 * (2^2) = 20-gon removes 2
+        		
+//        		7 * (2^1) = 14-gon removes 1 replaced by 7/2 = 3 terms
+//        		7 * (2^2) = 28-gon removes 2
+        		
+//        		11 * (2^1) = 22-gon removes 1 replaced by 11/2 = 5 terms
+        		
+//        		13 * (2^1) = 26-gon removes 1 replaced by 13/2 = 6 terms
+        		
+//        		17 * (2^1) = 34-gon removes 1 replaced by 17/2 = 8 terms
+        		
+//        		19 * (2^1) = 38-gon removes 1 replaced by 19/2 = 8 terms
+ 
 //                9, 
 //                10,
 //                12,
@@ -91,9 +132,11 @@ public class ParameterizedFieldTest {
 //                34,
 //        		  35,
 //                36,
-                // TODO: Confirm that up thru 37 are all working
-        		38,
+//        		  38,
+                // TODO: Confirm that up thru 39 are all working
+        		  46,
 //                48,
+//        		  58,
                 }; 
         for (int i : sides) {
             ParameterizedFields.printMatrices( new PolygonField(i) );

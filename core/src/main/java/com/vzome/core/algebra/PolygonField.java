@@ -935,9 +935,18 @@ public class PolygonField extends ParameterizedField<Integer> {
             case 36:
                 normalizer = PolygonField::normalize36;
                 break;
+            case 38:
+            	normalizer = PolygonField::normalize38;
+            	break;
+            case 46:
+                normalizer = PolygonField::normalize46;
+                break;
             case 48:
             	normalizer = PolygonField::normalize48;
             	break;
+            case 58:
+                normalizer = PolygonField::normalize58;
+                break;
             default:
                 normalizer = ParameterizedField::doNothing; // unchanged
                 break;
@@ -998,14 +1007,7 @@ public class PolygonField extends ParameterizedField<Integer> {
     private static void normalize18(AlgebraicField field, BigRational[] factors) {
         normalizeFactor(factors, 6, 0, 4); // F = 1 + D
         normalizeFactor(factors, 7, 1, 3); // G = A + C
-    	int H = 8;
-    	BigRational factor = factors[H]; // H = 2B 
-        if(!factor.isZero()) {
-            factors[2] = factors[2].plus(factor); 	// B
-            factors[2] = factors[2].plus(factor); 	// B again = 2B
-            // zero
-            factors[H] = BigRational.ZERO;
-        }
+        normalizeFactor(factors, 8, 2, 2); // H = B + B = 2B
     }
     
     private static void normalize20(AlgebraicField field, BigRational[] factors) {
@@ -1224,9 +1226,8 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[ 6] = factors[ 6].plus(factor); 	// F again = 2F
             factors[ 8] = factors[ 8].minus(factor); 	// -H
             factors[ 8] = factors[ 8].minus(factor); 	// -H again = -2H
-            factors[10]= factors[10].plus(factor); 		// J
-            factors[10]= factors[10].plus(factor); 		// J again = 2J
-            // I think this is the same as normalize26 up to this point ??? 
+            factors[10] = factors[10].plus(factor); 	// J
+            factors[10] = factors[10].plus(factor); 	// J again = 2J
             factors[12] = factors[12].minus(factor); 	// -L
             factors[12] = factors[12].minus(factor); 	// -L again = -2L
             factors[14] = factors[14].plus(factor); 	// N
@@ -1317,6 +1318,64 @@ public class PolygonField extends ParameterizedField<Integer> {
         normalizeFactor(factors, 17, 5,  5); // Q = E + E
     }
 
+    private static void normalize38(AlgebraicField field, BigRational[] factors) {
+    	int R = 18; 
+    	BigRational factor = factors[R]; // R = +2 -2B +2D -2F +2H -2J +2L -2N +2P
+        if(!factor.isZero()) {
+            factors[0] = factors[0].plus(factor); 	// -units
+            factors[0] = factors[0].plus(factor); 	// -units again = 2
+            factors[2] = factors[2].minus(factor); 	// -B
+            factors[2] = factors[2].minus(factor); 	// -B again - 2B
+            factors[4] = factors[4].plus(factor); 	// D
+            factors[4] = factors[4].plus(factor); 	// D again = 2D
+            factors[6] = factors[6].minus(factor); 	// -F
+            factors[6] = factors[6].minus(factor);	// -F again = -2F
+            factors[8] = factors[8].plus(factor); 	// H
+            factors[8] = factors[8].plus(factor); 	// H again = 2H
+            factors[10] = factors[10].minus(factor); 	// -J
+            factors[10] = factors[10].minus(factor); 	// -J again - 2J
+            factors[12] = factors[12].plus(factor); 	// L
+            factors[12] = factors[12].plus(factor); 	// L again = 2L
+            factors[14] = factors[14].minus(factor); 	// -N
+            factors[14] = factors[14].minus(factor);	// -N again = -2N
+            factors[16] = factors[16].plus(factor); 	// P
+            factors[16] = factors[16].plus(factor); 	// P again = 2P
+            // zero
+            factors[R] = BigRational.ZERO;
+        }	 
+    }
+
+    private static void normalize46(AlgebraicField field, BigRational[] factors) {
+    	int V = 22; 
+    	BigRational factor = factors[V]; // V = +2 -2B +2D -2F +2H -2J +2L -2N +2P -2R +2T
+        if(!factor.isZero()) {
+            factors[0] = factors[0].plus(factor); 	// -units
+            factors[0] = factors[0].plus(factor); 	// -units again = 2
+            factors[2] = factors[2].minus(factor); 	// -B
+            factors[2] = factors[2].minus(factor); 	// -B again - 2B
+            factors[4] = factors[4].plus(factor); 	// D
+            factors[4] = factors[4].plus(factor); 	// D again = 2D
+            factors[6] = factors[6].minus(factor); 	// -F
+            factors[6] = factors[6].minus(factor);	// -F again = -2F
+            factors[8] = factors[8].plus(factor); 	// H
+            factors[8] = factors[8].plus(factor); 	// H again = 2H
+            factors[10] = factors[10].minus(factor); 	// -J
+            factors[10] = factors[10].minus(factor); 	// -J again - 2J
+            factors[12] = factors[12].plus(factor); 	// L
+            factors[12] = factors[12].plus(factor); 	// L again = 2L
+            factors[14] = factors[14].minus(factor); 	// -N
+            factors[14] = factors[14].minus(factor);	// -N again = -2N
+            factors[16] = factors[16].plus(factor); 	// P
+            factors[16] = factors[16].plus(factor); 	// P again = 2P
+            factors[18] = factors[18].minus(factor); 	// -R
+            factors[18] = factors[18].minus(factor);	// -R again = -2R
+            factors[20] = factors[20].plus(factor); 	// T
+            factors[20] = factors[20].plus(factor); 	// T again = 2T
+            // zero
+            factors[V] = BigRational.ZERO;
+        }	 
+    }
+
     // this pattern seems to work for 3 times any even power of 2 (e.g. 3 * 16 = 48)
     private static void normalize48(AlgebraicField field, BigRational[] factors) {
         normalizeFactor(factors, 16, 0, 14); // P = 1 + N
@@ -1329,6 +1388,43 @@ public class PolygonField extends ParameterizedField<Integer> {
         normalizeFactor(factors, 23, 7,  7); // W = G + G
     }
 
+    private static void normalize58(AlgebraicField field, BigRational[] factors) {
+        int d28 = 28; 
+    	BigRational factor = factors[d28]; // d28 = -2 +2B -2D +2F -2H +2J -2L +2N -2P +2R -2T +2V -2X +2Z
+        if(!factor.isZero()) {
+            factors[ 0] = factors[ 0].minus(factor); 	// -units
+            factors[ 0] = factors[ 0].minus(factor); 	// -units again = -2
+            factors[ 2] = factors[ 2].plus(factor); 	// B
+            factors[ 2] = factors[ 2].plus(factor); 	// B again = 2B
+            factors[ 4] = factors[ 4].minus(factor); 	// -D
+            factors[ 4] = factors[ 4].minus(factor); 	// -D again = -2D
+            factors[ 6] = factors[ 6].plus(factor); 	// F
+            factors[ 6] = factors[ 6].plus(factor); 	// F again = 2F
+            factors[ 8] = factors[ 8].minus(factor); 	// -H
+            factors[ 8] = factors[ 8].minus(factor); 	// -H again = -2H
+            factors[10] = factors[10].plus(factor); 	// J
+            factors[10] = factors[10].plus(factor); 	// J again = 2J
+            factors[12] = factors[12].minus(factor); 	// -L
+            factors[12] = factors[12].minus(factor); 	// -L again = -2L
+            factors[14] = factors[14].plus(factor); 	// N
+            factors[14] = factors[14].plus(factor); 	// N again = 2N
+            factors[16] = factors[16].minus(factor); 	// -P
+            factors[16] = factors[16].minus(factor); 	// -P again = -2P
+            factors[18] = factors[18].plus(factor); 	// R
+            factors[18] = factors[18].plus(factor); 	// R again = 2R
+            factors[20] = factors[20].minus(factor); 	// -T
+            factors[20] = factors[20].minus(factor); 	// -T again = -2T
+            factors[22] = factors[22].plus(factor); 	// V
+            factors[22] = factors[22].plus(factor); 	// V again = 2V
+            factors[24] = factors[24].minus(factor); 	// -X
+            factors[24] = factors[24].minus(factor); 	// -X again = -2X
+            factors[26] = factors[26].plus(factor); 	// Z
+            factors[26] = factors[26].plus(factor); 	// Z again = 2Z
+            // zero
+            factors[d28] = BigRational.ZERO;
+        }
+    }
+    
     // TODO: Refactor this method into the base class, then use it in SqrtField.normalizePerfectSquare()
     private static void normalizeFactor(BigRational[] factors, int i, int j, int k) {
         BigRational factor = factors[i]; 
