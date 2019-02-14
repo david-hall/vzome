@@ -3,6 +3,10 @@ package com.vzome.core.algebra;
 /**
  * @author David Hall
  */
+/**
+* @deprecated Use com.vzome.fields.sqrtphi.SqrtPhiField instead. Consider moving it back to this package.
+*/
+@Deprecated
 public class SqrtPhiField  extends ParameterizedField<Integer> {
     public static final String FIELD_NAME = "sqrtPhi";
     
