@@ -144,8 +144,7 @@ public class ParameterizedFields {
 					double candidate = field.getCoefficient(q);
 					String sq = field.getIrrational(q);
 					System.out.println("\n try " + sq + " [" + q + "]: " + candidate);
-					int maxScalar = 2;
-					if(consider(field, candidate, scalars, maxScalar, 0)) {
+					if(consider(field, candidate, scalars, 0)) {
 						printScalars(scalars);
 					}
 				}
@@ -178,12 +177,14 @@ public class ParameterizedFields {
 		if((count > 1 || mult > 0) && nearEqual(candidate, total)) {
 			for(int i = scalars.length-1; i >= 0; i--) {
 				int scalar = scalars[i];
-				if(scalar != 0) {
+				if(scalar == 0) {
+					System.out.print("    ");
+				} else {
 					String irr = field.getIrrational(i);
 					System.out.print((scalar < 0 ? " " : " +") + scalar + irr);
 				}
 			}
-			System.out.println(" = ");
+			System.out.println(" = " + total);
 			
 //			for(int i = scalars.length-1; i >= 0; i--) {
 //				int scalar = scalars[i];
@@ -199,19 +200,16 @@ public class ParameterizedFields {
 		return false;
 	}
 
-	private static boolean consider(PolygonField field, double candidate, int[] scalars, int maxScalar, int depth) {
+	final private static int[] testScalars = {0, 1, -1, 2, -2}; 
+	private static boolean consider(PolygonField field, double candidate, int[] scalars, int depth) {
 		if(depth == scalars.length) {
 			// evaluate
 			return testScalars(field, candidate, scalars);
 		} else {
-			for(int i = 0; i <= maxScalar; i++) {
-				scalars[depth] = i;
-				if(consider(field, candidate, scalars, maxScalar, depth+1)) {
+			for(int scalar : testScalars) {
+				scalars[depth] = scalar;
+				if(consider(field, candidate, scalars, depth+1)) {
 					return false;
-				}
-				if(i > 0) {
-					scalars[depth] = -i;
-					consider(field, candidate, scalars, maxScalar, depth+1);
 				}
 			}
 			return false;
@@ -219,7 +217,7 @@ public class ParameterizedFields {
 	}
 	
 	private static boolean nearEqual(double d1, double d2) {
-		double delta = 0.00000000000001d; // 14 0's after the .
+		double delta = 0.00000000000001d; // 13 0's after the .
 		return Math.abs(d1 - d2) < delta;
 	}
 	
@@ -236,6 +234,15 @@ public class ParameterizedFields {
 			
 		case 28:
 			return (field.polygonSides() / 2) - 3;
+			
+		case 34:
+			return (field.polygonSides() / 2) - 2;
+			
+		case 35:
+			return (field.polygonSides() / 2) - 5;
+			
+		case 38:
+			return (field.polygonSides() / 2) - 5;
 			
 		}
 		return (field.polygonSides() / 4)+1;

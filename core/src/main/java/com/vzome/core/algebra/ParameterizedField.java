@@ -19,7 +19,7 @@ public abstract class ParameterizedField<T extends Object> extends AlgebraicFiel
         coefficients = new double[order];
         multiplierMatrix = new short[order][order][order];
         irrationalLabels = new String[order][2];
-        irrationalLabels[0] = new String[] {"", ""}; // unused placeholder for easier indexing
+        irrationalLabels[0] = new String[] {" ", " "}; // units use a space character
         // overridable methods intentionally called from c'tor. Be sure all member variables are initialized first.
         initialize();
     }
