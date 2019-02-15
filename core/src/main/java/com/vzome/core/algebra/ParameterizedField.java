@@ -39,6 +39,9 @@ public abstract class ParameterizedField<T extends Object> extends AlgebraicFiel
     public void expandTerms(BigRational[] factors) {
     	int n = getOrder(); // expand sequential terms begining with the last one and working down
     	System.out.println(" expands " + normalizerMatrix.length + " term" + (normalizerMatrix.length == 1 ? "" : "s") + ":");
+    	if(normalizerMatrix.length + normalizerMatrix[0].length != n) {
+    		System.out.println("normalizerMatrix dimensions " + normalizerMatrix.length + " + " +  normalizerMatrix[0].length + " should total " + n);
+    	}
     	for(short[] scalars : normalizerMatrix) {
     		--n;
        		BigRational factor = factors[n];

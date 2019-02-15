@@ -842,6 +842,7 @@ public class PolygonField extends ParameterizedField<Integer> {
         // so that "carry" must be transferred to the units position
         // much like the situation for perfect squares in SqrtField.
         // We could hard code the values, but the code below makes the reasoning a little clearer.
+        // TODO: This part should be redundant and therefore unnecessary if we normalize correctly
         if(polygonSides() == 6 && getOrder() == 2) {
             for(int x=0; x<order; x++) {
                 for(int y=0; y<order; y++) {
@@ -958,6 +959,7 @@ public class PolygonField extends ParameterizedField<Integer> {
     private static void normalize6(ParameterizedField<?> field, BigRational[] factors) {
         normalizeFactor(factors, 2, 0, 0); // B = 2
         field.normalizerMatrix = new short[][] {
+        //   1  A  
         	{2, 0},	// B = 2
         };
 
@@ -966,6 +968,7 @@ public class PolygonField extends ParameterizedField<Integer> {
     private static void normalize9(ParameterizedField<?> field, BigRational[] factors) {
         normalizeFactor(factors, 3, 0, 1); // C = 1 + A
         field.normalizerMatrix = new short[][] {
+        //   1  A  B  
         	{1, 1, 0},	// C = 1 + A
         };
     }
@@ -973,6 +976,7 @@ public class PolygonField extends ParameterizedField<Integer> {
     private static void normalize10(ParameterizedField<?> field, BigRational[] factors) {
         normalizeFactor(factors, 4, -2L, 0, 2L, 2); // D = -2 + 2B
         field.normalizerMatrix = new short[][] {
+        //    1  A  B  C  
         	{-2, 0, 2, 0},	// D = -2 + 2B
         };
     }
@@ -982,6 +986,7 @@ public class PolygonField extends ParameterizedField<Integer> {
         normalizeFactor(factors, 4, 0, 2); // D = 1 + B
         normalizeFactor(factors, 5, 1, 1); // E = A + A
         field.normalizerMatrix = new short[][] {
+        //   1  A  B  C    
         	{0, 2, 0, 0},	// E = A + A = 2A
         	{1, 0, 1, 0},	// D = 1 + B
         };
@@ -1001,7 +1006,8 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[F] = BigRational.ZERO;
         }
         field.normalizerMatrix = new short[][] {
-        	{2, 0, -2, 0, 2},	// F = 2 -2B + 2D
+        //   1  A  B  C  D  E  
+        	{2, 0,-2, 0, 2, 0},	// F = 2 -2B + 2D
         };
     }
 
@@ -1020,6 +1026,7 @@ public class PolygonField extends ParameterizedField<Integer> {
         normalizeFactor(factors, 5, 0, 3); // E = 1 + C
         normalizeFactor(factors, 6, 1, 2); // F = A + B
         field.normalizerMatrix = new short[][] {
+        //   1  A  B  C  
         	{0, 1, 1, 0},	// F = A + B
         	{1, 0, 0, 1},	// E = 1 + C
         	{1, 2, 1,-1},	// D = 1 + 2A + B - C 
@@ -1031,6 +1038,7 @@ public class PolygonField extends ParameterizedField<Integer> {
         normalizeFactor(factors, 7, 1, 3); // G = A + C
         normalizeFactor(factors, 8, 2, 2); // H = B + B = 2B
         field.normalizerMatrix = new short[][] {
+        //   1  A  B  C  D  E  
         	{0, 0, 2, 0, 0, 0},	// H = B + B = 2B
         	{0, 1, 0, 1, 0, 0},	// G = A + C
         	{1, 0, 0, 0, 1, 0},	// F = 1 + D
@@ -1059,6 +1067,7 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[H] = BigRational.ZERO;
         }
         field.normalizerMatrix = new short[][] {
+        //    1  A  B  C  D  E  F  G  
         	{ 0,-2, 0, 0, 0, 2, 0, 0},	// I = -2A +2E
         	{-1, 0,-1, 0, 1, 0, 1, 0},	// H = -1 -B +D +F
         };
@@ -1083,10 +1092,11 @@ public class PolygonField extends ParameterizedField<Integer> {
     	normalizeFactor(factors, 8, 1, 4); // H = A + D
     	normalizeFactor(factors, 9, 2, 3); // I = B + C
         field.normalizerMatrix = new short[][] {
-        	{ 0, 0, 1, 1, 0, 0, 0},	// I = B + C
-        	{ 0, 1, 0, 0, 1, 0, 0},	// H = A + D
-        	{ 1, 0, 0, 0, 0, 0, 0},	// G = 1 + E
-        	{-2,-1, 1, 2, 1,-1, 0},	// F = -2 -A +B +2C +D -E
+        //    1  A  B  C  D  E  
+        	{ 0, 0, 1, 1, 0, 0},	// I = B + C
+        	{ 0, 1, 0, 0, 1, 0},	// H = A + D
+        	{ 1, 0, 0, 0, 0, 1},	// G = 1 + E
+        	{-2,-1, 1, 2, 1,-1},	// F = -2 -A +B +2C +D -E
         };
     }
 
@@ -1108,7 +1118,8 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[J] = BigRational.ZERO;
         }	 
         field.normalizerMatrix = new short[][] {
-        	{2, 0,-2, 0, 2, 0, -2, 0, 2, 0},	// J = 2 -2B +2D -2F +2H
+        //   1  A  B  C  D  E  F  G  H  I
+        	{2, 0,-2, 0, 2, 0,-2, 0, 2, 0},	// J = 2 -2B +2D -2F +2H
         };
     }
 
@@ -1119,6 +1130,7 @@ public class PolygonField extends ParameterizedField<Integer> {
         normalizeFactor(factors, 10, 2, 4); // J = B + D
         normalizeFactor(factors, 11, 3, 3); // K = C + C
         field.normalizerMatrix = new short[][] {
+        //   1  A  B  C  D  E  F  G  
         	{0, 0, 0, 2, 0, 0, 0, 0},	// K = C + C = 2C
         	{0, 0, 1, 0, 1, 0, 0, 0},	// J = B + D
         	{0, 1, 0, 0, 0, 1, 0, 0},	// I = A + E
@@ -1148,6 +1160,7 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[J] = BigRational.ZERO;
         }
         field.normalizerMatrix = new short[][] {
+        //    1  A  B  C  D  E  F  G  H  I
         	{ 0,-1,-1, 0, 0, 0, 1, 1, 0, 0},	// K = - A - B + F + G
         	{-1, 0, 0,-1, 0, 1, 0, 0, 1, 0},	// J = - 1 - C + E + H 
         };
@@ -1173,7 +1186,8 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[L] = BigRational.ZERO;
         }
         field.normalizerMatrix = new short[][] {
-        	{-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0},	//L = -2 +2B -2D +2F -2H +2J 
+        //    1  A  B  C  D  E  F  G  H  I  J  K
+        	{-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0},	// L = -2 +2B -2D +2F -2H +2J 
         };
     }
     
@@ -1183,10 +1197,11 @@ public class PolygonField extends ParameterizedField<Integer> {
         normalizeFactor(factors, 10, 1, 6); // J = A + F
         normalizeFactor(factors,  9, 0, 7); // I = 1 + G
         field.normalizerMatrix = new short[][] {
-        	{1, 0, 0, 0, 0, 0, 0, 1, 0},	// I = 1 + G
-        	{0, 1, 0, 0, 0, 0, 1, 0, 0},	// J = A + F
-        	{0, 0, 1, 0, 0, 1, 0, 0, 0},	// K = B + E
+        //   1  A  B  C  D  E  F  G  H   
         	{0, 0, 0, 1, 1, 0, 0, 0, 0},	// L = C + D
+        	{0, 0, 1, 0, 0, 1, 0, 0, 0},	// K = B + E
+        	{0, 1, 0, 0, 0, 0, 1, 0, 0},	// J = A + F
+        	{1, 0, 0, 0, 0, 0, 0, 1, 0},	// I = 1 + G
         };
     }
     
@@ -1215,7 +1230,8 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[L] = BigRational.ZERO;
         }
         field.normalizerMatrix = new short[][] {
-        	{0, 2, 0, 0, 0,-2, 0, 0, 0, 2, 0},	// M = 2A -2E +2I
+        //   1  A  B  C  D  E  F  G  H  I  J  K  
+        	{0, 2, 0, 0, 0,-2, 0, 0, 0, 2, 0, 0},	// M = 2A -2E +2I
         	{1, 0, 1, 0,-1, 0,-1, 0, 1, 0, 1, 0},	// L = 1 + B -D -F +H +J
         };
     }
@@ -1247,13 +1263,14 @@ public class PolygonField extends ParameterizedField<Integer> {
         normalizeFactor(factors, 13, 5, 3); // M = E + C
         normalizeFactor(factors, 14, 4, 4); // N = D + D = 2D
         field.normalizerMatrix = new short[][] {
-        	{0, 0, 0, 0, 2, 0, 0, 0, 0},	// N = D + D = 2D
-        	{0, 0, 0, 1, 0, 1, 0, 0, 0},	// M = C + E
-        	{0, 0, 1, 0, 0, 0, 1, 0, 0},	// L = B + F
-        	{0, 1, 0, 0, 0, 0, 0, 1, 0},	// K = A + G
-        	{1, 0, 1, 0, 1, 0, 0, 0, 0},	// J = 1 + B + D // also = H + 1
-        	{0, 1, 0, 2, 0, 1, 0, 1, 0},	// I = A + 2C +E -G
-        	{0, 0, 1, 0, 1, 0, 0, 0, 0},	// H = B + D
+        //   1  A  B  C  D  E  F  G  
+        	{0, 0, 0, 0, 2, 0, 0, 0},	// N = D + D = 2D
+        	{0, 0, 0, 1, 0, 1, 0, 0},	// M = C + E
+        	{0, 0, 1, 0, 0, 0, 1, 0},	// L = B + F
+        	{0, 1, 0, 0, 0, 0, 0, 1},	// K = A + G
+        	{1, 0, 1, 0, 1, 0, 0, 0},	// J = 1 + B + D // also = H + 1
+        	{0, 1, 0, 2, 0, 1, 0,-1},	// I = A + 2C +E -G
+        	{0, 0, 1, 0, 1, 0, 0, 0},	// H = B + D
         };
     }
 
@@ -1283,6 +1300,7 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[J] = BigRational.ZERO;
         }
         field.normalizerMatrix = new short[][] {
+        //   1  A  B  C  D  E  F  G  H  I    
         	{0, 0, 0, 0, 1, 1, 0, 0, 0, 0}, // O = D + E
         	{0, 0, 0, 1, 0, 0, 1, 0, 0, 0}, // N = C + F
         	{0, 0, 1, 0, 0, 0, 0, 1, 0, 0}, // M = B + G
@@ -1316,7 +1334,8 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[P] = BigRational.ZERO;
         }
         field.normalizerMatrix = new short[][] {
-        	{-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2}, // P = -2 +2B -2D +2F -2H +2 J -2L +2N
+        //    1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  
+        	{-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0}, // P = -2 +2B -2D +2F -2H +2 J -2L +2N
         };
     }
     
@@ -1390,6 +1409,7 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[L] = BigRational.ZERO;
         }
         field.normalizerMatrix = new short[][] {
+        //    1  A  B  C  D  E  F  G  H  I  J  K  
         	{ 0, 0,-1,-1, 0, 0, 0, 0, 0, 1, 1, 0}, // P = -B -C + I + J
         	{ 0,-1, 0, 0,-1, 0, 0, 0, 1, 0, 0, 1}, // O = -A -D + H + K
         	{-1,-1,-2,-1, 0,-1, 1, 2, 0, 1, 1,-1}, // N = -1 -A -2B -C -E +F +2G +I +J -K
@@ -1407,12 +1427,13 @@ public class PolygonField extends ParameterizedField<Integer> {
         normalizeFactor(factors, 16, 4,  6); // P = D + F
         normalizeFactor(factors, 17, 5,  5); // Q = E + E
         field.normalizerMatrix = new short[][] {
-        	{ 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0}, // Q = E + E = 2E 
-        	{ 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0}, // P = D + F 
-        	{ 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0}, // O = C + G 
-        	{ 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0}, // N = B + H 
-        	{ 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}, // M = A + I 
-        	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0}, // L = 1 + J 
+        //   1  A  B  C  D  E  F  G  H  I  J  K
+        	{0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0}, // Q = E + E = 2E 
+        	{0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0}, // P = D + F 
+        	{0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0}, // O = C + G 
+        	{0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0}, // N = B + H 
+        	{0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}, // M = A + I 
+        	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0}, // L = 1 + J 
         };
     }
 
@@ -1442,7 +1463,8 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[R] = BigRational.ZERO;
         }	 
         field.normalizerMatrix = new short[][] {
-        	{2, 0,-2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0},	// R = +2 -2B +2D -2F +2H -2J +2L -2N +2P
+        //   1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  
+        	{2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0},	// R = +2 -2B +2D -2F +2H -2J +2L -2N +2P
         };
     }
 
@@ -1476,7 +1498,8 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[V] = BigRational.ZERO;
         }	 
         field.normalizerMatrix = new short[][] {
-        	{2, 0,-2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0},	// V = +2 -2B +2D -2F +2H -2J +2L -2N +2P -2R +2T
+        //   1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S  T  U
+        	{2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0},	// V = +2 -2B +2D -2F +2H -2J +2L -2N +2P -2R +2T
         };
     }
 
@@ -1491,6 +1514,7 @@ public class PolygonField extends ParameterizedField<Integer> {
         normalizeFactor(factors, 22, 6,  8); // V = F + H
         normalizeFactor(factors, 23, 7,  7); // W = G + G
         field.normalizerMatrix = new short[][] {
+        //   1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O
         	{0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0},	// W = G + G = 2G
         	{0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0},	// V = F + H
         	{0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},	// U = E + I
@@ -1538,7 +1562,8 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[d28] = BigRational.ZERO;
         }
         field.normalizerMatrix = new short[][] {
-        	{-2, 0, 2, 0,-2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0},	// d28 = -2 +2B -2D +2F -2H +2J -2L +2N -2P +2R -2T +2V -2X +2Z
+       //     1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S  T  U  V  W  X  Y  Z d27
+        	{-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0},	// d28 = -2 +2B -2D +2F -2H +2J -2L +2N -2P +2R -2T +2V -2X +2Z
         };
     }
     
