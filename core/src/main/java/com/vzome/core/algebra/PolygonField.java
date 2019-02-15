@@ -1493,7 +1493,7 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[Q] = BigRational.ZERO;
         }	 
     	int R = 18; 
-    	factor = factors[R]; // R = -B - D + J + L
+    	factor = factors[R]; // R = -B -D + J + L
         if(!factor.isZero()) {
             factors[ 2] = factors[ 2].minus(factor); 	// -B
             factors[ 4] = factors[ 4].minus(factor); 	// -D
@@ -1514,10 +1514,10 @@ public class PolygonField extends ParameterizedField<Integer> {
         }	 
         field.normalizerMatrix = new short[][] {
         //    1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  
-        	{ 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0},	// S = 
-        	{ 0, 0,-1, 0,-1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0},	// R = 
-        	{ 0,-1, 0, 0, 0,-1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0},	// Q = 
-        	{-1, 0, 0, 0, 0, 0,-1, 0, 1, 0, 0, 0, 0, 0, 1, 0},	// P = 
+        	{ 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0},	// S = -2C +2K
+        	{ 0, 0,-1, 0,-1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0},	// R = -B -D + J + L
+        	{ 0,-1, 0, 0, 0,-1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0},	// Q = -A -E + I + M
+        	{-1, 0, 0, 0, 0, 0,-1, 0, 1, 0, 0, 0, 0, 0, 1, 0},	// P = -1 -F + H + N
         };
     }
 
