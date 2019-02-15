@@ -955,25 +955,39 @@ public class PolygonField extends ParameterizedField<Integer> {
     }
     
     // this pattern seems to work for 3 times any even power of 2 (e.g. 3 * 2 = 6)
-    private static void normalize6(AlgebraicField field, BigRational[] factors) {
-        normalizeFactor(factors, 2, 0, 0); // B = 1 + 1
+    private static void normalize6(ParameterizedField<?> field, BigRational[] factors) {
+        normalizeFactor(factors, 2, 0, 0); // B = 2
+        field.normalizerMatrix = new short[][] {
+        	{2, 0},	// B = 2
+        };
+
     }
 
-    private static void normalize9(AlgebraicField field, BigRational[] factors) {
+    private static void normalize9(ParameterizedField<?> field, BigRational[] factors) {
         normalizeFactor(factors, 3, 0, 1); // C = 1 + A
+        field.normalizerMatrix = new short[][] {
+        	{1, 1, 0},	// C = 1 + A
+        };
     }
 
-    private static void normalize10(AlgebraicField field, BigRational[] factors) {
-        normalizeFactor(factors, 4, -2L, 0, 2L, 2); // D = -2(1) + 2B
+    private static void normalize10(ParameterizedField<?> field, BigRational[] factors) {
+        normalizeFactor(factors, 4, -2L, 0, 2L, 2); // D = -2 + 2B
+        field.normalizerMatrix = new short[][] {
+        	{-2, 0, 2, 0},	// D = -2 + 2B
+        };
     }
 
     // this pattern seems to work for 3 times any even power of 2 (e.g. 3 * 4 = 12)
-    private static void normalize12(AlgebraicField field, BigRational[] factors) {
+    private static void normalize12(ParameterizedField<?> field, BigRational[] factors) {
         normalizeFactor(factors, 4, 0, 2); // D = 1 + B
         normalizeFactor(factors, 5, 1, 1); // E = A + A
+        field.normalizerMatrix = new short[][] {
+        	{0, 2, 0, 0},	// E = A + A = 2A
+        	{1, 0, 1, 0},	// D = 1 + B
+        };
     }
 
-    private static void normalize14(AlgebraicField field, BigRational[] factors) {
+    private static void normalize14(ParameterizedField<?> field, BigRational[] factors) {
     	int F  = 6;
     	BigRational factor = factors[F]; // F = 2 - 2B + 2D
         if(!factor.isZero()) {
@@ -986,9 +1000,12 @@ public class PolygonField extends ParameterizedField<Integer> {
             // zero
             factors[F] = BigRational.ZERO;
         }
+        field.normalizerMatrix = new short[][] {
+        	{2, 0, -2, 0, 2},	// F = 2 -2B + 2D
+        };
     }
 
-    private static void normalize15(AlgebraicField field, BigRational[] factors) {
+    private static void normalize15(ParameterizedField<?> field, BigRational[] factors) {
     	int D = 4;
     	BigRational factor = factors[D]; // D = 1 + 2A + B - C 
         if(!factor.isZero()) {
@@ -1002,15 +1019,25 @@ public class PolygonField extends ParameterizedField<Integer> {
         }
         normalizeFactor(factors, 5, 0, 3); // E = 1 + C
         normalizeFactor(factors, 6, 1, 2); // F = A + B
+        field.normalizerMatrix = new short[][] {
+        	{0, 1, 1, 0},	// F = A + B
+        	{1, 0, 0, 1},	// E = 1 + C
+        	{1, 2, 1,-1},	// D = 1 + 2A + B - C 
+        };
     }
 
-    private static void normalize18(AlgebraicField field, BigRational[] factors) {
+    private static void normalize18(ParameterizedField<?> field, BigRational[] factors) {
         normalizeFactor(factors, 6, 0, 4); // F = 1 + D
         normalizeFactor(factors, 7, 1, 3); // G = A + C
         normalizeFactor(factors, 8, 2, 2); // H = B + B = 2B
+        field.normalizerMatrix = new short[][] {
+        	{0, 0, 2, 0, 0, 0},	// H = B + B = 2B
+        	{0, 1, 0, 1, 0, 0},	// G = A + C
+        	{1, 0, 0, 0, 1, 0},	// F = 1 + D
+        };
     }
     
-    private static void normalize20(AlgebraicField field, BigRational[] factors) {
+    private static void normalize20(ParameterizedField<?> field, BigRational[] factors) {
     	int I = 9;
     	BigRational factor = factors[I]; // I = 2E - 2A
         if(!factor.isZero()) {
@@ -1031,9 +1058,13 @@ public class PolygonField extends ParameterizedField<Integer> {
             // zero
             factors[H] = BigRational.ZERO;
         }
+        field.normalizerMatrix = new short[][] {
+        	{ 0,-2, 0, 0, 0, 2, 0, 0},	// I = -2A +2E
+        	{-1, 0,-1, 0, 1, 0, 1, 0},	// H = -1 -B +D +F
+        };
     }
 
-    private static void normalize21(AlgebraicField field, BigRational[] factors) {
+    private static void normalize21(ParameterizedField<?> field, BigRational[] factors) {
     	int F = 6; 
     	BigRational factor = factors[F]; // F = -E +D +2C +B -A -2
         if(!factor.isZero()) {
@@ -1051,9 +1082,15 @@ public class PolygonField extends ParameterizedField<Integer> {
     	normalizeFactor(factors, 7, 0, 5); // G = 1 + E
     	normalizeFactor(factors, 8, 1, 4); // H = A + D
     	normalizeFactor(factors, 9, 2, 3); // I = B + C
+        field.normalizerMatrix = new short[][] {
+        	{ 0, 0, 1, 1, 0, 0, 0},	// I = B + C
+        	{ 0, 1, 0, 0, 1, 0, 0},	// H = A + D
+        	{ 1, 0, 0, 0, 0, 0, 0},	// G = 1 + E
+        	{-2,-1, 1, 2, 1,-1, 0},	// F = -2 -A +B +2C +D -E
+        };
     }
 
-    private static void normalize22(AlgebraicField field, BigRational[] factors) {
+    private static void normalize22(ParameterizedField<?> field, BigRational[] factors) {
     	int J = 10; 
     	BigRational factor = factors[J]; // J = 2H -2F +2D -2B +2
         if(!factor.isZero()) {
@@ -1070,17 +1107,26 @@ public class PolygonField extends ParameterizedField<Integer> {
             // zero
             factors[J] = BigRational.ZERO;
         }	 
+        field.normalizerMatrix = new short[][] {
+        	{2, 0,-2, 0, 2, 0, -2, 0, 2, 0},	// J = 2 -2B +2D -2F +2H
+        };
     }
 
     // this pattern seems to work for 3 times any even power of 2 (e.g. 3 * 8 = 24)
-    private static void normalize24(AlgebraicField field, BigRational[] factors) {
+    private static void normalize24(ParameterizedField<?> field, BigRational[] factors) {
         normalizeFactor(factors,  8, 0, 6); // H = 1 + F
         normalizeFactor(factors,  9, 1, 5); // I = A + E
         normalizeFactor(factors, 10, 2, 4); // J = B + D
         normalizeFactor(factors, 11, 3, 3); // K = C + C
+        field.normalizerMatrix = new short[][] {
+        	{0, 0, 0, 2, 0, 0, 0, 0},	// K = C + C = 2C
+        	{0, 0, 1, 0, 1, 0, 0, 0},	// J = B + D
+        	{0, 1, 0, 0, 0, 1, 0, 0},	// I = A + E
+        	{1, 0, 0, 0, 0, 0, 1, 0},	// H = 1 + F
+        };
     }
 
-    private static void normalize25(AlgebraicField field, BigRational[] factors) {
+    private static void normalize25(ParameterizedField<?> field, BigRational[] factors) {
     	int K = 11; 
     	BigRational factor = factors[K]; // K = G + F - B - A
         if(!factor.isZero()) {
@@ -1101,9 +1147,13 @@ public class PolygonField extends ParameterizedField<Integer> {
             // zero
             factors[J] = BigRational.ZERO;
         }
+        field.normalizerMatrix = new short[][] {
+        	{ 0,-1,-1, 0, 0, 0, 1, 1, 0, 0},	// K = - A - B + F + G
+        	{-1, 0, 0,-1, 0, 1, 0, 0, 1, 0},	// J = - 1 - C + E + H 
+        };
     }
 
-    private static void normalize26(AlgebraicField field, BigRational[] factors) {
+    private static void normalize26(ParameterizedField<?> field, BigRational[] factors) {
         int L = 12; 
     	BigRational factor = factors[L]; // L = 2J -2H +2F -2D +2B -2
         if(!factor.isZero()) {
@@ -1122,16 +1172,25 @@ public class PolygonField extends ParameterizedField<Integer> {
             // zero
             factors[L] = BigRational.ZERO;
         }
+        field.normalizerMatrix = new short[][] {
+        	{-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0},	//L = -2 +2B -2D +2F -2H +2J 
+        };
     }
     
-    private static void normalize27(AlgebraicField field, BigRational[] factors) {
+    private static void normalize27(ParameterizedField<?> field, BigRational[] factors) {
         normalizeFactor(factors, 12, 3, 4); // L = C + D
         normalizeFactor(factors, 11, 2, 5); // K = B + E
         normalizeFactor(factors, 10, 1, 6); // J = A + F
         normalizeFactor(factors,  9, 0, 7); // I = 1 + G
+        field.normalizerMatrix = new short[][] {
+        	{1, 0, 0, 0, 0, 0, 0, 1, 0},	// I = 1 + G
+        	{0, 1, 0, 0, 0, 0, 1, 0, 0},	// J = A + F
+        	{0, 0, 1, 0, 0, 1, 0, 0, 0},	// K = B + E
+        	{0, 0, 0, 1, 1, 0, 0, 0, 0},	// L = C + D
+        };
     }
     
-    private static void normalize28(AlgebraicField field, BigRational[] factors) {
+    private static void normalize28(ParameterizedField<?> field, BigRational[] factors) {
         int M = 13;
     	BigRational factor = factors[M]; // M = 2I -2E +2A
         if(!factor.isZero()) {
@@ -1155,9 +1214,13 @@ public class PolygonField extends ParameterizedField<Integer> {
             // zero
             factors[L] = BigRational.ZERO;
         }
+        field.normalizerMatrix = new short[][] {
+        	{0, 2, 0, 0, 0,-2, 0, 0, 0, 2, 0},	// M = 2A -2E +2I
+        	{1, 0, 1, 0,-1, 0,-1, 0, 1, 0, 1, 0},	// L = 1 + B -D -F +H +J
+        };
     }
 
-    private static void normalize30(AlgebraicField field, BigRational[] factors) {
+    private static void normalize30(ParameterizedField<?> field, BigRational[] factors) {
         normalizeFactor(factors,  8, 4, 2); // H = D + B
         int I = 9;
     	BigRational factor = factors[I]; // I = -G +E +2C +A
@@ -1183,9 +1246,18 @@ public class PolygonField extends ParameterizedField<Integer> {
         normalizeFactor(factors, 12, 6, 2); // L = F + B
         normalizeFactor(factors, 13, 5, 3); // M = E + C
         normalizeFactor(factors, 14, 4, 4); // N = D + D = 2D
+        field.normalizerMatrix = new short[][] {
+        	{0, 0, 0, 0, 2, 0, 0, 0, 0},	// N = D + D = 2D
+        	{0, 0, 0, 1, 0, 1, 0, 0, 0},	// M = C + E
+        	{0, 0, 1, 0, 0, 0, 1, 0, 0},	// L = B + F
+        	{0, 1, 0, 0, 0, 0, 0, 1, 0},	// K = A + G
+        	{1, 0, 1, 0, 1, 0, 0, 0, 0},	// J = 1 + B + D // also = H + 1
+        	{0, 1, 0, 2, 0, 1, 0, 1, 0},	// I = A + 2C +E -G
+        	{0, 0, 1, 0, 1, 0, 0, 0, 0},	// H = B + D
+        };
     }
 
-    private static void normalize33(AlgebraicField field, BigRational[] factors) {
+    private static void normalize33(ParameterizedField<?> field, BigRational[] factors) {
         normalizeFactor(factors, 15, 5, 4); // O = E + D
         normalizeFactor(factors, 14, 6, 3); // N = F + C
         normalizeFactor(factors, 13, 7, 2); // M = G + B
@@ -1210,9 +1282,17 @@ public class PolygonField extends ParameterizedField<Integer> {
             // zero
             factors[J] = BigRational.ZERO;
         }
+        field.normalizerMatrix = new short[][] {
+        	{0, 0, 0, 0, 1, 1, 0, 0, 0, 0}, // O = D + E
+        	{0, 0, 0, 1, 0, 0, 1, 0, 0, 0}, // N = C + F
+        	{0, 0, 1, 0, 0, 0, 0, 1, 0, 0}, // M = B + G
+        	{0, 1, 0, 0, 0, 0, 0, 0, 1, 0}, // L = A + H
+        	{1, 0, 0, 0, 0, 0, 0, 0, 0, 1}, // K = 1 + I
+        	{1, 2, 1,-1,-2,-1, 1, 2, 1,-1},	// J = 1 +2A +B -2 -2D -E +F +2G +H -I
+        };
     }
     
-    private static void normalize34(AlgebraicField field, BigRational[] factors) {
+    private static void normalize34(ParameterizedField<?> field, BigRational[] factors) {
         int P = 16; 
     	BigRational factor = factors[P]; // P = 2N -2L +2J -2H +2F -2D +2B -2
         if(!factor.isZero()) {
@@ -1235,9 +1315,12 @@ public class PolygonField extends ParameterizedField<Integer> {
             // zero
             factors[P] = BigRational.ZERO;
         }
+        field.normalizerMatrix = new short[][] {
+        	{-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2}, // P = -2 +2B -2D +2F -2H +2 J -2L +2N
+        };
     }
     
-    private static void normalize35(AlgebraicField field, BigRational[] factors) {
+    private static void normalize35(ParameterizedField<?> field, BigRational[] factors) {
         int P = 16; 
     	BigRational factor = factors[P]; 	// P = J + I -C -B
         if(!factor.isZero()) {
@@ -1306,19 +1389,34 @@ public class PolygonField extends ParameterizedField<Integer> {
             // zero
             factors[L] = BigRational.ZERO;
         }
+        field.normalizerMatrix = new short[][] {
+        	{ 0, 0,-1,-1, 0, 0, 0, 0, 0, 1, 1, 0}, // P = -B -C + I + J
+        	{ 0,-1, 0, 0,-1, 0, 0, 0, 1, 0, 0, 1}, // O = -A -D + H + K
+        	{-1,-1,-2,-1, 0,-1, 1, 2, 0, 1, 1,-1}, // N = -1 -A -2B -C -E +F +2G +I +J -K
+        	{-1,-1, 0,-1,-1, 1, 0, 0, 2, 0,-1, 1}, // M = -1 -A -C -D +E +2H -J +K
+        	{ 0,-1,-2,-1, 0, 0, 1, 1, 0, 1, 1,-1}, // L = -A -2B -C +F +G +I +J -K
+        };
     }
     
     // this pattern seems to work for 3 to any power times any even power of 2 (e.g. 3 * 3 * 4 = 36)
-    private static void normalize36(AlgebraicField field, BigRational[] factors) {
+    private static void normalize36(ParameterizedField<?> field, BigRational[] factors) {
         normalizeFactor(factors, 12, 0, 10); // L = 1 + J
         normalizeFactor(factors, 13, 1,  9); // M = A + I
         normalizeFactor(factors, 14, 2,  8); // N = B + H
         normalizeFactor(factors, 15, 3,  7); // O = C + G
         normalizeFactor(factors, 16, 4,  6); // P = D + F
         normalizeFactor(factors, 17, 5,  5); // Q = E + E
+        field.normalizerMatrix = new short[][] {
+        	{ 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0}, // Q = E + E = 2E 
+        	{ 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0}, // P = D + F 
+        	{ 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0}, // O = C + G 
+        	{ 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0}, // N = B + H 
+        	{ 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}, // M = A + I 
+        	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0}, // L = 1 + J 
+        };
     }
 
-    private static void normalize38(AlgebraicField field, BigRational[] factors) {
+    private static void normalize38(ParameterizedField<?> field, BigRational[] factors) {
     	int R = 18; 
     	BigRational factor = factors[R]; // R = +2 -2B +2D -2F +2H -2J +2L -2N +2P
         if(!factor.isZero()) {
@@ -1343,9 +1441,12 @@ public class PolygonField extends ParameterizedField<Integer> {
             // zero
             factors[R] = BigRational.ZERO;
         }	 
+        field.normalizerMatrix = new short[][] {
+        	{2, 0,-2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0},	// R = +2 -2B +2D -2F +2H -2J +2L -2N +2P
+        };
     }
 
-    private static void normalize46(AlgebraicField field, BigRational[] factors) {
+    private static void normalize46(ParameterizedField<?> field, BigRational[] factors) {
     	int V = 22; 
     	BigRational factor = factors[V]; // V = +2 -2B +2D -2F +2H -2J +2L -2N +2P -2R +2T
         if(!factor.isZero()) {
@@ -1374,10 +1475,13 @@ public class PolygonField extends ParameterizedField<Integer> {
             // zero
             factors[V] = BigRational.ZERO;
         }	 
+        field.normalizerMatrix = new short[][] {
+        	{2, 0,-2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0},	// V = +2 -2B +2D -2F +2H -2J +2L -2N +2P -2R +2T
+        };
     }
 
     // this pattern seems to work for 3 times any even power of 2 (e.g. 3 * 16 = 48)
-    private static void normalize48(AlgebraicField field, BigRational[] factors) {
+    private static void normalize48(ParameterizedField<?> field, BigRational[] factors) {
         normalizeFactor(factors, 16, 0, 14); // P = 1 + N
         normalizeFactor(factors, 17, 1, 13); // Q = A + M
         normalizeFactor(factors, 18, 2, 12); // R = B + L
@@ -1386,9 +1490,19 @@ public class PolygonField extends ParameterizedField<Integer> {
         normalizeFactor(factors, 21, 5,  9); // U = E + I
         normalizeFactor(factors, 22, 6,  8); // V = F + H
         normalizeFactor(factors, 23, 7,  7); // W = G + G
+        field.normalizerMatrix = new short[][] {
+        	{0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0},	// W = G + G = 2G
+        	{0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0},	// V = F + H
+        	{0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},	// U = E + I
+        	{0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},	// T = D + J
+        	{0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},	// S = C + K
+        	{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},	// R = B + L
+        	{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},	// Q = A + M
+        	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},	// P = 1 + N
+        };
     }
 
-    private static void normalize58(AlgebraicField field, BigRational[] factors) {
+    private static void normalize58(ParameterizedField<?> field, BigRational[] factors) {
         int d28 = 28; 
     	BigRational factor = factors[d28]; // d28 = -2 +2B -2D +2F -2H +2J -2L +2N -2P +2R -2T +2V -2X +2Z
         if(!factor.isZero()) {
@@ -1423,6 +1537,9 @@ public class PolygonField extends ParameterizedField<Integer> {
             // zero
             factors[d28] = BigRational.ZERO;
         }
+        field.normalizerMatrix = new short[][] {
+        	{-2, 0, 2, 0,-2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0, -2, 0, 2, 0},	// d28 = -2 +2B -2D +2F -2H +2J -2L +2N -2P +2R -2T +2V -2X +2Z
+        };
     }
     
     // TODO: Refactor this method into the base class, then use it in SqrtField.normalizePerfectSquare()

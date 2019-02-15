@@ -10,6 +10,7 @@ public abstract class ParameterizedField<T extends Object> extends AlgebraicFiel
     protected final T operand;
     protected final double[] coefficients;
     protected short[][][] multiplierMatrix;
+    protected short[][] normalizerMatrix;
     protected final String[][] irrationalLabels;
     
     public ParameterizedField(String name, int order, T operand) {
@@ -18,6 +19,7 @@ public abstract class ParameterizedField<T extends Object> extends AlgebraicFiel
         // These arrays are allocated here, but all non-zero values will be initialized in the derived classes.
         coefficients = new double[order];
         multiplierMatrix = new short[order][order][order];
+        normalizerMatrix = null;
         irrationalLabels = new String[order][2];
         irrationalLabels[0] = new String[] {" ", " "}; // units use a space character
         // overridable methods intentionally called from c'tor. Be sure all member variables are initialized first.
@@ -28,7 +30,37 @@ public abstract class ParameterizedField<T extends Object> extends AlgebraicFiel
      * doNothing is the default normalizer method.
      * @param factors
      */
-    static final void doNothing(AlgebraicField field, BigRational[] factors) {}
+    protected final void doNothing(BigRational[] factors) {}
+    
+    /**
+     * @param factors
+     */
+//    protected 
+    public void expandTerms(BigRational[] factors) {
+    	int n = getOrder(); // expand sequential terms begining with the last one and working down
+    	System.out.println(" expands " + normalizerMatrix.length + " term" + (normalizerMatrix.length == 1 ? "" : "s") + ":");
+    	for(short[] scalars : normalizerMatrix) {
+    		--n;
+       		BigRational factor = factors[n];
+           	System.out.print(this.getIrrational(n) + " = ");
+        	if(factor.isZero()) {
+//				System.out.print("    ");
+//			} else {
+               	for(int term = 0; term < scalars.length; term++) {
+            		int scalar = scalars[term];
+            		if(scalar == 0) {
+    					System.out.print("    ");
+    				} else {
+    					String irr = this.getIrrational(term);
+    					System.out.print((scalar < 0 ? " " : " +") + scalar + irr);
+            			factors[term] = factors[term].plus( scalar == 1 ? factor : factor.times(scalar) );
+            		}
+        	    }
+               	System.out.println();
+    	        factors[n] = BigRational.ZERO;
+        	}    		
+    	}
+    }
     
     /**
      * Subclasses may need different normalization methods based on their parameters.
@@ -36,7 +68,7 @@ public abstract class ParameterizedField<T extends Object> extends AlgebraicFiel
      * By assigning an appropriate normalizer method once in the c'tor, 
      * the method can avoid the repeated overhead of checking isPerfectSquare() within the normalizer method itself.   
      */
-    protected BiConsumer<AlgebraicField, BigRational[]> normalizer = ParameterizedField::doNothing;
+    protected BiConsumer<ParameterizedField<?>, BigRational[]> normalizer = ParameterizedField::doNothing;
     
     @Override
 	final void normalize( BigRational[] factors ) 

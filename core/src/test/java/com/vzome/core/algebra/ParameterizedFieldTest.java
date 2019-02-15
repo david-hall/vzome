@@ -57,6 +57,47 @@ public class ParameterizedFieldTest {
     }
 
     @Test
+    public void testExpandTerms() {
+    	int[] sides = {
+    			6,
+    			9,
+    			10,
+    			12,
+    			14,
+    			15,
+        		18,
+        		20,
+        		21,
+        		22,
+        		24,
+				25,
+				26,
+				27,
+				28,
+				30,
+				33,
+				34,
+				35,
+				36,
+				38,
+				46,
+				48,
+				58,
+    	};
+    	
+    	for(int i : sides) {
+    		PolygonField field = new PolygonField(i);
+    		System.out.print(field.getName());
+//            for (int j = 0; j < field.getOrder(); j++) {
+//                AlgebraicNumber n = field.getUnitTerm(j);
+//                field.expandTerms(n.getFactors());    
+//            }
+            field.expandTerms(field.getUnitPolynomial().getFactors());
+            System.out.println();
+        }
+    }
+    
+    @Test
     public void printPolygonFieldMatrices() {
         int[] sides = {
                 // I have a pattern that seems to work for 3 times any integer power of 2
