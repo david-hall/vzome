@@ -59,9 +59,9 @@ public abstract class ParameterizedField<T extends Object> extends AlgebraicFiel
             			factors[term] = factors[term].plus( scalar == 1 ? factor : factor.times(scalar) );
             		}
         	    }
-               	System.out.println();
     	        factors[n] = BigRational.ZERO;
         	}    		
+           	System.out.println();
     	}
     }
     

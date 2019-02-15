@@ -939,6 +939,9 @@ public class PolygonField extends ParameterizedField<Integer> {
             case 38:
             	normalizer = PolygonField::normalize38;
             	break;
+            case 40:
+                normalizer = PolygonField::normalize40;
+                break;
             case 46:
                 normalizer = PolygonField::normalize46;
                 break;
@@ -1465,6 +1468,56 @@ public class PolygonField extends ParameterizedField<Integer> {
         field.normalizerMatrix = new short[][] {
         //   1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  
         	{2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0},	// R = +2 -2B +2D -2F +2H -2J +2L -2N +2P
+        };
+    }
+
+    private static void normalize40(ParameterizedField<?> field, BigRational[] factors) {
+    	int P = 16; 
+    	BigRational factor = factors[P]; // P = -1 -F + H + N
+        if(!factor.isZero()) {
+            factors[ 0] = factors[ 0].minus(factor); 	// -units
+            factors[ 6] = factors[ 6].minus(factor); 	// -F
+            factors[ 8] = factors[ 8].plus(factor); 	// H
+            factors[14] = factors[14].plus(factor); 	// N
+            // zero
+            factors[P] = BigRational.ZERO;
+        }	 
+    	int Q = 17; 
+    	factor = factors[Q]; // Q = -A -E + I + M
+        if(!factor.isZero()) {
+            factors[ 1] = factors[ 1].minus(factor); 	// -A
+            factors[ 5] = factors[ 5].minus(factor); 	// -E
+            factors[ 9] = factors[ 9].plus(factor); 	// I
+            factors[13] = factors[13].plus(factor); 	// M
+            // zero
+            factors[Q] = BigRational.ZERO;
+        }	 
+    	int R = 18; 
+    	factor = factors[R]; // R = -B - D + J + L
+        if(!factor.isZero()) {
+            factors[ 2] = factors[ 2].minus(factor); 	// -B
+            factors[ 4] = factors[ 4].minus(factor); 	// -D
+            factors[10] = factors[10].plus(factor); 	// J
+            factors[12] = factors[12].plus(factor); 	// L
+            // zero
+            factors[R] = BigRational.ZERO;
+        }	 
+    	int S = 19; 
+    	factor = factors[S]; // S = -2C +2K
+        if(!factor.isZero()) {
+            factors[ 3] = factors[ 3].minus(factor); 	// -C
+            factors[ 3] = factors[ 3].minus(factor); 	// -C again
+            factors[11] = factors[11].plus(factor); 	// K
+            factors[11] = factors[11].plus(factor); 	// K again
+            // zero
+            factors[S] = BigRational.ZERO;
+        }	 
+        field.normalizerMatrix = new short[][] {
+        //    1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  
+        	{ 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0},	// S = 
+        	{ 0, 0,-1, 0,-1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0},	// R = 
+        	{ 0,-1, 0, 0, 0,-1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0},	// Q = 
+        	{-1, 0, 0, 0, 0, 0,-1, 0, 1, 0, 0, 0, 0, 0, 1, 0},	// P = 
         };
     }
 
