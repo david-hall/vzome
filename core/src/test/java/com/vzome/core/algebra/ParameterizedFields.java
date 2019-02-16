@@ -119,7 +119,14 @@ public class ParameterizedFields {
 		return buf.toString();
 	}
 	
-	public static void printNormalization(PolygonField field) {
+	// these are all used by printNormalization and the methods it calls
+	// they are local instead of being passed as args to reduce the recursuve stack size.
+	private static int[] scalars;
+	private static PolygonField field;
+	private static double candidate;
+	
+	public static void printNormalization(PolygonField inField) {
+		field = inField;
 		final int sides = field.polygonSides();
 		// positive powers of two
         if ((sides & (sides - 1)) == 0) {
@@ -134,32 +141,32 @@ public class ParameterizedFields {
 		}
 		final int order = field.getOrder();
 		if(order == sides/2) {
-			int normalizedOrder = getNormalizedOrder(field);
+			int normalizedOrder = getNormalizedOrder();
 			if(order > normalizedOrder) {
 				System.out.println("\n" + field.getName() + " is not normalized. order = " + order + " should be " + normalizedOrder + ". " + thisSourceCodeLine());
 				System.out.println(coefficientsToString(field));
 	
-				int[] scalars = new int[normalizedOrder+1]; // native types are all initialized to 0.
+				scalars = new int[normalizedOrder+1]; // native types are all initialized to 0.
 				for(int q = order-1; q >= normalizedOrder; q--) {
-					double candidate = field.getCoefficient(q);
+					candidate = field.getCoefficient(q);
 					String sq = field.getIrrational(q);
 					System.out.println("\n try " + sq + " [" + q + "]: " + candidate);
-					if(consider(field, candidate, scalars, 0)) {
-						printScalars(scalars);
+					if(consider(0)) {
+						printScalars();
 					}
 				}
 			}
 		}
 	}
 
-	private static void printScalars(int[] scalars) {
+	private static void printScalars() {
 		for(int scalar : scalars) {
-			System.out.print((scalar < 0 ? "" : "+") + scalar);
+			System.out.print((scalar < 0 ? " " : " +") + scalar);
 		}
 		System.out.println();
 	}
 
-	private static boolean testScalars(PolygonField field, double candidate, int[] scalars) {
+	private static boolean testScalars() {
 		double total = 0.0d;
 		int count = 0;
 		int mult = 0;
@@ -201,14 +208,18 @@ public class ParameterizedFields {
 	}
 
 	final private static int[] testScalars = {0, 1, -1, 2, -2}; 
-	private static boolean consider(PolygonField field, double candidate, int[] scalars, int depth) {
+	
+	private static boolean consider(int depth) {
 		if(depth == scalars.length) {
 			// evaluate
-			return testScalars(field, candidate, scalars);
+			return testScalars();
 		} else {
+			if(depth == scalars.length - 15) {
+				printScalars(); // just so I can be sure it's not hung and judge the time to complete
+			}
 			for(int scalar : testScalars) {
 				scalars[depth] = scalar;
-				if(consider(field, candidate, scalars, depth+1)) {
+				if(consider(depth+1)) {
 					return false;
 				}
 			}
@@ -221,7 +232,7 @@ public class ParameterizedFields {
 		return Math.abs(d1 - d2) < delta;
 	}
 	
-	private static int getNormalizedOrder(PolygonField field) {
+	private static int getNormalizedOrder() {
 		switch(field.polygonSides()) {
 		case 22:
 			return (field.polygonSides() / 2) - 1;
