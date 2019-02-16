@@ -51,7 +51,7 @@ public class ParameterizedFieldTest {
 
     @Test
     public void printPolygonFieldNormalization() {
-    	int nSides = 42;
+    	int nSides = 44;
         ParameterizedFields.printNormalization( new PolygonField(nSides) );
     }
 

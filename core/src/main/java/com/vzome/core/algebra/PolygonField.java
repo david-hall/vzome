@@ -1577,6 +1577,18 @@ public class PolygonField extends ParameterizedField<Integer> {
 //    	m =     -2a     -1c     +1e     +2g     +1l     -1k
 //    	l = -1      -1b             +1f     +1h
 	
+//    polygon45 expands 10 terms:
+//    	u =                         +1f +1g
+//    	t =                     +1e         +1h
+//    	s =                 +1d                 +1i
+//    	r =             +1c                         +1j
+//    	q =         +1b                                 +1k
+//    	p =     +1a                                         +1l
+//    	o =     +1a         +1d     +1f         +1i -1j
+//    	n =         +1b         +2e         +1h         -1k
+//    	m = -1  +1a         +1d     +1f         +1i -1j
+//    	l = +1  -1a     +1c             +1g     -1i +1j
+    
     private static void normalize46(ParameterizedField<?> field, BigRational[] factors) {
     	int V = 22; 
     	BigRational factor = factors[V]; // V = +2 -2B +2D -2F +2H -2J +2L -2N +2P -2R +2T
