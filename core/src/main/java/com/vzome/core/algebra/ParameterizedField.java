@@ -37,31 +37,40 @@ public abstract class ParameterizedField<T extends Object> extends AlgebraicFiel
      */
 //    protected 
     public void expandTerms(BigRational[] factors) {
+    	final boolean print = true; // TODO: set print to false for production
     	int n = getOrder(); // expand sequential terms begining with the last one and working down
-    	System.out.println(" expands " + normalizerMatrix.length + " term" + (normalizerMatrix.length == 1 ? "" : "s") + ":");
-    	if(normalizerMatrix.length + normalizerMatrix[0].length != n) {
-    		System.out.println("normalizerMatrix dimensions " + normalizerMatrix.length + " + " +  normalizerMatrix[0].length + " should total " + n);
+    	if(print) {
+	    	System.out.println(" expands " + normalizerMatrix.length + " term" + (normalizerMatrix.length == 1 ? "" : "s") + ":");
+	    	if(normalizerMatrix.length + normalizerMatrix[0].length != n) {
+	    		System.out.println("normalizerMatrix dimensions " + normalizerMatrix.length + " + " +  normalizerMatrix[0].length + " should total " + n);
+	    	}
     	}
     	for(short[] scalars : normalizerMatrix) {
     		--n;
-       		BigRational factor = factors[n];
-           	System.out.print(this.getIrrational(n) + " = ");
-        	if(factor.isZero()) {
-//				System.out.print("    ");
-//			} else {
+           	BigRational factor = factors[n];
+        	if(!factor.isZero()) {
                	for(int term = 0; term < scalars.length; term++) {
             		int scalar = scalars[term];
-            		if(scalar == 0) {
-    					System.out.print("    ");
-    				} else {
-    					String irr = this.getIrrational(term);
-    					System.out.print((scalar < 0 ? " " : " +") + scalar + irr);
+            		if(scalar != 0) {
             			factors[term] = factors[term].plus( scalar == 1 ? factor : factor.times(scalar) );
             		}
         	    }
     	        factors[n] = BigRational.ZERO;
         	}    		
-           	System.out.println();
+        	if(print) {
+	        	// the rest is all for debugging
+	        	System.out.print(this.getIrrational(n) + " = ");
+	           	for(int term = 0; term < scalars.length; term++) {
+	        		int scalar = scalars[term];
+	        		if(scalar == 0) {
+						System.out.print("    ");
+					} else {
+						String irr = this.getIrrational(term);
+						System.out.print((scalar < 0 ? " " : " +") + scalar + irr);
+	        		}
+	        	}    		
+	           	System.out.println();
+        	}
     	}
     }
     

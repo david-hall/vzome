@@ -244,6 +244,9 @@ public class ParameterizedFields {
 		case 38:
 			return (field.polygonSides() / 2) - 2;
 			
+		case 39:
+			return (field.polygonSides() / 2) - 7;
+
 		case 46:
 			return (field.polygonSides() / 2) - 2;
 			
@@ -509,10 +512,10 @@ public class ParameterizedFields {
 //        System.out.println("coefficientsAdded" + name + coefficientsAddedToString(field));
 //        System.out.println("coefficientsSubtracted" + name + coefficientsSubtractedToString(field));
 //        System.out.println("coefficientsScaled" + name + coefficientsScaledToString(field));
-        System.out.println("coefficientsMultiplied" + name + coefficientsMultipliedToString(field));
+//        System.out.println("coefficientsMultiplied" + name + coefficientsMultipliedToString(field));
 //        System.out.println("multiplierMatrix" + name + multiplierMatrixToString(field));
 //
-        System.out.println( "wolfram alpha test query" + name + ParameterizedFields.wolframAlphaTestString( field ));
+//        System.out.println( "wolfram alpha test query" + name + ParameterizedFields.wolframAlphaTestString( field ));
 //        
 //        System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.DEFAULT_FORMAT));
 //      System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.EXPRESSION_FORMAT));

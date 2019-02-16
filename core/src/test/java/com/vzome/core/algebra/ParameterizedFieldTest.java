@@ -51,9 +51,8 @@ public class ParameterizedFieldTest {
 
     @Test
     public void printPolygonFieldNormalization() {
-        for(int i = 38; i <= 38; i++) {
-//            ParameterizedFields.printNormalization( new PolygonField(i) );
-        }
+    	int nSides = 42;
+        ParameterizedFields.printNormalization( new PolygonField(nSides) );
     }
 
     @Test
@@ -80,8 +79,9 @@ public class ParameterizedFieldTest {
 				35,
 				36,
 				38,
-//				39,
+				39,
 				40,
+				// 42,
 				46,
 				48,
 				58,
@@ -176,9 +176,10 @@ public class ParameterizedFieldTest {
 //        		  35,
 //                36,
 //        		  38,
-                // TODO: Confirm that up thru 38 are all working
-        		  39,
+//        		  39,
 //        		  40,
+                // TODO: Confirm that up thru 41 are all working
+        		  42,
 //        		  46,
 //                48,
 //        		  58,

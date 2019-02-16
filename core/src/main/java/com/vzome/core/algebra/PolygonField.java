@@ -939,6 +939,9 @@ public class PolygonField extends ParameterizedField<Integer> {
             case 38:
             	normalizer = PolygonField::normalize38;
             	break;
+            case 39:
+            	normalizer = PolygonField::normalize39;
+            	break;
             case 40:
                 normalizer = PolygonField::normalize40;
                 break;
@@ -1471,6 +1474,47 @@ public class PolygonField extends ParameterizedField<Integer> {
         };
     }
 
+    private static void normalize39(ParameterizedField<?> field, BigRational[] factors) {
+        normalizeFactor(factors, 18, 5,  6); // R = E + F
+        normalizeFactor(factors, 17, 4,  7); // Q = D + G
+        normalizeFactor(factors, 16, 3,  8); // P = C + H
+        normalizeFactor(factors, 15, 2,  9); // O = B + I
+        normalizeFactor(factors, 14, 1, 10); // N = A + J
+        normalizeFactor(factors, 13, 0, 11); // M = 1 + K
+    	int L = 12; 
+    	BigRational factor = factors[L]; // L = -2 -A +B +2C +D -E -2F -G +H +2I +J -K
+        if(!factor.isZero()) {
+            factors[ 0] = factors[ 0].minus(factor); 	// -units
+            factors[ 0] = factors[ 0].minus(factor); 	// -units again
+            factors[ 1] = factors[ 1].minus(factor); 	// -A
+            factors[ 2] = factors[ 2].plus(factor); 	// B
+            factors[ 3] = factors[ 3].plus(factor); 	// C
+            factors[ 3] = factors[ 3].plus(factor); 	// C again
+            factors[ 4] = factors[ 4].plus(factor); 	// D
+            factors[ 5] = factors[ 5].plus(factor); 	// E
+            factors[ 6] = factors[ 6].minus(factor); 	// -F
+            factors[ 6] = factors[ 6].minus(factor); 	// -F again
+            factors[ 7] = factors[ 7].minus(factor); 	// -G
+            factors[ 8] = factors[ 8].plus(factor); 	// H
+            factors[ 9] = factors[ 9].plus(factor); 	// I
+            factors[ 9] = factors[ 9].plus(factor); 	// I again
+            factors[10] = factors[10].plus(factor); 	// J
+            factors[11] = factors[11].minus(factor); 	// -K
+            // zero
+            factors[L] = BigRational.ZERO;
+        }
+        field.normalizerMatrix = new short[][] {
+        //    1  A  B  C  D  E  F  G  H  I  J  K  
+        	{ 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0}, // R = E + F
+        	{ 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0}, // Q = D + G
+        	{ 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0}, // P = C + H
+        	{ 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0}, // O = B + I
+        	{ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0}, // N = A + J
+        	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, // M = 1 + K
+        	{-2,-1, 1, 2, 1,-1,-2,-1, 1, 2, 1,-1}, // L = -2 -A +B +2C +D -E -2F -G +H +2I +J -K
+        };
+    }
+    
     private static void normalize40(ParameterizedField<?> field, BigRational[] factors) {
     	int P = 16; 
     	BigRational factor = factors[P]; // P = -1 -F + H + N
@@ -1521,6 +1565,18 @@ public class PolygonField extends ParameterizedField<Integer> {
         };
     }
 
+    // TODO: normalize42
+//    polygon42 expands 9 terms:
+//    	t =                         +2f
+//    	s =                     +1e     +1g
+//    	r =                 +1d             +1h
+//    	q =             +1c                     +1i
+//    	p =         +1b                             +1j
+//    	o =     +1a                                     +1k
+//    	n =         -1b             +1f     +1h
+//    	m =     -2a     -1c     +1e     +2g     +1l     -1k
+//    	l = -1      -1b             +1f     +1h
+	
     private static void normalize46(ParameterizedField<?> field, BigRational[] factors) {
     	int V = 22; 
     	BigRational factor = factors[V]; // V = +2 -2B +2D -2F +2H -2J +2L -2N +2P -2R +2T
