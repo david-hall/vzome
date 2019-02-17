@@ -184,9 +184,9 @@ public class ParameterizedFieldTest {
         		  42,
 //        		  44,
         		  45,
-//        		  49,
 //        		  46,
 //                48,
+        		  49,
 //        		  58,
                 }; 
         for (int i : sides) {

@@ -209,6 +209,15 @@ public class PolygonField extends ParameterizedField<Integer> {
                 irrationalLabels[4] = new String[]{ "\u03BC", "mu"     };
                 break;
 
+            case 13:
+            	// See https://nbviewer.jupyter.org/github/vorth/ipython/blob/master/triskaidecagons/Triskaidecagons.ipynb
+                irrationalLabels[1] = new String[]{ "\u03B1", "alpha" };
+                irrationalLabels[2] = new String[]{ "\u03B2", "beta" };
+                irrationalLabels[3] = new String[]{ "\u03B3", "gamma" };
+                irrationalLabels[4] = new String[]{ "\u03B4", "delta" };
+                irrationalLabels[5] = new String[]{ "\u03B5", "epsilon" };
+                break;
+
             default:
                 // TODO: Move this default behavior into the base class, possibly with an option for the subscripted variable name
                 final String alphabet = "abcdefghijklmnopqrstuvwxyz";
@@ -216,14 +225,14 @@ public class PolygonField extends ParameterizedField<Integer> {
                 if(order -1 <= alphabet.length()) {
                     for(int i = 1; i < order; i++) {
                         String name = alphabet.substring(i-1, i);
-                        irrationalLabels[i] = new String[]{ name, name };
+                        irrationalLabels[i] = new String[]{ name, "d[" + i + "]" };
                     }
                 }
                 else {
                     // The article "Proof by Picture: Products and Reciprocals of Diagonal Length Ratios in the Regular Polygon"
                     // at http://forumgeom.fau.edu/FG2006volume6/FG200610.pdf uses one-based indexing for the diagonals,
                     // but I am going to use zero-based indexing so it corresponds to our coefficients and multiplierMatrix indices.
-                    // irrationalLabels[0] should never be needed, so I'll leave it blank.
+                    // irrationalLabels[0] remains unchanged from the default (blank).
                     for(int i = 1; i < order; i++) {
                         irrationalLabels[i] = new String[]{ "d" + subscriptString(i), "d[" + i + "]" };
                     }
@@ -245,6 +254,7 @@ public class PolygonField extends ParameterizedField<Integer> {
                 .replace("7", "\u2087")
                 .replace("8", "\u2088")
                 .replace("9", "\u2089")
+                .replace("+", "\u208A")
                 .replace("-", "\u208B")
                 ;
     }
