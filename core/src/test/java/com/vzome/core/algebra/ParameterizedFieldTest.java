@@ -8,6 +8,7 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
+import com.vzome.core.generic.Utilities;
 import com.vzome.core.math.RealVector;
 
 /**
@@ -60,13 +61,16 @@ public class ParameterizedFieldTest {
 
     @Test
     public void testMulDivEvaluate() {
+		System.out.println("testMulDivEvaluate " + Utilities.thisSourceCodeLine());
     	final double delta = 0.000000000001d; // eleven 0's between the decimal point and the 1
     	for(int nSides = PolygonField.MIN_SIDES; nSides <= 58; nSides++) {
-        	if(nSides == 42) continue; // not normalized yet
-        	if(nSides == 45) continue; // not normalized yet
-        	if(nSides > 48 && nSides != 58) continue; // not normalized yet
+    		// TODO: non-primes from 49 to 57 are not normalized yet
+        	if(nSides > 48 && nSides != 58 && nSides != 53 && nSides != 59) {
+        		System.out.println("Skipping " + nSides + " test at " + Utilities.thisSourceCodeLine());
+        		continue; 
+        	}
     		PolygonField field = new PolygonField(nSides);
-    		System.out.println(field.getName());
+//    		System.out.println(field.getName());
             int n = field.getOrder();
             for (int i = 0; i < n; i++) {
                 AlgebraicNumber n1 = field.getUnitTerm(i);
@@ -79,8 +83,8 @@ public class ParameterizedFieldTest {
                         AlgebraicNumber quotient = n1.dividedBy(n2);
                         double prod = product.evaluate();
                         double quot = quotient.evaluate();
-                    	System.out.println(nSides + ": " + n1.toString() + " * " + n2.toString() + " = " + product.toString() + "\t: " + d1 + " * " + d2 + " = " + prod );
-                    	System.out.println(nSides + ": " + n1.toString() + " / " + n2.toString() + " = " + quotient.toString() + "\t: " + d1 + " / " + d2 + " = "+ quot );
+//                    	System.out.println(nSides + ": " + n1.toString() + " * " + n2.toString() + " = " + product.toString() + "\t: " + d1 + " * " + d2 + " = " + prod );
+//                    	System.out.println(nSides + ": " + n1.toString() + " / " + n2.toString() + " = " + quotient.toString() + "\t: " + d1 + " / " + d2 + " = "+ quot );
                         assertEquals(d1 * d2, prod, delta);
                         assertEquals(d1 / d2, quot, delta);
                     }
@@ -118,9 +122,9 @@ public class ParameterizedFieldTest {
 				38,
 				39,
 				40,
-				// 42,
+				42,
 				44,
-				// 45,
+				45,
 				46,
 				48,
 				58,
@@ -217,12 +221,12 @@ public class ParameterizedFieldTest {
 //				38,
 //				39,
 //				40,
-                // TODO: Confirm that up thru 41 are all working
 //				42,
 //				44,
 //				45,
 //				46,
 				48,
+                // TODO: Confirm that up thru 48 are all working
 //				49,
 //				58,
                 }; 

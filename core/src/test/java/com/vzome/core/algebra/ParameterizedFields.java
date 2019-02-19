@@ -576,7 +576,7 @@ public class ParameterizedFields {
 //        System.out.println("coefficientsAdded" + name + coefficientsAddedToString(field));
 //        System.out.println("coefficientsSubtracted" + name + coefficientsSubtractedToString(field));
 //        System.out.println("coefficientsScaled" + name + coefficientsScaledToString(field));
-//        System.out.println("coefficientsMultiplied" + name + coefficientsMultipliedToString(field));
+        System.out.println("coefficientsMultiplied" + name + coefficientsMultipliedToString(field));
         System.out.println("coefficientsDivided" + name + coefficientsDividedToString(field));
 //        System.out.println("multiplierMatrix" + name + multiplierMatrixToString(field));
 //
@@ -590,7 +590,7 @@ public class ParameterizedFields {
 //		 
         System.out.println("factorsDivided" + name + factorsDividedToString(field, AlgebraicField.DEFAULT_FORMAT));
         System.out.println("factorsEvaluatedDivided" + name + factorsEvaluatedDividedToString(field, AlgebraicField.DEFAULT_FORMAT));
-//        System.out.println("factorsReduced" + name + factorsReducedToString(field, AlgebraicField.DEFAULT_FORMAT));
+        System.out.println("factorsReduced" + name + factorsReducedToString(field, AlgebraicField.DEFAULT_FORMAT));
 //		 
 //        System.out.println("VEF" + name + multiplierMatrixToVefString(field));
 //        System.out.println("hull" + name + hullToVefString(field));
