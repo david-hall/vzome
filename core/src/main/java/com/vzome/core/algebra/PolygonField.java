@@ -41,12 +41,7 @@ public class PolygonField extends ParameterizedField<Integer> {
             // Specifically, for a hexagon, the calculated value of coefficients[2] is 2.0000000000000004
             // I want to have the exact correct value, so I'm going to hard code it.
             // I'm pretty sure that Niven's theorem https://en.wikipedia.org/wiki/Niven%27s_theorem
-            // implies that this will be the only case where we'll get a rational result,
-            // although I have not thought through other cases where polygonSides() may be some multiple of 6
-            // Empirically, I can see that it doesn't happen when polygonSides() == 12
-            // If there is found to be some other case where we get a rational coefficient,
-            // (notice that I say rational coefficient, not just integer coefficient)
-            // then it should be checked here, and normalize() should reflect that case as well.
+            // implies that this will be the only case where we'll get a rational result.
             coefficients[2] = 2.0d;
             // Similarly, the calculated value of coefficients[1] is 1.7320508075688774 and should exactly equal sqrt(3) which is 1.73205080756887729...
             coefficients[1] = Math.sqrt(3);
@@ -186,7 +181,7 @@ public class PolygonField extends ParameterizedField<Integer> {
 
             case 6:
                 irrationalLabels[1] = new String[]{ "\u221A" + "3", "sqrtThree" };
-                if(getOrder() > 2)
+                if(irrationalLabels.length > 2)
                 irrationalLabels[2] = new String[]{ "Two", "two" };
                 break;
 
@@ -198,7 +193,7 @@ public class PolygonField extends ParameterizedField<Integer> {
             case 9:
                 irrationalLabels[1] = new String[]{ "\u03B1", "alpha" };
                 irrationalLabels[2] = new String[]{ "\u03B2", "beta" };
-                if(getOrder() > 3)
+                if(irrationalLabels.length > 3)
                 irrationalLabels[3] = new String[]{ "\u03B3", "gamma" };
                 break;
 
@@ -219,11 +214,11 @@ public class PolygonField extends ParameterizedField<Integer> {
                 break;
 
             default:
-                // TODO: Move this default behavior into the base class, possibly with an option for the subscripted variable name
+                // TODO: Move this default behavior into the base class
                 final String alphabet = "abcdefghijklmnopqrstuvwxyz";
-                int order = getOrder();
-                if(order -1 <= alphabet.length()) {
-                    for(int i = 1; i < order; i++) {
+                int length = irrationalLabels.length;
+                if(length -1 <= alphabet.length()) {
+                    for(int i = 1; i < length; i++) {
                         String name = alphabet.substring(i-1, i);
                         irrationalLabels[i] = new String[]{ name, "d[" + i + "]" };
                     }
@@ -233,7 +228,7 @@ public class PolygonField extends ParameterizedField<Integer> {
                     // at http://forumgeom.fau.edu/FG2006volume6/FG200610.pdf uses one-based indexing for the diagonals,
                     // but I am going to use zero-based indexing so it corresponds to our coefficients and multiplierMatrix indices.
                     // irrationalLabels[0] remains unchanged from the default (blank).
-                    for(int i = 1; i < order; i++) {
+                    for(int i = 1; i < irrationalLabels.length; i++) {
                         irrationalLabels[i] = new String[]{ "d" + subscriptString(i), "d[" + i + "]" };
                     }
                 }
@@ -913,11 +908,11 @@ public class PolygonField extends ParameterizedField<Integer> {
             case 21:
 	            normalizer = PolygonField::normalize21;
 	            break;
-            case 24:
-            	normalizer = PolygonField::normalize24;
-            	break;
             case 22:
             	normalizer = PolygonField::normalize22;
+            	break;
+            case 24:
+            	normalizer = PolygonField::normalize24;
             	break;
             case 25:
             	normalizer = PolygonField::normalize25;
@@ -1081,7 +1076,7 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[0] = factors[0].minus(factor); 	// -units
             factors[2] = factors[2].minus(factor); 	// -B
             factors[4] = factors[4].plus(factor); 	// D
-            factors[6] = factors[6].minus(factor);	// F
+            factors[6] = factors[6].plus(factor);	// F
             // zero
             factors[H] = BigRational.ZERO;
         }
@@ -1233,6 +1228,7 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[5] = factors[5].minus(factor); 	// -E
             factors[5] = factors[5].minus(factor); 	// -E again = -2E
             factors[9] = factors[9].plus(factor);	// I
+            factors[9] = factors[9].plus(factor);	// I again = 2I
             // zero
             factors[M] = BigRational.ZERO;
         }
@@ -1302,19 +1298,19 @@ public class PolygonField extends ParameterizedField<Integer> {
         int J = 10;
     	BigRational factor = factors[J]; 	// J = -I +H +2G +F -E -2D -C +B +2A +1
         if(!factor.isZero()) {
-            factors[0] = factors[0].plus(factor); 	// -units            
+            factors[0] = factors[0].plus(factor); 	// units            
             factors[1] = factors[1].plus(factor); 	// A
             factors[1] = factors[1].plus(factor); 	// A again = 2A
-            factors[2] = factors[2].minus(factor); 	// B
+            factors[2] = factors[2].plus(factor); 	// B
             factors[3] = factors[3].minus(factor); 	// -C
-            factors[4] = factors[4].plus(factor); 	// -D
-            factors[4] = factors[4].plus(factor); 	// -D again = -2D
+            factors[4] = factors[4].minus(factor); 	// -D
+            factors[4] = factors[4].minus(factor); 	// -D again = -2D
             factors[5] = factors[5].minus(factor); 	// -E
-            factors[6] = factors[6].minus(factor); 	// F
+            factors[6] = factors[6].plus(factor); 	// F
             factors[7] = factors[7].plus(factor); 	// G
             factors[7] = factors[7].plus(factor); 	// G again = 2G
-            factors[8] = factors[8].minus(factor); 	// H
-            factors[9] = factors[9].plus(factor); 	// -I
+            factors[8] = factors[8].plus(factor); 	// H
+            factors[9] = factors[9].minus(factor); 	// -I
             // zero
             factors[J] = BigRational.ZERO;
         }
@@ -1504,7 +1500,7 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[ 3] = factors[ 3].plus(factor); 	// C
             factors[ 3] = factors[ 3].plus(factor); 	// C again
             factors[ 4] = factors[ 4].plus(factor); 	// D
-            factors[ 5] = factors[ 5].plus(factor); 	// E
+            factors[ 5] = factors[ 5].minus(factor); 	// E
             factors[ 6] = factors[ 6].minus(factor); 	// -F
             factors[ 6] = factors[ 6].minus(factor); 	// -F again
             factors[ 7] = factors[ 7].minus(factor); 	// -G
@@ -1602,8 +1598,8 @@ public class PolygonField extends ParameterizedField<Integer> {
             factors[ 9] = factors[ 9].plus(factor); 	// I
             factors[13] = factors[13].minus(factor); 	// -M
             factors[13] = factors[13].minus(factor); 	// -M
-            factors[17] = factors[17].minus(factor); 	// Q
-            factors[17] = factors[17].minus(factor); 	// Q
+            factors[17] = factors[17].plus(factor); 	// Q
+            factors[17] = factors[17].plus(factor); 	// Q
             // zero
             factors[U] = BigRational.ZERO;
         }	 

@@ -64,6 +64,21 @@ public class ParameterizedFields {
         return buf.toString();
     }
 
+    public static String coefficientsDividedToString(ParameterizedField<?> field) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("{\n");
+        for (Double c1 : field.coefficients) {
+            buf.append("  { ");
+            for (Double c2 : field.coefficients) {
+                buf.append(String.format("%1$20.14f, ", c1 / c2)); // show one less decimal point because we're also
+                                                                    // including any ulp error
+            }
+            buf.append("},\n");
+        }
+        buf.append("}\n");
+        return buf.toString();
+    }
+
     public static String coefficientsScaledToString(ParameterizedField<?> field) {
         StringBuffer buf = new StringBuffer();
         buf.append("{\n");
@@ -228,7 +243,7 @@ public class ParameterizedFields {
 	}
 	
 	private static boolean nearEqual(double d1, double d2) {
-		double delta = 0.00000000000001d; // 13 0's after the .
+		double delta = 0.000000000001d; // eleven 0's between the decimal point and the 1
 		return Math.abs(d1 - d2) < delta;
 	}
 	
@@ -364,6 +379,41 @@ public class ParameterizedFields {
                 try {
                     AlgebraicNumber quotient = n1.dividedBy(n2);
                     s = quotient.toString(format).replace(" ", "");
+                }
+                catch(IllegalArgumentException ex) {
+                    s = "\t?";
+                }
+                buf.append(s);
+                buf.append(",");
+                buf.append("\t");
+                // buf.append( padding.substring(0, padLen - s.length() ) );
+            }
+            buf.append("},\n");
+        }
+        buf.append("}\n");
+        // TODO: recalc columns with spaces to replace tabs after all has been generated
+        // and spaces can be minimized
+        return buf.toString();
+    }
+
+    public static String factorsEvaluatedDividedToString(AlgebraicField field, int format) {
+        // int padLen = 0;
+        // for( int n = 0; n < field.getOrder(); n++) {
+        // padLen += (2 + field.getIrrational(n, format).length());
+        // }
+        // final String padding = new String(new char[padLen]).replace('\0', ' ');
+        StringBuffer buf = new StringBuffer();
+        buf.append("{\n");
+        int n = field.getOrder();
+        for (int i = 0; i < n; i++) {
+            AlgebraicNumber n1 = field.getUnitTerm(i);
+            buf.append("  { ");
+            for (int j = 0; j < n; j++) {
+                AlgebraicNumber n2 = field.getUnitTerm(j);
+                String s = "";
+                try {
+                    AlgebraicNumber quotient = n1.dividedBy(n2);
+                    s = Double.toString(quotient.evaluate());
                 }
                 catch(IllegalArgumentException ex) {
                     s = "\t?";
@@ -527,6 +577,7 @@ public class ParameterizedFields {
 //        System.out.println("coefficientsSubtracted" + name + coefficientsSubtractedToString(field));
 //        System.out.println("coefficientsScaled" + name + coefficientsScaledToString(field));
 //        System.out.println("coefficientsMultiplied" + name + coefficientsMultipliedToString(field));
+        System.out.println("coefficientsDivided" + name + coefficientsDividedToString(field));
 //        System.out.println("multiplierMatrix" + name + multiplierMatrixToString(field));
 //
 //        System.out.println( "wolfram alpha test query" + name + ParameterizedFields.wolframAlphaTestString( field ));
@@ -535,10 +586,11 @@ public class ParameterizedFields {
 //      System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.EXPRESSION_FORMAT));
 //      System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.ZOMIC_FORMAT));
 //		// VEF_FORMAT order is reversed from other formats
-      System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.VEF_FORMAT));
+//        System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.VEF_FORMAT));
 //		 
         System.out.println("factorsDivided" + name + factorsDividedToString(field, AlgebraicField.DEFAULT_FORMAT));
-        System.out.println("factorsReduced" + name + factorsReducedToString(field, AlgebraicField.DEFAULT_FORMAT));
+        System.out.println("factorsEvaluatedDivided" + name + factorsEvaluatedDividedToString(field, AlgebraicField.DEFAULT_FORMAT));
+//        System.out.println("factorsReduced" + name + factorsReducedToString(field, AlgebraicField.DEFAULT_FORMAT));
 //		 
 //        System.out.println("VEF" + name + multiplierMatrixToVefString(field));
 //        System.out.println("hull" + name + hullToVefString(field));

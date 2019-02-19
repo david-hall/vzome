@@ -4,6 +4,7 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
@@ -16,7 +17,9 @@ public class ParameterizedFieldTest {
 
     @Test
     public void testHighOrderPolygonFieldConstructor() {
-        PolygonField field = new PolygonField(120);
+    	// nSides should be a prime so that no normalization is needed
+    	// or else a non-prime with a value that we can calculate the normalization (not hard coded)
+        PolygonField field = new PolygonField(103); 
         assertNotNull(field);
     }
 
@@ -49,12 +52,46 @@ public class ParameterizedFieldTest {
         }
     }
 
-    @Test
+//    @Test
     public void printPolygonFieldNormalization() {
-    	int nSides = 45;
+    	int nSides = 15;
         ParameterizedFields.printNormalization( new PolygonField(nSides) );
     }
 
+    @Test
+    public void testMulDivEvaluate() {
+    	final double delta = 0.000000000001d; // eleven 0's between the decimal point and the 1
+    	for(int nSides = PolygonField.MIN_SIDES; nSides <= 58; nSides++) {
+        	if(nSides == 42) continue; // not normalized yet
+        	if(nSides == 45) continue; // not normalized yet
+        	if(nSides > 48 && nSides != 58) continue; // not normalized yet
+    		PolygonField field = new PolygonField(nSides);
+    		System.out.println(field.getName());
+            int n = field.getOrder();
+            for (int i = 0; i < n; i++) {
+                AlgebraicNumber n1 = field.getUnitTerm(i);
+                double d1 = n1.evaluate();
+                for (int j = 0; j < n; j++) {
+                    AlgebraicNumber n2 = field.getUnitTerm(j);
+                    double d2 = n2.evaluate();
+                    try {
+                        AlgebraicNumber product = n1.times(n2);
+                        AlgebraicNumber quotient = n1.dividedBy(n2);
+                        double prod = product.evaluate();
+                        double quot = quotient.evaluate();
+                    	System.out.println(nSides + ": " + n1.toString() + " * " + n2.toString() + " = " + product.toString() + "\t: " + d1 + " * " + d2 + " = " + prod );
+                    	System.out.println(nSides + ": " + n1.toString() + " / " + n2.toString() + " = " + quotient.toString() + "\t: " + d1 + " / " + d2 + " = "+ quot );
+                        assertEquals(d1 * d2, prod, delta);
+                        assertEquals(d1 / d2, quot, delta);
+                    }
+                    catch(IllegalArgumentException ex) {
+                        fail(ex.getMessage());
+                    }
+                }
+            }
+    	}
+    }
+    
     @Test
     public void testExpandTerms() {
     	int[] sides = {
@@ -157,37 +194,37 @@ public class ParameterizedFieldTest {
         		
 //        		19 * (2^1) = 38-gon removes 1 replaced by 19/2 = 8 terms
  
-//                9, 
-//                10,
-//                12,
-//                14, 
-//                15, 
-//                18, 
-//                20,         		
-//                21, 
-//                22, 
-//                24,
-//                25,
-//                26,
-//                27,
-//        		  28,
-//        		  30,
-//        		  32,
-//                33,
-//                34,
-//        		  35,
-//                36,
-//        		  38,
-//        		  39,
-//        		  40,
+//				9, 
+//				10,
+//				12,
+//				14, 
+//				15, 
+//				18, 
+//				20,         		
+//				21, 
+//				22, 
+//				24,
+//				25,
+//				26,
+//				27,
+//				28,
+//				30,
+//				32,
+//				33,
+//				34,
+//				35,
+//				36,
+//				38,
+//				39,
+//				40,
                 // TODO: Confirm that up thru 41 are all working
-        		  42,
-//        		  44,
-        		  45,
-//        		  46,
-//                48,
-        		  49,
-//        		  58,
+//				42,
+//				44,
+//				45,
+//				46,
+				48,
+//				49,
+//				58,
                 }; 
         for (int i : sides) {
             ParameterizedFields.printMatrices( new PolygonField(i) );

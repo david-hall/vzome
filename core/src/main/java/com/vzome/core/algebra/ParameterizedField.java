@@ -10,8 +10,8 @@ public abstract class ParameterizedField<T extends Object> extends AlgebraicFiel
     protected final T operand;
     protected final double[] coefficients;
     protected short[][][] multiplierMatrix;
-    protected short[][] normalizerMatrix;
-    protected final String[][] irrationalLabels;
+    protected short[][] normalizerMatrix; // TODO: Move this to PolygonField.
+    protected String[][] irrationalLabels;
     
     public ParameterizedField(String name, int order, T operand) {
         super(name, order);
@@ -37,6 +37,7 @@ public abstract class ParameterizedField<T extends Object> extends AlgebraicFiel
      */
 //    protected 
     public void expandTerms(BigRational[] factors) {
+    	if(normalizerMatrix == null) return;
     	final boolean print = true; // TODO: set print to false for production
     	int n = getOrder(); // expand sequential terms begining with the last one and working down
     	if(print) {

@@ -54,7 +54,7 @@ public class SqrtField extends ParameterizedField<Integer> {
     }
     
     @Override
-        protected void initializeNormalizer() {
+    protected void initializeNormalizer() {
         Double squareRoot = Math.sqrt( radicand() );
         double floor = Math.floor(squareRoot);
         if(floor * floor == radicand()) {
