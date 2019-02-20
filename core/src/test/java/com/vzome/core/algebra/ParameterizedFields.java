@@ -279,6 +279,9 @@ public class ParameterizedFields {
 		case 46:
 			return (field.polygonSides() / 2) - 2;
 			
+		case 49:
+			return (field.polygonSides() / 2) - 4;
+
 		}
 		return (field.polygonSides() / 4)+1;
 		// TODO: Optimize this using the number of non-invertible terms
