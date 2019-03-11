@@ -64,8 +64,8 @@ public class ParameterizedFieldTest {
 		System.out.println("testMulDivEvaluate " + Utilities.thisSourceCodeLine());
     	final double delta = 0.000000000001d; // eleven 0's between the decimal point and the 1
     	for(int nSides = PolygonField.MIN_SIDES; nSides <= 60; nSides++) {
-    		// TODO: some non-primes from 51 to 57 are not normalized yet
-        	if(nSides >= 51 && nSides != 53 && nSides != 54 && nSides != 58 && nSides != 59) {
+    		// TODO: some non-primes from 52 to 57 are not normalized yet
+        	if(nSides >= 52 && nSides != 53 && nSides != 54 && nSides != 58 && nSides != 59) {
         		System.out.println("Skipping " + nSides + " test at " + Utilities.thisSourceCodeLine());
         		continue; 
         	}
@@ -129,6 +129,7 @@ public class ParameterizedFieldTest {
 				48,
 				49,
 				50,
+				51,
 				54,
 				58,
     	};
@@ -230,8 +231,9 @@ public class ParameterizedFieldTest {
 //				46,
 //				48,
 //				49,
-				50,
-                // TODO: Confirm that up thru 50 are all working
+//				50,
+				51,
+                // TODO: Confirm that up thru 51 are all working
 //				54,
 //				58,
                 }; 
