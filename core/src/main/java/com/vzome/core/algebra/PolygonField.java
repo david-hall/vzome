@@ -968,6 +968,9 @@ public class PolygonField extends ParameterizedField<Integer> {
             case 49:
             	normalizer = PolygonField::normalize49;
             	break;
+            case 50:
+                normalizer = PolygonField::normalize50;
+                break;
             case 54:
                 normalizer = PolygonField::normalize54;
                 break;
@@ -1883,6 +1886,67 @@ public class PolygonField extends ParameterizedField<Integer> {
         	{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},	// T = B + N
         	{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},	// S = A + O
         	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},	// R = 1 + P
+        };
+    }
+
+    private static void normalize50(ParameterizedField<?> field, BigRational[] factors) {
+    	int X = 24; 
+    	BigRational factor = factors[X];     // x =                  -2d                                     +2n
+        if(!factor.isZero()) {
+            factors[ 4] = factors[ 4].minus(factor); 	// -D
+            factors[ 4] = factors[ 4].minus(factor); 	// -D
+            factors[14] = factors[14].plus(factor); 	// N
+            factors[14] = factors[14].plus(factor); 	// N
+            // zero
+            factors[X] = BigRational.ZERO;
+        }	 
+    	int W = 23; 
+    	factor = factors[W];                 // w =              -1c     -1e                             +1m     +1o
+        if(!factor.isZero()) {
+            factors[ 3] = factors[ 3].minus(factor); 	// -C
+            factors[ 5] = factors[ 5].minus(factor); 	// -E
+            factors[13] = factors[13].plus(factor); 	// M
+            factors[15] = factors[15].plus(factor); 	// O
+            // zero
+            factors[W] = BigRational.ZERO;
+        }	 
+    	int V = 22; 
+    	factor = factors[V];                  // v =          -1b             -1f                     +1l             +1p
+        if(!factor.isZero()) {
+            factors[ 2] = factors[ 2].minus(factor); 	// -B
+            factors[ 6] = factors[ 6].minus(factor); 	// -F
+            factors[12] = factors[12].plus(factor); 	// L
+            factors[16] = factors[16].plus(factor); 	// P
+            // zero
+            factors[V] = BigRational.ZERO;
+        }	 
+    	int U = 21; 
+    	factor = factors[U];                  // u =      -1a                     -1g             +1k                     +1q
+        if(!factor.isZero()) {
+            factors[ 1] = factors[ 1].minus(factor); 	// -A
+            factors[ 7] = factors[ 7].minus(factor); 	// -G
+            factors[11] = factors[11].plus(factor); 	// K
+            factors[17] = factors[17].plus(factor); 	// Q
+            // zero
+            factors[U] = BigRational.ZERO;
+        }	 
+    	int T = 20; 
+    	factor = factors[T];                   // t =  -1                              -1h     +1j                             +1r
+        if(!factor.isZero()) {
+            factors[ 0] = factors[ 0].minus(factor); 	// -units
+            factors[ 8] = factors[ 8].minus(factor); 	// -H
+            factors[10] = factors[10].plus(factor); 	// J
+            factors[18] = factors[18].plus(factor); 	// R
+            // zero
+            factors[T] = BigRational.ZERO;
+        }	 
+        field.normalizerMatrix = new short[][] {
+        //    1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S
+        	{ 0, 0, 0, 0,-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0},	// x =                  -2d                                     +2n
+        	{ 0, 0, 0,-1, 0,-1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0},	// w =              -1c     -1e                             +1m     +1o
+        	{ 0, 0,-1, 0, 0, 0,-1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0},	// v =          -1b             -1f                     +1l             +1p
+        	{ 0,-1, 0, 0, 0, 0, 0,-1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0},	// u =      -1a                     -1g             +1k                     +1q
+        	{-1, 0, 0, 0, 0, 0, 0, 0,-1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0},	// t =  -1                              -1h     +1j                             +1r
         };
     }
 
