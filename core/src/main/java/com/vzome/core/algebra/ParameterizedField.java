@@ -70,7 +70,7 @@ public abstract class ParameterizedField<T extends Object> extends AlgebraicFiel
 						System.out.print((scalar < 0 ? " " : " +") + scalar + irr);
 	        		}
 	        	}    		
-	           	System.out.println();
+	           	System.out.println("|"); // visual indication of pattern edge
         	}
     	}
     }

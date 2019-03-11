@@ -968,6 +968,9 @@ public class PolygonField extends ParameterizedField<Integer> {
             case 49:
             	normalizer = PolygonField::normalize49;
             	break;
+            case 54:
+                normalizer = PolygonField::normalize54;
+                break;
             case 58:
                 normalizer = PolygonField::normalize58;
                 break;
@@ -1855,6 +1858,31 @@ public class PolygonField extends ParameterizedField<Integer> {
         	{0, 0, 1, 1, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0},	// W = B + C - I - J + P + Q
         	{0, 1, 0, 0, 1, 0, 0, 0,-1, 0, 0,-1, 0, 0, 0, 1, 0, 0, 1, 0, 0},	// V = A + D - H - K + O + R
         	{1, 0, 0, 0, 0, 1, 0,-1, 0, 0, 0, 0,-1, 0, 1, 0, 0, 0, 0, 1, 0},	// U = 1 + E - G - L + N + S
+        };
+    }
+
+    // this pattern seems to work for 3 times any even power of 2 (e.g. 3 * 18 = 54)
+    private static void normalize54(ParameterizedField<?> field, BigRational[] factors) {
+        normalizeFactor(factors, 18, 0, 16); // R = 1 + P
+        normalizeFactor(factors, 19, 1, 15); // S = A + O
+        normalizeFactor(factors, 20, 2, 14); // T = B + N
+        normalizeFactor(factors, 21, 3, 13); // U = C + M
+        normalizeFactor(factors, 22, 4, 12); // V = D + L
+        normalizeFactor(factors, 23, 5, 11); // W = E + K
+        normalizeFactor(factors, 24, 6, 10); // X = F + J
+        normalizeFactor(factors, 25, 7,  9); // Y = G + I
+        normalizeFactor(factors, 26, 8,  8); // Z = H + H
+        field.normalizerMatrix = new short[][] {
+        //   1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q
+        	{0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0},	// Z = H + H = 2H
+        	{0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},	// Y = G + I
+        	{0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},	// X = F + J
+        	{0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},	// W = E + K
+        	{0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},	// V = D + L
+        	{0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},	// U = C + M
+        	{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},	// T = B + N
+        	{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},	// S = A + O
+        	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},	// R = 1 + P
         };
     }
 

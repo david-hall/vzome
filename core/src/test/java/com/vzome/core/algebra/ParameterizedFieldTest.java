@@ -127,6 +127,8 @@ public class ParameterizedFieldTest {
 				45,
 				46,
 				48,
+				49,
+				54,
 				58,
     	};
     	
@@ -228,6 +230,7 @@ public class ParameterizedFieldTest {
 //				48,
 				49,
                 // TODO: Confirm that up thru 49 are all working
+				54,
 //				58,
                 }; 
         for (int i : sides) {

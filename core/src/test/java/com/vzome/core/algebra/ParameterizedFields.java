@@ -276,11 +276,17 @@ public class ParameterizedFields {
 		case 44:
 			return (field.polygonSides() / 2) - 3;
 
+		case 45:
+			return 12;
+
 		case 46:
 			return (field.polygonSides() / 2) - 2;
 			
 		case 49:
 			return (field.polygonSides() / 2) - 4;
+
+		case 54:
+			return 18;
 
 		}
 		return (field.polygonSides() / 4)+1;
