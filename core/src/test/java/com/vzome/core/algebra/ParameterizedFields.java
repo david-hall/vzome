@@ -6,6 +6,7 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 
 import java.math.BigInteger;
+import java.time.LocalDate;
 
 import org.junit.Test;
 
@@ -229,7 +230,8 @@ public class ParameterizedFields {
 			// evaluate
 			return testScalars();
 		} else {
-			if(depth == scalars.length - 15) {
+			if(depth == scalars.length - 20) {
+				System.out.println(LocalDate.now());
 				printScalars(); // just so I can be sure it's not hung and judge the time to complete
 			}
 			for(int scalar : testScalars) {
@@ -290,6 +292,9 @@ public class ParameterizedFields {
 
 		case 51:
 			return 16;
+
+		case 52:
+			return 26 - 2;
 
 		case 54:
 			return 18;

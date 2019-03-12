@@ -974,6 +974,9 @@ public class PolygonField extends ParameterizedField<Integer> {
             case 51:
                 normalizer = PolygonField::normalize51;
                 break;
+            case 52:
+                normalizer = PolygonField::normalize52;
+                break;
             case 54:
                 normalizer = PolygonField::normalize54;
                 break;
@@ -1979,6 +1982,50 @@ public class PolygonField extends ParameterizedField<Integer> {
         };
     }
 
+    private static void normalize52(ParameterizedField<?> field, BigRational[] factors) {
+    	int Y = 25; 
+    	BigRational factor = factors[Y]; // y =      -2a             +2e             -2i             +2m             -2q             +2u
+        if(!factor.isZero()) {
+            factors[ 1] = factors[ 1].minus(factor); 	// -A
+            factors[ 1] = factors[ 1].minus(factor); 	// -A
+            factors[ 5] = factors[ 5].plus(factor); 	// E
+            factors[ 5] = factors[ 5].plus(factor); 	// E
+            factors[ 9] = factors[ 9].minus(factor); 	// -I
+            factors[ 9] = factors[ 9].minus(factor); 	// -I
+            factors[13] = factors[13].plus(factor); 	// M
+            factors[13] = factors[13].plus(factor); 	// M
+            factors[17] = factors[17].minus(factor); 	// -Q
+            factors[17] = factors[17].minus(factor); 	// -Q
+            factors[21] = factors[21].plus(factor); 	// U
+            factors[21] = factors[21].plus(factor); 	// U
+            // zero
+            factors[Y] = BigRational.ZERO;
+        }	 
+    	int X = 24; 
+    	factor = factors[X]; // x =  -1      -1b     +1d     +1f     -1h     -1j     +1l     +1n     -1p     -1r     +1t     +1v
+        if(!factor.isZero()) {
+            factors[ 0] = factors[ 0].minus(factor); 	// -units
+            factors[ 2] = factors[ 2].minus(factor); 	// -B
+            factors[ 4] = factors[ 4].plus(factor); 	// D
+            factors[ 6] = factors[ 6].plus(factor); 	// F
+            factors[ 8] = factors[ 8].minus(factor); 	// -H
+            factors[10] = factors[10].minus(factor); 	// -J
+            factors[12] = factors[12].plus(factor); 	// L
+            factors[14] = factors[14].plus(factor); 	// N
+            factors[16] = factors[16].minus(factor); 	// -P
+            factors[18] = factors[18].minus(factor); 	// -R
+            factors[20] = factors[20].plus(factor); 	// T
+            factors[22] = factors[22].plus(factor); 	// V
+            // zero
+            factors[X] = BigRational.ZERO;
+        }	 
+        field.normalizerMatrix = new short[][] {
+        //    1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S  T  U  V  W 
+        	{ 0,-2, 0, 0, 0, 2, 0, 0, 0,-2, 0, 0, 0, 2, 0, 0, 0,-2, 0, 0, 0, 2, 0, 0},	// y =      -2a             +2e             -2i             +2m             -2q             +2u
+        	{-1, 0,-1, 0, 1, 0, 1, 0,-1, 0,-1, 0, 1, 0, 1, 0,-1, 0,-1, 0, 1, 0, 1, 0},	// x =  -1      -1b     +1d     +1f     -1h     -1j     +1l     +1n     -1p     -1r     +1t     +1v
+        };
+    }
+    
     // this pattern seems to work for 3 times any even power of 2 (e.g. 3 * 18 = 54)
     private static void normalize54(ParameterizedField<?> field, BigRational[] factors) {
         normalizeFactor(factors, 18, 0, 16); // R = 1 + P
