@@ -55,17 +55,19 @@ public class ParameterizedFieldTest {
 
 //    @Test
     public void printPolygonFieldNormalization() {
+    	System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
     	int nSides = 15;
-        ParameterizedFields.printNormalization( new PolygonField(nSides) );
+    	int skip = 0;
+        ParameterizedFields.printNormalization( new PolygonField(nSides) , skip);
     }
 
     @Test
     public void testMulDivEvaluate() {
-		System.out.println("testMulDivEvaluate " + Utilities.thisSourceCodeLine());
+    	System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
     	final double delta = 0.000000000001d; // eleven 0's between the decimal point and the 1
     	for(int nSides = PolygonField.MIN_SIDES; nSides <= 60; nSides++) {
-    		// TODO: some non-primes from 55 to 57 are not normalized yet
-        	if(nSides >= 55 && nSides != 58 && nSides != 59) {
+    		// TODO: some non-primes from 56 to 57 are not normalized yet
+        	if(nSides >= 56 && nSides != 58 && nSides != 59) {
         		System.out.println("Skipping " + nSides + " test at " + Utilities.thisSourceCodeLine());
         		continue; 
         	}
@@ -132,9 +134,11 @@ public class ParameterizedFieldTest {
 				51,
 				52,
 				54,
+				55,
 				58,
     	};
     	
+    	System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
     	for(int i : sides) {
     		PolygonField field = new PolygonField(i);
     		System.out.print(field.getName());
@@ -234,11 +238,13 @@ public class ParameterizedFieldTest {
 //				49,
 //				50,
 //				51,
-				52,
+//				52,
 //				54,
-                // TODO: Confirm that up thru 54 are all working
+				55,
+                // TODO: Confirm that up thru 55 are all working
 //				58,
                 }; 
+        System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
         for (int i : sides) {
             ParameterizedFields.printMatrices( new PolygonField(i) );
         }
@@ -249,7 +255,7 @@ public class ParameterizedFieldTest {
 //        ParameterizedFields.printMatrices( new EdPeggField() );
     }
     
-    @Test 
+//    @Test 
     public void printGcdTable() {
         // this is an experiment to see if I can calculate the correct order for a polygonField with nSides
         // so that it is an AlgebraicField, not just an AlgebraicRing.

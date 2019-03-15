@@ -43,7 +43,7 @@ public class PolygonField extends ParameterizedField<Integer> {
             // I'm pretty sure that Niven's theorem https://en.wikipedia.org/wiki/Niven%27s_theorem
             // implies that this will be the only case where we'll get a rational result.
             coefficients[2] = 2.0d;
-            // Similarly, the calculated value of coefficients[1] is 1.7320508075688774 and should exactly equal sqrt(3) which is 1.73205080756887729...
+            // Similarly, the calculated value of coefficients[1] is 1.7320508075688774 but should exactly equal sqrt(3) which is 1.73205080756887729...
             coefficients[1] = Math.sqrt(3);
             break;
 
@@ -979,6 +979,9 @@ public class PolygonField extends ParameterizedField<Integer> {
                 break;
             case 54:
                 normalizer = PolygonField::normalize54;
+                break;
+            case 55:
+                normalizer = PolygonField::normalize55;
                 break;
             case 58:
                 normalizer = PolygonField::normalize58;
@@ -2048,6 +2051,137 @@ public class PolygonField extends ParameterizedField<Integer> {
         	{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},	// T = B + N
         	{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},	// S = A + O
         	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},	// R = 1 + P
+        };
+    }
+
+    private static void normalize55(ParameterizedField<?> field, BigRational[] factors) {
+    	int Z = 26; 
+    	BigRational factor = factors[Z];     // z =                  -1d -1e                                     +1o +1p            |
+        if(!factor.isZero()) {
+            factors[ 4] = factors[ 4].minus(factor); 	// -D
+            factors[ 5] = factors[ 5].minus(factor); 	// -E
+            factors[15] = factors[15].plus(factor); 	// O
+            factors[16] = factors[16].plus(factor); 	// P
+            // zero
+            factors[Z] = BigRational.ZERO;
+        }	 
+    	int Y = 25; 
+    	factor = factors[Y];                 // y =              -1c         -1f                             +1n         +1q        |
+        if(!factor.isZero()) {
+            factors[ 3] = factors[ 3].minus(factor); 	// -C
+            factors[ 6] = factors[ 6].minus(factor); 	// -F
+            factors[14] = factors[14].plus(factor); 	// N
+            factors[17] = factors[17].plus(factor); 	// Q
+            // zero
+            factors[Y] = BigRational.ZERO;
+        }	 
+    	int X = 24; 
+    	factor = factors[X];                  // x =          -1b                 -1g                     +1m                 +1r    |
+        if(!factor.isZero()) {
+            factors[ 2] = factors[ 2].minus(factor); 	// -B
+            factors[ 7] = factors[ 7].minus(factor); 	// -G
+            factors[13] = factors[13].plus(factor); 	// M
+            factors[18] = factors[18].plus(factor); 	// R
+            // zero
+            factors[X] = BigRational.ZERO;
+        }	 
+    	int W = 23; 
+    	factor = factors[W];                  // w =      -1a                         -1h             +1l                         +1s|
+        if(!factor.isZero()) {
+            factors[ 1] = factors[ 1].minus(factor); 	// -A
+            factors[ 8] = factors[ 8].minus(factor); 	// -H
+            factors[12] = factors[12].plus(factor); 	// L
+            factors[19] = factors[19].plus(factor); 	// S
+            // zero
+            factors[W] = BigRational.ZERO;
+        }	 
+    	int V = 22; 
+    	factor = factors[V];                   // v =  -2  +1a     -2c     +1e -1f     +2h -1i -1j +1k -1l -1m +1n +1o     +1q +1r -1s|
+        if(!factor.isZero()) {
+            factors[ 0] = factors[ 0].minus(factor); 	// -units
+            factors[ 0] = factors[ 0].minus(factor); 	// -units
+            factors[ 1] = factors[ 1].plus(factor); 	// A
+            factors[ 3] = factors[ 3].minus(factor); 	// -C
+            factors[ 3] = factors[ 3].minus(factor); 	// -C
+            factors[ 5] = factors[ 5].plus(factor); 	// E
+            factors[ 6] = factors[ 6].minus(factor); 	// -F
+            factors[ 8] = factors[ 8].plus(factor); 	// H
+            factors[ 8] = factors[ 8].plus(factor); 	// H
+            factors[ 9] = factors[ 9].minus(factor); 	// -I
+            factors[10] = factors[10].minus(factor); 	// -J
+            factors[11] = factors[11].plus(factor); 	// K
+            factors[12] = factors[12].minus(factor); 	// -L
+            factors[13] = factors[13].minus(factor); 	// -M
+            factors[14] = factors[14].plus(factor); 	// N
+            factors[15] = factors[15].plus(factor); 	// O
+            factors[17] = factors[17].plus(factor); 	// Q
+            factors[18] = factors[18].plus(factor); 	// R
+            factors[19] = factors[19].minus(factor); 	// -S
+            // zero
+            factors[V] = BigRational.ZERO;
+        }	 
+    	int U = 21;
+    	factor = factors[U];                   // u =   2  -2a -1b +2c -1d -2e +2f +1g -2h +1i +1j -2k     +1m -1n     +2p     -1r +1s|
+        if(!factor.isZero()) {
+            factors[ 0] = factors[ 0].plus(factor); 	// units
+            factors[ 0] = factors[ 0].plus(factor); 	// units
+            factors[ 1] = factors[ 1].minus(factor); 	// -A
+            factors[ 1] = factors[ 1].minus(factor); 	// -A
+            factors[ 2] = factors[ 2].minus(factor); 	// -B
+            factors[ 3] = factors[ 3].plus(factor); 	// C
+            factors[ 3] = factors[ 3].plus(factor); 	// C
+            factors[ 4] = factors[ 4].minus(factor); 	// -D
+            factors[ 5] = factors[ 5].minus(factor); 	// -E
+            factors[ 5] = factors[ 5].minus(factor); 	// -E
+            factors[ 6] = factors[ 6].plus(factor); 	// F
+            factors[ 6] = factors[ 6].plus(factor); 	// F
+            factors[ 7] = factors[ 7].plus(factor); 	// G
+            factors[ 8] = factors[ 8].minus(factor); 	// -H
+            factors[ 8] = factors[ 8].minus(factor); 	// -H
+            factors[ 9] = factors[ 9].plus(factor); 	// I
+            factors[10] = factors[10].plus(factor); 	// J
+            factors[11] = factors[11].minus(factor); 	// -K
+            factors[11] = factors[11].minus(factor); 	// -K
+            factors[13] = factors[13].plus(factor); 	// M
+            factors[14] = factors[14].minus(factor); 	// N
+            factors[16] = factors[16].plus(factor); 	// P
+            factors[16] = factors[16].plus(factor); 	// P
+            factors[18] = factors[18].minus(factor); 	// -R
+            factors[19] = factors[19].plus(factor); 	// S
+            // zero
+            factors[U] = BigRational.ZERO;
+        }	 
+    	int T = 20;
+    	factor = factors[T];                   // t =  -1  +1a     -2c     +1e -1f     +2h     -1j     -1l -1m +1n +1o     +1q +1r -1s|
+        if(!factor.isZero()) {
+            factors[ 0] = factors[ 0].minus(factor); 	// -units
+            factors[ 1] = factors[ 1].plus(factor); 	// A
+            factors[ 3] = factors[ 3].minus(factor); 	// -C
+            factors[ 3] = factors[ 3].minus(factor); 	// -C
+            factors[ 5] = factors[ 5].plus(factor); 	// E
+            factors[ 6] = factors[ 6].minus(factor); 	// -F
+            factors[ 8] = factors[ 8].plus(factor); 	// H
+            factors[ 8] = factors[ 8].plus(factor); 	// H
+            factors[10] = factors[10].minus(factor); 	// -J
+            factors[12] = factors[12].minus(factor); 	// -L
+            factors[13] = factors[13].minus(factor); 	// -M
+            factors[14] = factors[14].plus(factor); 	// N
+            factors[15] = factors[15].plus(factor); 	// O
+            factors[17] = factors[17].plus(factor); 	// Q
+            factors[18] = factors[18].plus(factor); 	// R
+            factors[19] = factors[19].minus(factor); 	// -S
+            // zero
+            factors[T] = BigRational.ZERO;
+        }	 
+        field.normalizerMatrix = new short[][] {
+        //    1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S
+        	{ 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0},	// z =                  -1d -1e                                     +1o +1p            |
+        	{ 0, 0, 0,-1, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0},	// y =              -1c         -1f                             +1n         +1q        |
+        	{ 0, 0,-1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0},	// x =          -1b                 -1g                     +1m                 +1r    |
+        	{ 0,-1, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1},	// w =      -1a                         -1h             +1l                         +1s|
+        	{-2, 1, 0,-2, 0, 1,-1, 0, 2,-1,-1, 1,-1,-1, 1, 1, 0, 1, 1,-1},	// v =  -2  +1a     -2c     +1e -1f     +2h -1i -1j +1k -1l -1m +1n +1o     +1q +1r -1s|
+        	{ 2,-2,-1, 2,-1,-2, 2, 1,-2, 1, 1,-2, 0, 1,-1, 0, 2, 0,-1, 1},	// u =   2  -2a -1b +2c -1d -2e +2f +1g -2h +1i +1j -2k     +1m -1n     +2p     -1r +1s|
+        	{-1, 1, 0,-2, 0, 1,-1, 0, 2, 0,-1, 0,-1,-1, 1, 1, 0, 1, 1,-1},	// t =  -1  +1a     -2c     +1e -1f     +2h     -1j     -1l -1m +1n +1o     +1q +1r -1s|
         };
     }
 
