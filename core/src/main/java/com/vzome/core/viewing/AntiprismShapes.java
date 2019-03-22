@@ -31,10 +31,10 @@ public class AntiprismShapes extends AbstractShapes {
         final Polyhedron antiprism = new Polyhedron(field);
         final AlgebraicNumber topX = field.one();
         final AlgebraicNumber topY = field.zero();
-        final AlgebraicNumber maxTerm = field.getUnitTerm(field.getOrder() - 1);
-        final AlgebraicNumber botX = field.getUnitTerm(field.getOrder() - 2).dividedBy(maxTerm);
+        final AlgebraicNumber maxTerm = field.getUnitDiagonal(field.diagonalCount() - 1);
+        final AlgebraicNumber botX = field.getUnitDiagonal(field.diagonalCount() - 2).dividedBy(maxTerm);
         final AlgebraicNumber botY = maxTerm.reciprocal();
-        final AlgebraicNumber halfHeight = field.getUnitTerm(field.getOrder() - 1).reciprocal();
+        final AlgebraicNumber halfHeight = field.getUnitDiagonal(field.diagonalCount() - 1).reciprocal();
         final AlgebraicMatrix rotationMatrix = symm.getRotationMatrix();
 
         // Add vertices

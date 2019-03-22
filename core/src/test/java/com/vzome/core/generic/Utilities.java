@@ -2,6 +2,10 @@ package com.vzome.core.generic;
 
 import static junit.framework.TestCase.assertEquals;
 
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+
 public class Utilities {
     private Utilities() {}
 
@@ -27,6 +31,26 @@ public class Utilities {
     	if(expected != value) {
     	    System.out.println( value + " does not equal " + expected + ", but is within tolerance of " + delta + " " + getSourceCodeLine(2));
     	}
+    }
+
+    public static boolean isPowerOfTwo(int n) {
+    	return (n != 0) && ( (n & -n) ==n );
+    }
+    
+    public static boolean isPrime(int n) {
+    	final int certainty = 100; // same value as nextProbablePrime()
+    	return BigInteger.valueOf(n).isProbablePrime(certainty);
+    }
+    
+    public static List<Integer> primeFactors(int n) {
+    	List<Integer> factors = new ArrayList<>();
+    	for(int prime = 2; prime <= n; prime = BigInteger.valueOf(prime).nextProbablePrime().intValue()) {
+    		while(n % prime == 0) {
+    			factors.add(prime);
+    			n /= prime;
+    		}
+    	}
+    	return factors;
     }
 
 }

@@ -4,8 +4,7 @@ import static com.vzome.core.algebra.PentagonField.PHI_VALUE;
 import static java.lang.Math.PI;
 import static java.lang.Math.sin;
 
-import java.math.BigInteger;
-import java.util.Arrays;
+import com.vzome.core.generic.Utilities;
 
 /**
  * @author David Hall
@@ -14,27 +13,46 @@ public class PolygonField extends ParameterizedField<Integer> {
     
     /**
      * 
-     * @param polygonSides
+     * @param nSides
      * @return the coefficients of a PolygonField given the same parameter. 
      * This can be used to determine when two fields have compatible coefficients 
      * without having to generate an instance of the class. 
      */
-    public static double[] getFieldCoefficients(int polygonSides) {
-        int order = polygonSides/2;
+    public static double[] getFieldCoefficients(int nSides) {
+        int order = getOrder(nSides);
         double[] coefficients = new double[order]; 
-        double unitLength = sin(PI / polygonSides);
+        double[] diagLengths = getDiagonalLengths(nSides);
+
+        // if nSides is prime or a power of two then all diagLengths are returned
+        // otherwise, order is less than diagLengths.length, so not all are returned
+        for (int i = 0; i < order; i++) {
+            coefficients[i] = diagLengths[i];
+        }
+        return coefficients;
+    }
+    
+    /**
+     * 
+     * @param nSides
+     * @return an array with the unique lengths in increasing order 
+     * of the diagonals of a regular N-gon having a unit edge length. 
+     */
+    public static double[] getDiagonalLengths(int nSides) {
+        int count = diagonalCount(nSides);
+        double[] diagLengths = new double[count]; 
+        double unitLength = sin(PI / nSides);
 
         // The units position should always be exactly 1.0d.
         // We avoid any trig or rounding errors by specifically assigning it that value.
-        coefficients[0] = 1.0d;
+        diagLengths[0] = 1.0d;
         // now initialize the rest, starting from i = 1
-        for (int i = 1; i < order; i++) {
-            coefficients[i] = sin((i+1) * PI / polygonSides) / unitLength;
+        for (int i = 1; i < count; i++) {
+            diagLengths[i] = sin((i+1) * PI / nSides) / unitLength;
         }
 
         // I discovered that a few significant values don't appear to be calculated "correctly" at first glance.
         // I found a great explanation at https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
-        switch(polygonSides) {
+        switch(nSides) {
         case 6:
             // Since PI is irrational and cannot be exactly represented in a double,
             // the trig functions may not produce the exact result we expect.
@@ -42,9 +60,9 @@ public class PolygonField extends ParameterizedField<Integer> {
             // I want to have the exact correct value, so I'm going to hard code it.
             // I'm pretty sure that Niven's theorem https://en.wikipedia.org/wiki/Niven%27s_theorem
             // implies that this will be the only case where we'll get a rational result.
-            coefficients[2] = 2.0d;
+            diagLengths[2] = 2.0d;
             // Similarly, the calculated value of coefficients[1] is 1.7320508075688774 but should exactly equal sqrt(3) which is 1.73205080756887729...
-            coefficients[1] = Math.sqrt(3);
+            diagLengths[1] = Math.sqrt(3);
             break;
 
         case 5:
@@ -53,7 +71,7 @@ public class PolygonField extends ParameterizedField<Integer> {
             // coefficients[1] = 1.618033988749897
             // WolframAlpha says 1.618033988749894848204586834365...
             // I want to have the same value in either case, so I'm going to hard code it.
-            coefficients[1] = PHI_VALUE;
+            diagLengths[1] = PHI_VALUE;
             break;
 
 //        case 4:
@@ -74,9 +92,9 @@ public class PolygonField extends ParameterizedField<Integer> {
 //            System.out.printf("SIGMA_VALUE = %1.16f\n", HeptagonField.SIGMA_VALUE);
 //                      break;
         }
-        return coefficients;
+        return diagLengths;
     }
-    
+
     @Override
     public double[] getCoefficients() {
         return getFieldCoefficients(polygonSides());
@@ -84,23 +102,471 @@ public class PolygonField extends ParameterizedField<Integer> {
     
     public static final String FIELD_PREFIX = "polygon";
     
-    /**
-     * 
-     * @return a pre-sorted array of the standard number of sides to be used 
-     * as parameters to the PolygonField c'tor. This is intended to be a 
-     * convenient pre-calculated way for applications to know which values 
-     * should commonly be used without having to check individual values.
-     * This array should be sorted and should include all values up to an 
-     * arbitrary limit for which mayBeNonInvertable() will return false.
-     * Initially, we'll use all values up to and incuding 64.
-     */
-    public static int[] getStandardPolygonSides() {
-        final int[] std = new int[] {4, 5, 6, 7, 8, 11, 13, 16, 17, 19, 23, 29, 31, 32, 37, 41, 43, 47, 53, 59, 61, 64};
-        return Arrays.copyOf(std, std.length); // return a copy so the original array is immutable
+    public static int getOrder(int nSides) {
+    	return primaryDiagonalCount(nSides);
+    }
+    
+    public static int diagonalCount(int nSides) {
+    	return nSides/2;
+    }
+
+    public int diagonalCount() {
+    	return diagonalCount(polygonSides());
+    }
+
+    // generates the sequence described at https://oeis.org/A055034
+    public static int primaryDiagonalCount(int nSides) {
+    	// as long as nSides is an int, the result can safely be cast down to an int
+    	// but we need a long to hold 2 * nSides without overflowing
+    	return (int) (eulerTotient(2L * nSides) / 2L);
+    }
+    
+    public static int secondaryDiagonalCount(int nSides) {
+    	return diagonalCount(nSides) - primaryDiagonalCount(nSides);
+    }
+    
+    // returns the number of positive integers <= n and coprime to n
+    // The result will always be less than or equal to n/2 
+    // This function is also known as eulerPhi() or simpy phi(),
+    // but since we use phi for the golden ratio, I'll call it eulerTotient()
+    // It generates the sequence described at https://oeis.org/A000010
+    public static long eulerTotient(long n) {
+       long result = n; 
+       for(long i=2; i*i <= n; i++) { 
+            if (n % i == 0) result -= result / i; 
+            while (n % i == 0) {
+            	n /= i;
+            }
+       } 
+       if (n > 1) {
+    	   result -= result / n; 
+       }
+       return result; 
+    }
+    
+    public static short[][][] getNormalizedMultiplicationHolor(int nSides) {
+    	short[][][] holor = getExtendedMultiplicationHolor(nSides);
+    	if(Utilities.isPrime(nSides) || Utilities.isPowerOfTwo(nSides)) {
+    		return holor;
+    	}
+    	// copy the truncated holor to result
+    	int length = primaryDiagonalCount(nSides);
+    	short[][][] result = new short[length][length][length];
+    	for(int i = 0; i < length; i++) {
+        	for(int j = 0; j < length; j++) {
+    			for(int k = 0; k < length; k++) {
+    				result[i][j][k] = holor[i][j][k];
+        		}
+        	}
+    	}
+    	// apply normalizer matrix to result
+    	short[][] normalizerMatrix = getNormalizerMatrix(nSides);
+    	int n = 0;
+    	for(int term = length; term < diagonalCount(nSides); term++) {
+    		for(int r = 0; r < length; r++) {
+	    		for(int c = 0; c < length; c++) {
+        			short omit = holor[term][r][c];
+        			if(omit != 0) {
+        				for(int t = 0; t < length; t++) {
+        					short alt = normalizerMatrix[n][t];
+    						if(alt != 0) {
+            					int adjust = omit * alt;
+    							// This is the same as using 
+            					// result[t][r][c] += adjust; 
+    							// except that when using the += operator, the cast to short is implicit and thus may be overlooked.
+    							result[t][r][c] = (short)(result[t][r][c] + adjust); // cast assumes no overflow or underflow
+	        				}
+        				}
+        			}
+        		}
+    		}
+    		n++;
+    	}
+    	return result;
+    }
+    
+    public static short[][] getNormalizerMatrix(int nSides) {
+    	if(nSides < MIN_SIDES) {
+    		throw new IllegalArgumentException("nSides = " + nSides + " but must be greater than or equal to " + MIN_SIDES);
+    	}
+    	if(PolygonField.secondaryDiagonalCount(nSides) == 0) { // same as isPrime(nSides) || isPowerOfTwo(nSides)
+        	return null;
+    	}
+    	// TODO: calculate normalizerMatrix for any valid nSides 
+    	// rather than using this hard-coded switch for specific known values
+    	switch(nSides) {
+			case 6:
+			return new short[][] {
+			    // 1  a
+			    {  2, 0, },    //  b =  +2       |
+			};
+			
+			case 9:
+			return new short[][] {
+			    // 1  a  b
+			    {  1, 1, 0, },    //  c =  +1   +1a      |
+			};
+			
+			case 10:
+			return new short[][] {
+			    // 1  a  b  c
+			    { -2, 0, 2, 0, },    //  d =  -2        +2b      |
+			};
+			
+			case 12:
+			return new short[][] {
+			    // 1  a  b  c
+			    {  1, 0, 1, 0, },    //  d =  +1        +1b      |
+			    {  0, 2, 0, 0, },    //  e =       +2a           |
+			};
+			
+			case 14:
+			return new short[][] {
+			    // 1  a  b  c  d  e
+			    {  2, 0,-2, 0, 2, 0, },    //  f =  +2        -2b       +2d      |
+			};
+			
+			case 15:
+			return new short[][] {
+			    // 1  a  b  c
+			    {  1, 2, 1,-1, },    //  d =  +1   +2a  +1b  -1c |
+			    {  1, 0, 0, 1, },    //  e =  +1             +1c |
+			    {  0, 1, 1, 0, },    //  f =       +1a  +1b      |
+			};
+			
+			case 18:
+			return new short[][] {
+			    // 1  a  b  c  d  e
+			    {  1, 0, 0, 0, 1, 0, },    //  f =  +1                  +1d      |
+			    {  0, 1, 0, 1, 0, 0, },    //  g =       +1a       +1c           |
+			    {  0, 0, 2, 0, 0, 0, },    //  h =            +2b                |
+			};
+			
+			case 20:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g
+			    { -1, 0,-1, 0, 1, 0, 1, 0, },    //  h =  -1        -1b       +1d       +1f      |
+			    {  0,-2, 0, 0, 0, 2, 0, 0, },    //  i =       -2a                 +2e           |
+			};
+			
+			case 21:
+			return new short[][] {
+			    // 1  a  b  c  d  e
+			    { -2,-1, 1, 2, 1,-1, },    //  f =  -2   -1a  +1b  +2c  +1d  -1e |
+			    {  1, 0, 0, 0, 0, 1, },    //  g =  +1                       +1e |
+			    {  0, 1, 0, 0, 1, 0, },    //  h =       +1a            +1d      |
+			    {  0, 0, 1, 1, 0, 0, },    //  i =            +1b  +1c           |
+			};
+			
+			case 22:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i
+			    {  2, 0,-2, 0, 2, 0,-2, 0, 2, 0, },    //  j =  +2        -2b       +2d       -2f       +2h      |
+			};
+			
+			case 24:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g
+			    {  1, 0, 0, 0, 0, 0, 1, 0, },    //  h =  +1                            +1f      |
+			    {  0, 1, 0, 0, 0, 1, 0, 0, },    //  i =       +1a                 +1e           |
+			    {  0, 0, 1, 0, 1, 0, 0, 0, },    //  j =            +1b       +1d                |
+			    {  0, 0, 0, 2, 0, 0, 0, 0, },    //  k =                 +2c                     |
+			};
+			
+			case 25:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i
+			    { -1, 0, 0,-1, 0, 1, 0, 0, 1, 0, },    //  j =  -1             -1c       +1e            +1h      |
+			    {  0,-1,-1, 0, 0, 0, 1, 1, 0, 0, },    //  k =       -1a  -1b                 +1f  +1g           |
+			};
+			
+			case 26:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k
+			    { -2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0, },    //  l =  -2        +2b       -2d       +2f       -2h       +2j      |
+			};
+			
+			case 27:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h
+			    {  1, 0, 0, 0, 0, 0, 0, 1, 0, },    //  i =  +1                                 +1g      |
+			    {  0, 1, 0, 0, 0, 0, 1, 0, 0, },    //  j =       +1a                      +1f           |
+			    {  0, 0, 1, 0, 0, 1, 0, 0, 0, },    //  k =            +1b            +1e                |
+			    {  0, 0, 0, 1, 1, 0, 0, 0, 0, },    //  l =                 +1c  +1d                     |
+			};
+			
+			case 28:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k
+			    {  1, 0, 1, 0,-1, 0,-1, 0, 1, 0, 1, 0, },    //  l =  +1        +1b       -1d       -1f       +1h       +1j      |
+			    {  0, 2, 0, 0, 0,-2, 0, 0, 0, 2, 0, 0, },    //  m =       +2a                 -2e                 +2i           |
+			};
+			
+			case 30:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g
+			    {  0, 0, 1, 0, 1, 0, 0, 0, },    //  h =            +1b       +1d                |
+			    {  0, 1, 0, 2, 0, 1, 0,-1, },    //  i =       +1a       +2c       +1e       -1g |
+			    {  1, 0, 1, 0, 1, 0, 0, 0, },    //  j =  +1        +1b       +1d                |
+			    {  0, 1, 0, 0, 0, 0, 0, 1, },    //  k =       +1a                           +1g |
+			    {  0, 0, 1, 0, 0, 0, 1, 0, },    //  l =            +1b                 +1f      |
+			    {  0, 0, 0, 1, 0, 1, 0, 0, },    //  m =                 +1c       +1e           |
+			    {  0, 0, 0, 0, 2, 0, 0, 0, },    //  n =                      +2d                |
+			};
+			
+			case 33:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i
+			    {  1, 2, 1,-1,-2,-1, 1, 2, 1,-1, },    //  j =  +1   +2a  +1b  -1c  -2d  -1e  +1f  +2g  +1h  -1i |
+			    {  1, 0, 0, 0, 0, 0, 0, 0, 0, 1, },    //  k =  +1                                           +1i |
+			    {  0, 1, 0, 0, 0, 0, 0, 0, 1, 0, },    //  l =       +1a                                +1h      |
+			    {  0, 0, 1, 0, 0, 0, 0, 1, 0, 0, },    //  m =            +1b                      +1g           |
+			    {  0, 0, 0, 1, 0, 0, 1, 0, 0, 0, },    //  n =                 +1c            +1f                |
+			    {  0, 0, 0, 0, 1, 1, 0, 0, 0, 0, },    //  o =                      +1d  +1e                     |
+			};
+			
+			case 34:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o
+			    { -2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0, },    //  p =  -2        +2b       -2d       +2f       -2h       +2j       -2l       +2n      |
+			};
+			
+			case 35:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k
+			    {  0,-1,-2,-1, 0, 0, 1, 1, 0, 1, 1,-1, },    //  l =       -1a  -2b  -1c            +1f  +1g       +1i  +1j  -1k |
+			    { -1,-1, 0,-1,-1, 1, 0, 0, 2, 0,-1, 1, },    //  m =  -1   -1a       -1c  -1d  +1e            +2h       -1j  +1k |
+			    { -1,-1,-2,-1, 0,-1, 1, 2, 0, 1, 1,-1, },    //  n =  -1   -1a  -2b  -1c       -1e  +1f  +2g       +1i  +1j  -1k |
+			    {  0,-1, 0, 0,-1, 0, 0, 0, 1, 0, 0, 1, },    //  o =       -1a            -1d                 +1h            +1k |
+			    {  0, 0,-1,-1, 0, 0, 0, 0, 0, 1, 1, 0, },    //  p =            -1b  -1c                           +1i  +1j      |
+			};
+			
+			case 36:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k
+			    {  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, },    //  l =  +1                                                +1j      |
+			    {  0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, },    //  m =       +1a                                     +1i           |
+			    {  0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, },    //  n =            +1b                           +1h                |
+			    {  0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, },    //  o =                 +1c                 +1g                     |
+			    {  0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, },    //  p =                      +1d       +1f                          |
+			    {  0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, },    //  q =                           +2e                               |
+			};
+			
+			case 38:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q
+			    {  2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0, },    //  r =  +2        -2b       +2d       -2f       +2h       -2j       +2l       -2n       +2p      |
+			};
+			
+			case 39:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k
+			    { -2,-1, 1, 2, 1,-1,-2,-1, 1, 2, 1,-1, },    //  l =  -2   -1a  +1b  +2c  +1d  -1e  -2f  -1g  +1h  +2i  +1j  -1k |
+			    {  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, },    //  m =  +1                                                     +1k |
+			    {  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, },    //  n =       +1a                                          +1j      |
+			    {  0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, },    //  o =            +1b                                +1i           |
+			    {  0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, },    //  p =                 +1c                      +1h                |
+			    {  0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, },    //  q =                      +1d            +1g                     |
+			    {  0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, },    //  r =                           +1e  +1f                          |
+			};
+			
+			case 40:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o
+			    { -1, 0, 0, 0, 0, 0,-1, 0, 1, 0, 0, 0, 0, 0, 1, 0, },    //  p =  -1                            -1f       +1h                           +1n      |
+			    {  0,-1, 0, 0, 0,-1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, },    //  q =       -1a                 -1e                 +1i                 +1m           |
+			    {  0, 0,-1, 0,-1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, },    //  r =            -1b       -1d                           +1j       +1l                |
+			    {  0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, },    //  s =                 +2c                                     +2k                     |
+			};
+			
+			case 42:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k
+			    { -1, 0,-1, 0, 0, 0, 1, 0, 1, 0, 0, 0, },    //  l =  -1        -1b                 +1f       +1h                |
+			    {  0,-2, 0,-1, 0, 1, 0, 2, 0, 1, 0,-1, },    //  m =       -2a       -1c       +1e       +2g       +1i       -1k |
+			    {  0, 0,-1, 0, 0, 0, 1, 0, 1, 0, 0, 0, },    //  n =            -1b                 +1f       +1h                |
+			    {  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, },    //  o =       +1a                                               +1k |
+			    {  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, },    //  p =            +1b                                     +1j      |
+			    {  0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, },    //  q =                 +1c                           +1i           |
+			    {  0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, },    //  r =                      +1d                 +1h                |
+			    {  0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, },    //  s =                           +1e       +1g                     |
+			    {  0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, },    //  t =                                +2f                          |
+			};
+			
+			case 44:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s
+			    {  1, 0, 1, 0,-1, 0,-1, 0, 1, 0, 1, 0,-1, 0,-1, 0, 1, 0, 1, 0, },    //  t =  +1        +1b       -1d       -1f       +1h       +1j       -1l       -1n       +1p       +1r      |
+			    {  0, 2, 0, 0, 0,-2, 0, 0, 0, 2, 0, 0, 0,-2, 0, 0, 0, 2, 0, 0, },    //  u =       +2a                 -2e                 +2i                 -2m                 +2q           |
+			};
+			
+			case 45:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k
+			    {  1,-1, 0, 1, 0, 0, 0, 1, 0,-1, 1, 0, },    //  l =  +1   -1a       +1c                 +1g       -1i  +1j      |
+			    { -1, 1, 0, 0, 1, 0, 1, 0, 0, 1,-1, 0, },    //  m =  -1   +1a            +1d       +1f            +1i  -1j      |
+			    {  0, 0, 1, 0, 0, 2, 0, 0, 1, 0, 0,-1, },    //  n =            +1b            +2e            +1h            -1k |
+			    {  0, 1, 0, 0, 1, 0, 1, 0, 0, 1,-1, 0, },    //  o =       +1a            +1d       +1f            +1i  -1j      |
+			    {  1, 0, 0, 1, 0, 0, 0, 1, 0,-1, 1, 0, },    //  p =  +1             +1c                 +1g       -1i  +1j      |
+			    {  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, },    //  q =            +1b                                          +1k |
+			    {  0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, },    //  r =                 +1c                                +1j      |
+			    {  0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, },    //  s =                      +1d                      +1i           |
+			    {  0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, },    //  t =                           +1e            +1h                |
+			    {  0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, },    //  u =                                +1f  +1g                     |
+			};
+			
+			case 46:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s  t  u
+			    {  2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0, },    //  v =  +2        -2b       +2d       -2f       +2h       -2j       +2l       -2n       +2p       -2r       +2t      |
+			};
+			
+			case 48:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o
+			    {  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, },    //  p =  +1                                                                    +1n      |
+			    {  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, },    //  q =       +1a                                                         +1m           |
+			    {  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, },    //  r =            +1b                                               +1l                |
+			    {  0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, },    //  s =                 +1c                                     +1k                     |
+			    {  0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, },    //  t =                      +1d                           +1j                          |
+			    {  0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, },    //  u =                           +1e                 +1i                               |
+			    {  0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, },    //  v =                                +1f       +1h                                    |
+			    {  0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, },    //  w =                                     +2g                                         |
+			};
+			
+			case 49:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s  t
+			    {  1, 0, 0, 0, 0, 1, 0,-1, 0, 0, 0, 0,-1, 0, 1, 0, 0, 0, 0, 1, 0, },    //  u =  +1                       +1e       -1g                      -1l       +1n                      +1s      |
+			    {  0, 1, 0, 0, 1, 0, 0, 0,-1, 0, 0,-1, 0, 0, 0, 1, 0, 0, 1, 0, 0, },    //  v =       +1a            +1d                 -1h            -1k                 +1o            +1r           |
+			    {  0, 0, 1, 1, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, },    //  w =            +1b  +1c                           -1i  -1j                           +1p  +1q                |
+			};
+			
+			case 50:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s
+			    { -1, 0, 0, 0, 0, 0, 0, 0,-1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, },    //  t =  -1                                      -1h       +1j                                     +1r      |
+			    {  0,-1, 0, 0, 0, 0, 0,-1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, },    //  u =       -1a                           -1g                 +1k                           +1q           |
+			    {  0, 0,-1, 0, 0, 0,-1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, },    //  v =            -1b                 -1f                           +1l                 +1p                |
+			    {  0, 0, 0,-1, 0,-1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, },    //  w =                 -1c       -1e                                     +1m       +1o                     |
+			    {  0, 0, 0, 0,-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, },    //  x =                      -2d                                               +2n                          |
+			};
+			
+			case 51:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o
+			    {  1, 2, 1,-1,-2,-1, 1, 2, 1,-1,-2,-1, 1, 2, 1,-1, },    //  p =  +1   +2a  +1b  -1c  -2d  -1e  +1f  +2g  +1h  -1i  -2j  -1k  +1l  +2m  +1n  -1o |
+			    {  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, },    //  q =  +1                                                                         +1o |
+			    {  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, },    //  r =       +1a                                                              +1n      |
+			    {  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, },    //  s =            +1b                                                    +1m           |
+			    {  0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, },    //  t =                 +1c                                          +1l                |
+			    {  0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, },    //  u =                      +1d                                +1k                     |
+			    {  0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, },    //  v =                           +1e                      +1j                          |
+			    {  0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, },    //  w =                                +1f            +1i                               |
+			    {  0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, },    //  x =                                     +1g  +1h                                    |
+			};
+			
+			case 52:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s  t  u  v  w
+			    { -1, 0,-1, 0, 1, 0, 1, 0,-1, 0,-1, 0, 1, 0, 1, 0,-1, 0,-1, 0, 1, 0, 1, 0, },    //  x =  -1        -1b       +1d       +1f       -1h       -1j       +1l       +1n       -1p       -1r       +1t       +1v      |
+			    {  0,-2, 0, 0, 0, 2, 0, 0, 0,-2, 0, 0, 0, 2, 0, 0, 0,-2, 0, 0, 0, 2, 0, 0, },    //  y =       -2a                 +2e                 -2i                 +2m                 -2q                 +2u           |
+			};
+			
+			case 54:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q
+			    {  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, },    //  r =  +1                                                                              +1p      |
+			    {  0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, },    //  s =       +1a                                                                   +1o           |
+			    {  0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, },    //  t =            +1b                                                         +1n                |
+			    {  0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, },    //  u =                 +1c                                               +1m                     |
+			    {  0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, },    //  v =                      +1d                                     +1l                          |
+			    {  0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, },    //  w =                           +1e                           +1k                               |
+			    {  0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, },    //  x =                                +1f                 +1j                                    |
+			    {  0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, },    //  y =                                     +1g       +1i                                         |
+			    {  0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, },    //  z =                                          +2h                                              |
+			};
+			
+			case 55:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s
+			    { -1, 1, 0,-2, 0, 1,-1, 0, 2, 0,-1, 0,-1,-1, 1, 1, 0, 1, 1,-1, },    //  t =  -1   +1a       -2c       +1e  -1f       +2h       -1j       -1l  -1m  +1n  +1o       +1q  +1r  -1s |
+			    {  2,-2,-1, 2,-1,-2, 2, 1,-2, 1, 1,-2, 0, 1,-1, 0, 2, 0,-1, 1, },    //  u =  +2   -2a  -1b  +2c  -1d  -2e  +2f  +1g  -2h  +1i  +1j  -2k       +1m  -1n       +2p       -1r  +1s |
+			    { -2, 1, 0,-2, 0, 1,-1, 0, 2,-1,-1, 1,-1,-1, 1, 1, 0, 1, 1,-1, },    //  v =  -2   +1a       -2c       +1e  -1f       +2h  -1i  -1j  +1k  -1l  -1m  +1n  +1o       +1q  +1r  -1s |
+			    {  0,-1, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, },    //  w =       -1a                                -1h                 +1l                                +1s |
+			    {  0, 0,-1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, },    //  x =            -1b                      -1g                           +1m                      +1r      |
+			    {  0, 0, 0,-1, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, },    //  y =                 -1c            -1f                                     +1n            +1q           |
+			    {  0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, },    //  z =                      -1d  -1e                                               +1o  +1p                |
+			};
+			
+			case 58:
+			return new short[][] {
+			    // 1  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o  p  q  r  s  t  u  v  w  x  y  z  A
+			    { -2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0, },    //  B =  -2        +2b       -2d       +2f       -2h       +2j       -2l       +2n       -2p       +2r       -2t       +2v       -2x       +2z      |
+			};
+    	}
+    	// TODO: No need to throw this exception once I figure out how to calculate any normalizerMatrix
+    	throw new IllegalArgumentException("Unable to determine Normalizer Matrix for nSides = " + nSides);
+    }
+    
+    // It seems that the 3D multiplierMatrix should be called multiplicationTensor or multiplicationHolor
+    // Since Holor seems more generic, though less commonly used, I will use multiplicationHolor
+    // rather than multiplicationTensor since I don't know if they actually qualify as Tensors
+    // which have additional characteristic requirements beyond being a multi-dimentional array.
+    // If in fact, they are found to qualify as Tensors, then they should be renamed appropriately.
+    // TODO: change applicable method and variable names throughout...
+    //
+    // See https://en.wikipedia.org/wiki/Tensor#Holors, which says:
+    // The term holor is not in widespread use, and unfortunately the word "tensor" is often misused 
+    // when referring to the multidimensional array representation of a holor, 
+    // causing confusion regarding the strict meaning of tensor.
+    public static short[][][] getExtendedMultiplicationHolor(int nSides) {
+        int order = diagonalCount(nSides);
+        short[][][] holor = new short[order][order][order];
+    	
+        // initialize everything to 0
+        for (int i = 0; i < order; i++) {
+            for (int j = 0; j < order; j++) {
+                for (int k = 0; k < order; k++) {
+                    holor[i][j][k] = 0;
+                }
+            }
+        }
+            
+        // initialize all of the \<->\ SouthEasterly diagonal paths
+        for (int layer = 0; layer < order; layer++) {
+            int midWay = layer/2;
+            for (int bx = layer, by = 0; bx > midWay || bx == by; bx--, by++) {
+                for (int x = bx, y = by; x < order && y < order; x++, y++) {
+                    // Simple assignment would work here 
+                    // but incrementing the value identifies unwanted duplicates. Ditto for the mirror.
+                    holor[layer][y][x] += 1;
+                    if(x != y) {
+                        holor[layer][x][y] += 1; // mirror around x == y
+                    }
+                }
+            }
+        }
+
+        // initialize the remaining /<->/ SouthWesterly diagonal paths
+        int box = nSides - 2;
+        int parity = (nSides + 1) % 2;
+        for (int layer = 0; layer < order-parity; layer++) {
+            int base = box - layer;
+            for (int xb = base, yb = 0; xb >= 0; xb--, yb++) {
+                int x=xb;
+                int y=yb;
+                while(x<order && y<order) {
+                    holor[layer][y][x] += 1;
+                    x++;
+                    y++;
+                }
+            }
+        }
+        return holor;
     }
 
     private final boolean isEven;
-    private final boolean mayBeNonInvertable;
     
     public PolygonField(int polygonSides) {
         this( FIELD_PREFIX + polygonSides, polygonSides);
@@ -109,50 +575,8 @@ public class PolygonField extends ParameterizedField<Integer> {
     // this protected c'tor is intended to allow PentagonField and HeptagonField classes to be refactored
     // so they are derived from PolygonField and still maintain their original legacy names
     protected PolygonField(String name, int polygonSides) {
-        super( name, 
-//                polygonSides == 6 ? 2 : // TODO: Make this work for hexagon field ... 
-//                polygonSides == 9 ? 3 : 
-//                polygonSides == 10 ? 4 : 
-//                polygonSides == 12 ? 4 : 
-//                polygonSides == 15 ? 4 : 
-                polygonSides/2, polygonSides );
+        super( name, getOrder(polygonSides) /* diagonalCount(polygonSides)*/, polygonSides);
         isEven = operand % 2 == 0;
-        mayBeNonInvertable = mayBeNonInvertable(polygonSides);
-    }
-
-    /**
-     * 
-     * @param nSides
-     * @return true if the terms of an AlgebraicNumber in the PolygonField with 
-     * specified nSides could possibly be non-invertable, hence no reciprocal.
-     * Even in fields where the terms could possibly be non-invertable, 
-     * it's possible that some specific AlgebraicNumbers could be invertable.
-     * This property allows the field to still be used for those specific AlgebraicNumbers    
-     * Reciprocals are always valid for polygon fields where nSides == 6, 
-     * where nSides is prime, or where nSides is an exact power of 2. 
-     * This method will return false for all of these values.
-     * See the series at https://oeis.org/A067133. 
-     * Note that phi(n) mentioned there refers to Euler's totient function, not the golden ratio.
-     */
-    public static boolean mayBeNonInvertable(int nSides) {
-        if (nSides < MIN_SIDES) {
-            String msg = "polygon sides = " + nSides + ". It must be at least " + MIN_SIDES + ".";
-            throw new IllegalArgumentException(msg);
-        }
-//        if (nSides == 6) {
-//            return false; // no validation required
-//        }
-        // positive powers of two
-        if ((nSides & (nSides - 1)) == 0) {
-            return false; // no validation required
-        }
-        // prime
-        final int certainty = 100; // TODO: Determine the min reliable certainty here for any valid Integer nSides 
-        return ! BigInteger.valueOf(nSides).isProbablePrime(certainty);
-    }
-    
-    public boolean mayBeNonInvertable() {
-        return mayBeNonInvertable;
     }
 
     public final static int MIN_SIDES = 4;
@@ -167,6 +591,12 @@ public class PolygonField extends ParameterizedField<Integer> {
 
     @Override
     protected void initializeLabels() {
+    	int nSides = polygonSides();
+    	if(irrationalLabels.length != diagonalCount(nSides)) {
+    		String[] unitLabels = irrationalLabels[0];
+    		irrationalLabels = new String[diagonalCount(nSides)][unitLabels.length];
+    		irrationalLabels[0] = unitLabels; // retain the default labels for units
+    	}
         // odd-gons are labeled with the same lower case Greek letters as
         // Peter Steinbach uses in "Sections Beyond Golden"
         // See http://archive.bridgesmathart.org/2000/bridges2000-35.pdf
@@ -253,1999 +683,58 @@ public class PolygonField extends ParameterizedField<Integer> {
                 .replace("-", "\u208B")
                 ;
     }
+    
+    /**
+     * getUnitTerm(n) expects n < getOrder().
+     * This method handles normalized diagonal lengths 
+     * where getOrder() <= n < diagonalCount()
+     * In these cases, the resulting AlgebraicNumber will not have just the nth factor set to 1,
+     * but rather, will have the normalized equivalent.
+     * For example, since a normalized PolygonField(6) is of order 2, but diagonalCount() == 3,
+     *  PolygonField(6).getUnitTerm(2) would return factors of {2,0} rather than {0,0,1},   
+     */
+    public AlgebraicNumber getUnitDiagonal(int n) {
+        if(n >= getOrder() && n < diagonalCount()) {
+            // This is safe since AlgebraicNumber is immutable 
+            // and getFactors() returns a copy of its factors rather than the actual array
+            BigRational[] factors = zero.getFactors();
+            int row = n - getOrder();
+            for(int i = 0; i < getOrder(); i++) {
+            	int term = normalizerMatrix[row][i];
+            	if(term != 0) {
+            		factors[i] = new BigRational(term);
+            	}
+            }
+            return createAlgebraicNumber(factors);
+        }
+        return super.getUnitTerm(n);
+    }
 
     @Override
     protected void initializeCoefficients() {
         double[] temp = getCoefficients();
         int i = 0;
         for(double coefficient : temp) {
-            if(i < coefficients.length)
-            coefficients[i++] = coefficient;
+        	// TODO: This shouldn't be necessary here
+        	// although we do want to get only the diagonal lengths that correspond to the actual normalized order.
+            if(i < coefficients.length) {
+            	coefficients[i++] = coefficient;
+            } else {
+            	continue;
+            }
         }
     }
 
     @Override
     protected void initializeMultiplierMatrix() {
-        // <editor-fold defaultstate="collapsed">
-        // the editor-fold tag is used in NetBeans to collapse these comments within the editor by default 
-/*
-        multiplierMatrix( polygon4 ) =
-        {
-          {
-            { 1, 0, },
-            { 0, 2, },
-          },
-          {
-            { 0, 1, },
-            { 1, 0, },
-          },
-        }
-
-
-        multiplierMatrix( polygon5 ) =
-        {
-          {
-            { 1, 0, },
-            { 0, 1, },
-          },
-          {
-            { 0, 1, },
-            { 1, 1, },
-          },
-        }
-
-
-        // hexagon is a special case as described below
-        multiplierMatrix( polygon6 ) =
-        {
-          {
-            { 1, 0, 2, },
-            { 0, 3, 0, },
-            { 2, 0, 4, },
-          },
-          {
-            { 0, 1, 0, },
-            { 1, 0, 2, },
-            { 0, 2, 0, },
-          },
-          {
-            { 0, 0, 0, },
-            { 0, 0, 0, },
-            { 0, 0, 0, },
-          },
-        }
-
-
-        multiplierMatrix( polygon7 ) =
-        {
-          {
-            { 1, 0, 0, },
-            { 0, 1, 0, },
-            { 0, 0, 1, },
-          },
-          {
-            { 0, 1, 0, },
-            { 1, 0, 1, },
-            { 0, 1, 1, },
-          },
-          {
-            { 0, 0, 1, },
-            { 0, 1, 1, },
-            { 1, 1, 1, },
-          },
-        }
-
-
-        multiplierMatrix( polygon8 ) =
-        {
-          {
-            { 1, 0, 0, 0, },
-            { 0, 1, 0, 0, },
-            { 0, 0, 1, 0, },
-            { 0, 0, 0, 2, },
-          },
-          {
-            { 0, 1, 0, 0, },
-            { 1, 0, 1, 0, },
-            { 0, 1, 0, 2, },
-            { 0, 0, 2, 0, },
-          },
-          {
-            { 0, 0, 1, 0, },
-            { 0, 1, 0, 2, },
-            { 1, 0, 2, 0, },
-            { 0, 2, 0, 2, },
-          },
-          {
-            { 0, 0, 0, 1, },
-            { 0, 0, 1, 0, },
-            { 0, 1, 0, 1, },
-            { 1, 0, 1, 0, },
-          },
-        }
-
-
-        multiplierMatrix( polygon9 ) =
-        {
-          {
-            { 1, 0, 0, 0, },
-            { 0, 1, 0, 0, },
-            { 0, 0, 1, 0, },
-            { 0, 0, 0, 1, },
-          },
-          {
-            { 0, 1, 0, 0, },
-            { 1, 0, 1, 0, },
-            { 0, 1, 0, 1, },
-            { 0, 0, 1, 1, },
-          },
-          {
-            { 0, 0, 1, 0, },
-            { 0, 1, 0, 1, },
-            { 1, 0, 1, 1, },
-            { 0, 1, 1, 1, },
-          },
-          {
-            { 0, 0, 0, 1, },
-            { 0, 0, 1, 1, },
-            { 0, 1, 1, 1, },
-            { 1, 1, 1, 1, },
-          },
-        }
-
-
-        multiplierMatrix( polygon10 ) =
-        {
-          {
-            { 1, 0, 0, 0, 0, },
-            { 0, 1, 0, 0, 0, },
-            { 0, 0, 1, 0, 0, },
-            { 0, 0, 0, 1, 0, },
-            { 0, 0, 0, 0, 2, },
-          },
-          {
-            { 0, 1, 0, 0, 0, },
-            { 1, 0, 1, 0, 0, },
-            { 0, 1, 0, 1, 0, },
-            { 0, 0, 1, 0, 2, },
-            { 0, 0, 0, 2, 0, },
-          },
-          {
-            { 0, 0, 1, 0, 0, },
-            { 0, 1, 0, 1, 0, },
-            { 1, 0, 1, 0, 2, },
-            { 0, 1, 0, 2, 0, },
-            { 0, 0, 2, 0, 2, },
-          },
-          {
-            { 0, 0, 0, 1, 0, },
-            { 0, 0, 1, 0, 2, },
-            { 0, 1, 0, 2, 0, },
-            { 1, 0, 2, 0, 2, },
-            { 0, 2, 0, 2, 0, },
-          },
-          {
-            { 0, 0, 0, 0, 1, },
-            { 0, 0, 0, 1, 0, },
-            { 0, 0, 1, 0, 1, },
-            { 0, 1, 0, 1, 0, },
-            { 1, 0, 1, 0, 1, },
-          },
-        }
-
-
-        multiplierMatrix( polygon11 ) =
-        {
-          {
-            { 1, 0, 0, 0, 0, },
-            { 0, 1, 0, 0, 0, },
-            { 0, 0, 1, 0, 0, },
-            { 0, 0, 0, 1, 0, },
-            { 0, 0, 0, 0, 1, },
-          },
-          {
-            { 0, 1, 0, 0, 0, },
-            { 1, 0, 1, 0, 0, },
-            { 0, 1, 0, 1, 0, },
-            { 0, 0, 1, 0, 1, },
-            { 0, 0, 0, 1, 1, },
-          },
-          {
-            { 0, 0, 1, 0, 0, },
-            { 0, 1, 0, 1, 0, },
-            { 1, 0, 1, 0, 1, },
-            { 0, 1, 0, 1, 1, },
-            { 0, 0, 1, 1, 1, },
-          },
-          {
-            { 0, 0, 0, 1, 0, },
-            { 0, 0, 1, 0, 1, },
-            { 0, 1, 0, 1, 1, },
-            { 1, 0, 1, 1, 1, },
-            { 0, 1, 1, 1, 1, },
-          },
-          {
-            { 0, 0, 0, 0, 1, },
-            { 0, 0, 0, 1, 1, },
-            { 0, 0, 1, 1, 1, },
-            { 0, 1, 1, 1, 1, },
-            { 1, 1, 1, 1, 1, },
-          },
-        }
-
-
-        multiplierMatrix( polygon12 ) =
-        {
-          {
-            { 1, 0, 0, 0, 0, 0, },
-            { 0, 1, 0, 0, 0, 0, },
-            { 0, 0, 1, 0, 0, 0, },
-            { 0, 0, 0, 1, 0, 0, },
-            { 0, 0, 0, 0, 1, 0, },
-            { 0, 0, 0, 0, 0, 2, },
-          },
-          {
-            { 0, 1, 0, 0, 0, 0, },
-            { 1, 0, 1, 0, 0, 0, },
-            { 0, 1, 0, 1, 0, 0, },
-            { 0, 0, 1, 0, 1, 0, },
-            { 0, 0, 0, 1, 0, 2, },
-            { 0, 0, 0, 0, 2, 0, },
-          },
-          {
-            { 0, 0, 1, 0, 0, 0, },
-            { 0, 1, 0, 1, 0, 0, },
-            { 1, 0, 1, 0, 1, 0, },
-            { 0, 1, 0, 1, 0, 2, },
-            { 0, 0, 1, 0, 2, 0, },
-            { 0, 0, 0, 2, 0, 2, },
-          },
-          {
-            { 0, 0, 0, 1, 0, 0, },
-            { 0, 0, 1, 0, 1, 0, },
-            { 0, 1, 0, 1, 0, 2, },
-            { 1, 0, 1, 0, 2, 0, },
-            { 0, 1, 0, 2, 0, 2, },
-            { 0, 0, 2, 0, 2, 0, },
-          },
-          {
-            { 0, 0, 0, 0, 1, 0, },
-            { 0, 0, 0, 1, 0, 2, },
-            { 0, 0, 1, 0, 2, 0, },
-            { 0, 1, 0, 2, 0, 2, },
-            { 1, 0, 2, 0, 2, 0, },
-            { 0, 2, 0, 2, 0, 2, },
-          },
-          {
-            { 0, 0, 0, 0, 0, 1, },
-            { 0, 0, 0, 0, 1, 0, },
-            { 0, 0, 0, 1, 0, 1, },
-            { 0, 0, 1, 0, 1, 0, },
-            { 0, 1, 0, 1, 0, 1, },
-            { 1, 0, 1, 0, 1, 0, },
-          },
-        }
-
-
-        multiplierMatrix( polygon13 ) =
-        {
-          {
-            { 1, 0, 0, 0, 0, 0, },
-            { 0, 1, 0, 0, 0, 0, },
-            { 0, 0, 1, 0, 0, 0, },
-            { 0, 0, 0, 1, 0, 0, },
-            { 0, 0, 0, 0, 1, 0, },
-            { 0, 0, 0, 0, 0, 1, },
-          },
-          {
-            { 0, 1, 0, 0, 0, 0, },
-            { 1, 0, 1, 0, 0, 0, },
-            { 0, 1, 0, 1, 0, 0, },
-            { 0, 0, 1, 0, 1, 0, },
-            { 0, 0, 0, 1, 0, 1, },
-            { 0, 0, 0, 0, 1, 1, },
-          },
-          {
-            { 0, 0, 1, 0, 0, 0, },
-            { 0, 1, 0, 1, 0, 0, },
-            { 1, 0, 1, 0, 1, 0, },
-            { 0, 1, 0, 1, 0, 1, },
-            { 0, 0, 1, 0, 1, 1, },
-            { 0, 0, 0, 1, 1, 1, },
-          },
-          {
-            { 0, 0, 0, 1, 0, 0, },
-            { 0, 0, 1, 0, 1, 0, },
-            { 0, 1, 0, 1, 0, 1, },
-            { 1, 0, 1, 0, 1, 1, },
-            { 0, 1, 0, 1, 1, 1, },
-            { 0, 0, 1, 1, 1, 1, },
-          },
-          {
-            { 0, 0, 0, 0, 1, 0, },
-            { 0, 0, 0, 1, 0, 1, },
-            { 0, 0, 1, 0, 1, 1, },
-            { 0, 1, 0, 1, 1, 1, },
-            { 1, 0, 1, 1, 1, 1, },
-            { 0, 1, 1, 1, 1, 1, },
-          },
-          {
-            { 0, 0, 0, 0, 0, 1, },
-            { 0, 0, 0, 0, 1, 1, },
-            { 0, 0, 0, 1, 1, 1, },
-            { 0, 0, 1, 1, 1, 1, },
-            { 0, 1, 1, 1, 1, 1, },
-            { 1, 1, 1, 1, 1, 1, },
-          },
-        }
-
-
-        multiplierMatrix( polygon14 ) =
-        {
-          {
-            { 1, 0, 0, 0, 0, 0, 0, },
-            { 0, 1, 0, 0, 0, 0, 0, },
-            { 0, 0, 1, 0, 0, 0, 0, },
-            { 0, 0, 0, 1, 0, 0, 0, },
-            { 0, 0, 0, 0, 1, 0, 0, },
-            { 0, 0, 0, 0, 0, 1, 0, },
-            { 0, 0, 0, 0, 0, 0, 2, },
-          },
-          {
-            { 0, 1, 0, 0, 0, 0, 0, },
-            { 1, 0, 1, 0, 0, 0, 0, },
-            { 0, 1, 0, 1, 0, 0, 0, },
-            { 0, 0, 1, 0, 1, 0, 0, },
-            { 0, 0, 0, 1, 0, 1, 0, },
-            { 0, 0, 0, 0, 1, 0, 2, },
-            { 0, 0, 0, 0, 0, 2, 0, },
-          },
-          {
-            { 0, 0, 1, 0, 0, 0, 0, },
-            { 0, 1, 0, 1, 0, 0, 0, },
-            { 1, 0, 1, 0, 1, 0, 0, },
-            { 0, 1, 0, 1, 0, 1, 0, },
-            { 0, 0, 1, 0, 1, 0, 2, },
-            { 0, 0, 0, 1, 0, 2, 0, },
-            { 0, 0, 0, 0, 2, 0, 2, },
-          },
-          {
-            { 0, 0, 0, 1, 0, 0, 0, },
-            { 0, 0, 1, 0, 1, 0, 0, },
-            { 0, 1, 0, 1, 0, 1, 0, },
-            { 1, 0, 1, 0, 1, 0, 2, },
-            { 0, 1, 0, 1, 0, 2, 0, },
-            { 0, 0, 1, 0, 2, 0, 2, },
-            { 0, 0, 0, 2, 0, 2, 0, },
-          },
-          {
-            { 0, 0, 0, 0, 1, 0, 0, },
-            { 0, 0, 0, 1, 0, 1, 0, },
-            { 0, 0, 1, 0, 1, 0, 2, },
-            { 0, 1, 0, 1, 0, 2, 0, },
-            { 1, 0, 1, 0, 2, 0, 2, },
-            { 0, 1, 0, 2, 0, 2, 0, },
-            { 0, 0, 2, 0, 2, 0, 2, },
-          },
-          {
-            { 0, 0, 0, 0, 0, 1, 0, },
-            { 0, 0, 0, 0, 1, 0, 2, },
-            { 0, 0, 0, 1, 0, 2, 0, },
-            { 0, 0, 1, 0, 2, 0, 2, },
-            { 0, 1, 0, 2, 0, 2, 0, },
-            { 1, 0, 2, 0, 2, 0, 2, },
-            { 0, 2, 0, 2, 0, 2, 0, },
-          },
-          {
-            { 0, 0, 0, 0, 0, 0, 1, },
-            { 0, 0, 0, 0, 0, 1, 0, },
-            { 0, 0, 0, 0, 1, 0, 1, },
-            { 0, 0, 0, 1, 0, 1, 0, },
-            { 0, 0, 1, 0, 1, 0, 1, },
-            { 0, 1, 0, 1, 0, 1, 0, },
-            { 1, 0, 1, 0, 1, 0, 1, },
-          },
-        }
-
-
-        multiplierMatrix( polygon15 ) =
-        {
-          {
-            { 1, 0, 0, 0, 0, 0, 0, },
-            { 0, 1, 0, 0, 0, 0, 0, },
-            { 0, 0, 1, 0, 0, 0, 0, },
-            { 0, 0, 0, 1, 0, 0, 0, },
-            { 0, 0, 0, 0, 1, 0, 0, },
-            { 0, 0, 0, 0, 0, 1, 0, },
-            { 0, 0, 0, 0, 0, 0, 1, },
-          },
-          {
-            { 0, 1, 0, 0, 0, 0, 0, },
-            { 1, 0, 1, 0, 0, 0, 0, },
-            { 0, 1, 0, 1, 0, 0, 0, },
-            { 0, 0, 1, 0, 1, 0, 0, },
-            { 0, 0, 0, 1, 0, 1, 0, },
-            { 0, 0, 0, 0, 1, 0, 1, },
-            { 0, 0, 0, 0, 0, 1, 1, },
-          },
-          {
-            { 0, 0, 1, 0, 0, 0, 0, },
-            { 0, 1, 0, 1, 0, 0, 0, },
-            { 1, 0, 1, 0, 1, 0, 0, },
-            { 0, 1, 0, 1, 0, 1, 0, },
-            { 0, 0, 1, 0, 1, 0, 1, },
-            { 0, 0, 0, 1, 0, 1, 1, },
-            { 0, 0, 0, 0, 1, 1, 1, },
-          },
-          {
-            { 0, 0, 0, 1, 0, 0, 0, },
-            { 0, 0, 1, 0, 1, 0, 0, },
-            { 0, 1, 0, 1, 0, 1, 0, },
-            { 1, 0, 1, 0, 1, 0, 1, },
-            { 0, 1, 0, 1, 0, 1, 1, },
-            { 0, 0, 1, 0, 1, 1, 1, },
-            { 0, 0, 0, 1, 1, 1, 1, },
-          },
-          {
-            { 0, 0, 0, 0, 1, 0, 0, },
-            { 0, 0, 0, 1, 0, 1, 0, },
-            { 0, 0, 1, 0, 1, 0, 1, },
-            { 0, 1, 0, 1, 0, 1, 1, },
-            { 1, 0, 1, 0, 1, 1, 1, },
-            { 0, 1, 0, 1, 1, 1, 1, },
-            { 0, 0, 1, 1, 1, 1, 1, },
-          },
-          {
-            { 0, 0, 0, 0, 0, 1, 0, },
-            { 0, 0, 0, 0, 1, 0, 1, },
-            { 0, 0, 0, 1, 0, 1, 1, },
-            { 0, 0, 1, 0, 1, 1, 1, },
-            { 0, 1, 0, 1, 1, 1, 1, },
-            { 1, 0, 1, 1, 1, 1, 1, },
-            { 0, 1, 1, 1, 1, 1, 1, },
-          },
-          {
-            { 0, 0, 0, 0, 0, 0, 1, },
-            { 0, 0, 0, 0, 0, 1, 1, },
-            { 0, 0, 0, 0, 1, 1, 1, },
-            { 0, 0, 0, 1, 1, 1, 1, },
-            { 0, 0, 1, 1, 1, 1, 1, },
-            { 0, 1, 1, 1, 1, 1, 1, },
-            { 1, 1, 1, 1, 1, 1, 1, },
-          },
-        }
-*/
-        // </editor-fold>
-        if(polygonSides() == 9 && getOrder() == 3) {
-            multiplierMatrix = new short[][][] 
-                {
-                  {
-                    { 1, 0, 0, },
-                    { 0, 1, 1, },
-                    { 0, 1, 2, },
-                  },
-                  {
-                    { 0, 1, 0, },
-                    { 1, 0, 2, },
-                    { 0, 2, 1, },
-                  },
-                  {
-                    { 0, 0, 1, },
-                    { 0, 1, 0, },
-                    { 1, 0, 1, },
-                  },
-                };
-            return;
-        }
-        
-        if(polygonSides() == 10 && getOrder() == 4) {
-            multiplierMatrix = new short[][][] // D = -2 + 2B
-                    {                       // { // D is truncated ... $ = to be modified
-                      { // units            //   {  // units
-                        { 1, 0, 0, 0, },    //     { 1, 0, 0, 0, },
-                        { 0, 1, 0,-2, },    //     { 0, 1, 0,$0, },
-                        { 0, 0,-1, 0, },    //     { 0, 0,$1, 0, },
-                        { 0,-2, 0,-1, },    //     { 0,$0, 0,$1, },
-                      },                    //   },
-                      { // A                //   {  // A = no change
-                        { 0, 1, 0, 0, },    //     { 0, 1, 0, 0, },
-                        { 1, 0, 1, 0, },    //     { 1, 0, 1, 0, },
-                        { 0, 1, 0, 1, },    //     { 0, 1, 0, 1, },
-                        { 0, 0, 1, 0, },    //     { 0, 0, 1, 0, },
-                      },                    //   },
-                      { // B                //   {  // B
-                        { 0, 0, 1, 0, },    //     { 0, 0, 1, 0, },
-                        { 0, 1, 0, 3, },    //     { 0, 1, 0,$1, },
-                        { 1, 0, 3, 0, },    //     { 1, 0,$1, 0, },
-                        { 0, 3, 0, 4, },    //     { 0,$1, 0,$2, },
-                      },                    //   },
-                      { // C                //   {  // C = no change
-                        { 0, 0, 0, 1, },    //     { 0, 0, 0, 1, },
-                        { 0, 0, 1, 0, },    //     { 0, 0, 1, 0, },
-                        { 0, 1, 0, 2, },    //     { 0, 1, 0, 2, },
-                        { 1, 0, 2, 0, },    //     { 1, 0, 2, 0, },
-                      },                    //   },
-                    };                      // };
-            return;
-        }
-
-        if(polygonSides() == 12 && getOrder() == 4) {
-            multiplierMatrix = new short[][][] // D = 1 + B; E = 2A
-              {                       // { // D & E  are truncated ... $ = to be modified
-                { // units
-                    { 1, 0, 0, 0, },
-                    { 0, 1, 0, 1, },
-                    { 0, 0, 2, 0, },
-                    { 0, 1, 0, 3, },
-                  },
-                  {
-                    { 0, 1, 0, 0, },
-                    { 1, 0, 1, 0, },
-                    { 0, 1, 0, 3, },
-                    { 0, 0, 3, 0, },
-                  },
-                  {
-                    { 0, 0, 1, 0, },
-                    { 0, 1, 0, 2, },
-                    { 1, 0, 2, 0, },
-                    { 0, 2, 0, 3, },
-                  },
-                  {
-                    { 0, 0, 0, 1, },
-                    { 0, 0, 1, 0, },
-                    { 0, 1, 0, 3, },
-                    { 1, 0, 3, 0, },
-                  },
-                };
-            return;
-        }
-
-        int order = getOrder();
-
-        // initialize everything to 0
-        for (int i = 0; i < order; i++) {
-            for (int j = 0; j < order; j++) {
-                for (int k = 0; k < order; k++) {
-                    multiplierMatrix[i][j][k] = 0;
-                }
-            }
-        }
-            
-        // initialize all of the \<->\ SouthEasterly diagonal paths
-        for (int layer = 0; layer < order; layer++) {
-            int midWay = layer/2;
-            for (int bx = layer, by = 0; bx > midWay || bx == by; bx--, by++) {
-                for (int x = bx, y = by; x < order && y < order; x++, y++) {
-                    // Simple assignment would work here 
-                    // but incrementing the value identifies unwanted duplicates. Ditto for the mirror.
-                    multiplierMatrix[layer][y][x] += 1;
-                    if(x != y) {
-                        multiplierMatrix[layer][x][y] += 1; // mirror around x == y
-                    }
-                }
-            }
-        }
-
-        // initialize the remaining /<->/ SouthWesterly diagonal paths
-        int box = polygonSides() - 2;
-        int parity = (polygonSides()+1) % 2;
-        for (int layer = 0; layer < order-parity; layer++) {
-            int base = box - layer;
-            for (int xb = base, yb = 0; xb >= 0; xb--, yb++) {
-                int x=xb;
-                int y=yb;
-                while(x<order && y<order) {
-                    multiplierMatrix[layer][y][x] += 1;
-                    x++;
-                    y++;
-                }
-            }
-        }
-
-        // Hexagons are a special case because the length of the 2nd diagonal 
-        // is an integer multiple of the unit edge,
-        // so that "carry" must be transferred to the units position
-        // much like the situation for perfect squares in SqrtField.
-        // We could hard code the values, but the code below makes the reasoning a little clearer.
-        // TODO: This part should be redundant and therefore unnecessary if we normalize correctly
-        if(polygonSides() == 6 && getOrder() == 2) {
-            for(int x=0; x<order; x++) {
-                for(int y=0; y<order; y++) {
-                    int xfer = 2 * multiplierMatrix[2][x][y];
-                    multiplierMatrix[0][x][y] += xfer;
-                    multiplierMatrix[2][x][y] = 0;
-                }
-            }
-
-//            multiplierMatrix = new short[][][] {
-//                {
-//                  { 1, 0, 2, },
-//                  { 0, 3, 0, },
-//                  { 2, 0, 4, },
-//                },
-//                {
-//                  { 0, 1, 0, },
-//                  { 1, 0, 2, },
-//                  { 0, 2, 0, },
-//                },
-//                {
-//                  { 0, 0, 0, },
-//                  { 0, 0, 0, },
-//                  { 0, 0, 0, },
-//                },
-//              };
-        }
+    	multiplierMatrix = getNormalizedMultiplicationHolor(polygonSides());
     }
 
     @Override
     protected void initializeNormalizer() {
-        if(polygonSides() / 2 == getOrder()) {
-            switch(polygonSides()) {
-            case 6: 
-                normalizer = PolygonField::normalize6;
-                break;
-            case 9:
-                normalizer = PolygonField::normalize9;
-                break;
-            case 10:
-                normalizer = PolygonField::normalize10;
-                break;
-            case 12:
-                normalizer = PolygonField::normalize12;
-                break;
-            case 14:
-            	normalizer = PolygonField::normalize14;
-            	break;
-            case 15:
-            	normalizer = PolygonField::normalize15;
-            	break;
-            case 18:
-            	normalizer = PolygonField::normalize18;
-            	break;
-            case 20:
-          	  	normalizer = PolygonField::normalize20;
-            	break;
-            case 21:
-	            normalizer = PolygonField::normalize21;
-	            break;
-            case 22:
-            	normalizer = PolygonField::normalize22;
-            	break;
-            case 24:
-            	normalizer = PolygonField::normalize24;
-            	break;
-            case 25:
-            	normalizer = PolygonField::normalize25;
-            	break;
-            case 26:
-            	normalizer = PolygonField::normalize26;
-            	break;
-            case 27:
-	            normalizer = PolygonField::normalize27;
-	            break;
-            case 28:
-	            normalizer = PolygonField::normalize28;
-	            break;
-            case 30:
-                normalizer = PolygonField::normalize30;
-                break;
-            case 33:
-                normalizer = PolygonField::normalize33;
-                break;
-            case 34:
-                normalizer = PolygonField::normalize34;
-                break;
-            case 35:
-                normalizer = PolygonField::normalize35;
-                break;
-            case 36:
-                normalizer = PolygonField::normalize36;
-                break;
-            case 38:
-            	normalizer = PolygonField::normalize38;
-            	break;
-            case 39:
-            	normalizer = PolygonField::normalize39;
-            	break;
-            case 40:
-                normalizer = PolygonField::normalize40;
-                break;
-            case 42:
-                normalizer = PolygonField::normalize42;
-                break;
-            case 44:
-                normalizer = PolygonField::normalize44;
-                break;
-            case 45:
-                normalizer = PolygonField::normalize45;
-                break;
-            case 46:
-                normalizer = PolygonField::normalize46;
-                break;
-            case 48:
-            	normalizer = PolygonField::normalize48;
-            	break;
-            case 49:
-            	normalizer = PolygonField::normalize49;
-            	break;
-            case 50:
-                normalizer = PolygonField::normalize50;
-                break;
-            case 51:
-                normalizer = PolygonField::normalize51;
-                break;
-            case 52:
-                normalizer = PolygonField::normalize52;
-                break;
-            case 54:
-                normalizer = PolygonField::normalize54;
-                break;
-            case 55:
-                normalizer = PolygonField::normalize55;
-                break;
-            case 58:
-                normalizer = PolygonField::normalize58;
-                break;
-            default:
-                normalizer = ParameterizedField::doNothing; // unchanged
-                break;
-            }
-        }
-    }
-    
-    // this pattern seems to work for 3 times any even power of 2 (e.g. 3 * 2 = 6)
-    private static void normalize6(ParameterizedField<?> field, BigRational[] factors) {
-        normalizeFactor(factors, 2, 0, 0); // B = 2
-        field.normalizerMatrix = new short[][] {
-        //   1  A  
-        	{2, 0},	// B = 2
-        };
-
+    	normalizerMatrix = getNormalizerMatrix(polygonSides());
     }
 
-    private static void normalize9(ParameterizedField<?> field, BigRational[] factors) {
-        normalizeFactor(factors, 3, 0, 1); // C = 1 + A
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  
-        	{1, 1, 0},	// C = 1 + A
-        };
-    }
-
-    private static void normalize10(ParameterizedField<?> field, BigRational[] factors) {
-        normalizeFactor(factors, 4, -2L, 0, 2L, 2); // D = -2 + 2B
-        field.normalizerMatrix = new short[][] {
-        //    1  A  B  C  
-        	{-2, 0, 2, 0},	// D = -2 + 2B
-        };
-    }
-
-    // this pattern seems to work for 3 times any even power of 2 (e.g. 3 * 4 = 12)
-    private static void normalize12(ParameterizedField<?> field, BigRational[] factors) {
-        normalizeFactor(factors, 4, 0, 2); // D = 1 + B
-        normalizeFactor(factors, 5, 1, 1); // E = A + A
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C    
-        	{0, 2, 0, 0},	// E = A + A = 2A
-        	{1, 0, 1, 0},	// D = 1 + B
-        };
-    }
-
-    private static void normalize14(ParameterizedField<?> field, BigRational[] factors) {
-    	int F  = 6;
-    	BigRational factor = factors[F]; // F = 2 - 2B + 2D
-        if(!factor.isZero()) {
-            factors[0] = factors[0].plus(factor); 	// units
-            factors[0] = factors[0].plus(factor); 	// units again = 2
-            factors[2] = factors[2].minus(factor); 	// -B
-            factors[2] = factors[2].minus(factor); 	// -B again = -2B
-            factors[4] = factors[4].plus(factor); 	// D
-            factors[4] = factors[4].plus(factor); 	// D again = 2D
-            // zero
-            factors[F] = BigRational.ZERO;
-        }
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C  D  E  
-        	{2, 0,-2, 0, 2, 0},	// F = 2 -2B + 2D
-        };
-    }
-
-    private static void normalize15(ParameterizedField<?> field, BigRational[] factors) {
-    	int D = 4;
-    	BigRational factor = factors[D]; // D = 1 + 2A + B - C 
-        if(!factor.isZero()) {
-            factors[0] = factors[0].plus(factor); 	// units
-            factors[1] = factors[1].plus(factor); 	// A
-            factors[1] = factors[1].plus(factor); 	// A again = 2A
-            factors[2] = factors[2].plus(factor); 	// B
-            factors[3] = factors[3].minus(factor);	// C
-            // zero
-            factors[D] = BigRational.ZERO;
-        }
-        normalizeFactor(factors, 5, 0, 3); // E = 1 + C
-        normalizeFactor(factors, 6, 1, 2); // F = A + B
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C  
-        	{0, 1, 1, 0},	// F = A + B
-        	{1, 0, 0, 1},	// E = 1 + C
-        	{1, 2, 1,-1},	// D = 1 + 2A + B - C 
-        };
-    }
-
-    private static void normalize18(ParameterizedField<?> field, BigRational[] factors) {
-        normalizeFactor(factors, 6, 0, 4); // F = 1 + D
-        normalizeFactor(factors, 7, 1, 3); // G = A + C
-        normalizeFactor(factors, 8, 2, 2); // H = B + B = 2B
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C  D  E  
-        	{0, 0, 2, 0, 0, 0},	// H = B + B = 2B
-        	{0, 1, 0, 1, 0, 0},	// G = A + C
-        	{1, 0, 0, 0, 1, 0},	// F = 1 + D
-        };
-    }
-    
-    private static void normalize20(ParameterizedField<?> field, BigRational[] factors) {
-    	int I = 9;
-    	BigRational factor = factors[I]; // I = 2E - 2A
-        if(!factor.isZero()) {
-            factors[1] = factors[1].minus(factor); 	// A
-            factors[1] = factors[1].minus(factor); 	// A again = -2A
-            factors[5] = factors[5].plus(factor); 	// E
-            factors[5] = factors[5].plus(factor);	// again = 2E
-            // zero
-            factors[I] = BigRational.ZERO;
-        }
-    	int H = 8; 
-    	factor = factors[H]; // H = F + D -B -1
-        if(!factor.isZero()) {
-            factors[0] = factors[0].minus(factor); 	// -units
-            factors[2] = factors[2].minus(factor); 	// -B
-            factors[4] = factors[4].plus(factor); 	// D
-            factors[6] = factors[6].plus(factor);	// F
-            // zero
-            factors[H] = BigRational.ZERO;
-        }
-        field.normalizerMatrix = new short[][] {
-        //    1  A  B  C  D  E  F  G  
-        	{ 0,-2, 0, 0, 0, 2, 0, 0},	// I = -2A +2E
-        	{-1, 0,-1, 0, 1, 0, 1, 0},	// H = -1 -B +D +F
-        };
-    }
-
-    private static void normalize21(ParameterizedField<?> field, BigRational[] factors) {
-    	int F = 6; 
-    	BigRational factor = factors[F]; // F = -E +D +2C +B -A -2
-        if(!factor.isZero()) {
-            factors[0] = factors[0].minus(factor); 	// -units
-            factors[0] = factors[0].minus(factor); 	// -units again = 2
-            factors[1] = factors[1].minus(factor); 	// -A
-            factors[2] = factors[2].plus(factor); 	// B
-            factors[3] = factors[3].plus(factor); 	// C
-            factors[3] = factors[3].plus(factor); 	// C again = 2C
-            factors[4] = factors[4].plus(factor); 	// D
-            factors[5] = factors[5].minus(factor);	// -E
-            // zero
-            factors[F] = BigRational.ZERO;
-        }	 
-    	normalizeFactor(factors, 7, 0, 5); // G = 1 + E
-    	normalizeFactor(factors, 8, 1, 4); // H = A + D
-    	normalizeFactor(factors, 9, 2, 3); // I = B + C
-        field.normalizerMatrix = new short[][] {
-        //    1  A  B  C  D  E  
-        	{ 0, 0, 1, 1, 0, 0},	// I = B + C
-        	{ 0, 1, 0, 0, 1, 0},	// H = A + D
-        	{ 1, 0, 0, 0, 0, 1},	// G = 1 + E
-        	{-2,-1, 1, 2, 1,-1},	// F = -2 -A +B +2C +D -E
-        };
-    }
-
-    private static void normalize22(ParameterizedField<?> field, BigRational[] factors) {
-    	int J = 10; 
-    	BigRational factor = factors[J]; // J = 2H -2F +2D -2B +2
-        if(!factor.isZero()) {
-            factors[0] = factors[0].plus(factor); 	// -units
-            factors[0] = factors[0].plus(factor); 	// -units again = 2
-            factors[2] = factors[2].minus(factor); 	// -B
-            factors[2] = factors[2].minus(factor); 	// -B again - 2B
-            factors[4] = factors[4].plus(factor); 	// D
-            factors[4] = factors[4].plus(factor); 	// D again = 2D
-            factors[6] = factors[6].minus(factor); 	// -F
-            factors[6] = factors[6].minus(factor);	// -F again = -2F
-            factors[8] = factors[8].plus(factor); 	// H
-            factors[8] = factors[8].plus(factor); 	// H again = 2H
-            // zero
-            factors[J] = BigRational.ZERO;
-        }	 
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C  D  E  F  G  H  I
-        	{2, 0,-2, 0, 2, 0,-2, 0, 2, 0},	// J = 2 -2B +2D -2F +2H
-        };
-    }
-
-    // this pattern seems to work for 3 times any even power of 2 (e.g. 3 * 8 = 24)
-    private static void normalize24(ParameterizedField<?> field, BigRational[] factors) {
-        normalizeFactor(factors,  8, 0, 6); // H = 1 + F
-        normalizeFactor(factors,  9, 1, 5); // I = A + E
-        normalizeFactor(factors, 10, 2, 4); // J = B + D
-        normalizeFactor(factors, 11, 3, 3); // K = C + C
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C  D  E  F  G  
-        	{0, 0, 0, 2, 0, 0, 0, 0},	// K = C + C = 2C
-        	{0, 0, 1, 0, 1, 0, 0, 0},	// J = B + D
-        	{0, 1, 0, 0, 0, 1, 0, 0},	// I = A + E
-        	{1, 0, 0, 0, 0, 0, 1, 0},	// H = 1 + F
-        };
-    }
-
-    private static void normalize25(ParameterizedField<?> field, BigRational[] factors) {
-    	int K = 11; 
-    	BigRational factor = factors[K]; // K = G + F - B - A
-        if(!factor.isZero()) {
-            factors[1] = factors[1].minus(factor); 	// -A
-            factors[2] = factors[2].minus(factor); 	// -B
-            factors[6] = factors[6].plus(factor); 	// F
-            factors[7] = factors[7].plus(factor); 	// G
-            // zero
-            factors[K] = BigRational.ZERO;
-        }
-        int J = 10;
-        factor = factors[J]; // J = H + E - C - 1
-        if(!factor.isZero()) {
-            factors[0] = factors[0].minus(factor); 	// -1
-            factors[3] = factors[3].minus(factor); 	// -C
-            factors[5] = factors[5].plus(factor); 	// E
-            factors[8] = factors[8].plus(factor); 	// H
-            // zero
-            factors[J] = BigRational.ZERO;
-        }
-        field.normalizerMatrix = new short[][] {
-        //    1  A  B  C  D  E  F  G  H  I
-        	{ 0,-1,-1, 0, 0, 0, 1, 1, 0, 0},	// K = - A - B + F + G
-        	{-1, 0, 0,-1, 0, 1, 0, 0, 1, 0},	// J = - 1 - C + E + H 
-        };
-    }
-
-    private static void normalize26(ParameterizedField<?> field, BigRational[] factors) {
-        int L = 12; 
-    	BigRational factor = factors[L]; // L = 2J -2H +2F -2D +2B -2
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].minus(factor); 	// -units
-            factors[ 0] = factors[ 0].minus(factor); 	// -units again = -2
-            factors[ 2] = factors[ 2].plus(factor); 	// B
-            factors[ 2] = factors[ 2].plus(factor); 	// B again = 2B
-            factors[ 4] = factors[ 4].minus(factor); 	// -D
-            factors[ 4] = factors[ 4].minus(factor); 	// -D again = -2D
-            factors[ 6] = factors[ 6].plus(factor); 	// F
-            factors[ 6] = factors[ 6].plus(factor); 	// F again = 2F
-            factors[ 8] = factors[ 8].minus(factor); 	// -H
-            factors[ 8] = factors[ 8].minus(factor); 	// -H again = -2H
-            factors[10]= factors[10].plus(factor); 		// J
-            factors[10]= factors[10].plus(factor); 		// J again = 2J
-            // zero
-            factors[L] = BigRational.ZERO;
-        }
-        field.normalizerMatrix = new short[][] {
-        //    1  A  B  C  D  E  F  G  H  I  J  K
-        	{-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0},	// L = -2 +2B -2D +2F -2H +2J 
-        };
-    }
-    
-    private static void normalize27(ParameterizedField<?> field, BigRational[] factors) {
-        normalizeFactor(factors, 12, 3, 4); // L = C + D
-        normalizeFactor(factors, 11, 2, 5); // K = B + E
-        normalizeFactor(factors, 10, 1, 6); // J = A + F
-        normalizeFactor(factors,  9, 0, 7); // I = 1 + G
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C  D  E  F  G  H   
-        	{0, 0, 0, 1, 1, 0, 0, 0, 0},	// L = C + D
-        	{0, 0, 1, 0, 0, 1, 0, 0, 0},	// K = B + E
-        	{0, 1, 0, 0, 0, 0, 1, 0, 0},	// J = A + F
-        	{1, 0, 0, 0, 0, 0, 0, 1, 0},	// I = 1 + G
-        };
-    }
-    
-    private static void normalize28(ParameterizedField<?> field, BigRational[] factors) {
-        int M = 13;
-    	BigRational factor = factors[M]; // M = 2I -2E +2A
-        if(!factor.isZero()) {
-            factors[1] = factors[1].plus(factor); 	// A
-            factors[1] = factors[1].plus(factor); 	// A again = 2A
-            factors[5] = factors[5].minus(factor); 	// -E
-            factors[5] = factors[5].minus(factor); 	// -E again = -2E
-            factors[9] = factors[9].plus(factor);	// I
-            factors[9] = factors[9].plus(factor);	// I again = 2I
-            // zero
-            factors[M] = BigRational.ZERO;
-        }
-    	int L = 12; 
-    	factor = factors[L]; // L = J +H -F -D +B +1
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].plus(factor); 	// units
-            factors[ 2] = factors[ 2].plus(factor); 	// B
-            factors[ 4] = factors[ 4].minus(factor); 	// -D
-            factors[ 6] = factors[ 6].minus(factor); 	// -F
-            factors[ 8] = factors[ 8].plus(factor); 	// H
-            factors[10] = factors[10].plus(factor); 	// J
-            // zero
-            factors[L] = BigRational.ZERO;
-        }
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C  D  E  F  G  H  I  J  K  
-        	{0, 2, 0, 0, 0,-2, 0, 0, 0, 2, 0, 0},	// M = 2A -2E +2I
-        	{1, 0, 1, 0,-1, 0,-1, 0, 1, 0, 1, 0},	// L = 1 + B -D -F +H +J
-        };
-    }
-
-    private static void normalize30(ParameterizedField<?> field, BigRational[] factors) {
-        normalizeFactor(factors,  8, 4, 2); // H = D + B
-        int I = 9;
-    	BigRational factor = factors[I]; // I = -G +E +2C +A
-        if(!factor.isZero()) {
-            factors[1] = factors[1].plus(factor); 	// A
-            factors[3] = factors[3].plus(factor); 	// C
-            factors[3] = factors[3].plus(factor); 	// C again = 2C
-            factors[5] = factors[5].plus(factor); 	// E
-            factors[7] = factors[7].minus(factor);	// -G
-            // zero
-            factors[I] = BigRational.ZERO;
-        }
-    	int J = 10; 
-    	factor = factors[J]; // J = H + 1 = D + B + 1
-        if(!factor.isZero()) {
-            factors[0] = factors[0].plus(factor); 	// units
-            factors[2] = factors[2].plus(factor); 	// B
-            factors[4] = factors[4].plus(factor); 	// D
-            // zero
-            factors[J] = BigRational.ZERO;
-        }
-        normalizeFactor(factors, 11, 7, 1); // K = G + A
-        normalizeFactor(factors, 12, 6, 2); // L = F + B
-        normalizeFactor(factors, 13, 5, 3); // M = E + C
-        normalizeFactor(factors, 14, 4, 4); // N = D + D = 2D
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C  D  E  F  G  
-        	{0, 0, 0, 0, 2, 0, 0, 0},	// N = D + D = 2D
-        	{0, 0, 0, 1, 0, 1, 0, 0},	// M = C + E
-        	{0, 0, 1, 0, 0, 0, 1, 0},	// L = B + F
-        	{0, 1, 0, 0, 0, 0, 0, 1},	// K = A + G
-        	{1, 0, 1, 0, 1, 0, 0, 0},	// J = 1 + B + D // also = H + 1
-        	{0, 1, 0, 2, 0, 1, 0,-1},	// I = A + 2C +E -G
-        	{0, 0, 1, 0, 1, 0, 0, 0},	// H = B + D
-        };
-    }
-
-    private static void normalize33(ParameterizedField<?> field, BigRational[] factors) {
-        normalizeFactor(factors, 15, 5, 4); // O = E + D
-        normalizeFactor(factors, 14, 6, 3); // N = F + C
-        normalizeFactor(factors, 13, 7, 2); // M = G + B
-        normalizeFactor(factors, 12, 8, 1); // L = H + A
-        normalizeFactor(factors, 11, 9, 0); // K = I + 1
-        int J = 10;
-    	BigRational factor = factors[J]; 	// J = -I +H +2G +F -E -2D -C +B +2A +1
-        if(!factor.isZero()) {
-            factors[0] = factors[0].plus(factor); 	// units            
-            factors[1] = factors[1].plus(factor); 	// A
-            factors[1] = factors[1].plus(factor); 	// A again = 2A
-            factors[2] = factors[2].plus(factor); 	// B
-            factors[3] = factors[3].minus(factor); 	// -C
-            factors[4] = factors[4].minus(factor); 	// -D
-            factors[4] = factors[4].minus(factor); 	// -D again = -2D
-            factors[5] = factors[5].minus(factor); 	// -E
-            factors[6] = factors[6].plus(factor); 	// F
-            factors[7] = factors[7].plus(factor); 	// G
-            factors[7] = factors[7].plus(factor); 	// G again = 2G
-            factors[8] = factors[8].plus(factor); 	// H
-            factors[9] = factors[9].minus(factor); 	// -I
-            // zero
-            factors[J] = BigRational.ZERO;
-        }
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C  D  E  F  G  H  I    
-        	{0, 0, 0, 0, 1, 1, 0, 0, 0, 0}, // O = D + E
-        	{0, 0, 0, 1, 0, 0, 1, 0, 0, 0}, // N = C + F
-        	{0, 0, 1, 0, 0, 0, 0, 1, 0, 0}, // M = B + G
-        	{0, 1, 0, 0, 0, 0, 0, 0, 1, 0}, // L = A + H
-        	{1, 0, 0, 0, 0, 0, 0, 0, 0, 1}, // K = 1 + I
-        	{1, 2, 1,-1,-2,-1, 1, 2, 1,-1},	// J = 1 +2A +B -2 -2D -E +F +2G +H -I
-        };
-    }
-    
-    private static void normalize34(ParameterizedField<?> field, BigRational[] factors) {
-        int P = 16; 
-    	BigRational factor = factors[P]; // P = 2N -2L +2J -2H +2F -2D +2B -2
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].minus(factor); 	// -units
-            factors[ 0] = factors[ 0].minus(factor); 	// -units again = -2
-            factors[ 2] = factors[ 2].plus(factor); 	// B
-            factors[ 2] = factors[ 2].plus(factor); 	// B again = 2B
-            factors[ 4] = factors[ 4].minus(factor); 	// -D
-            factors[ 4] = factors[ 4].minus(factor); 	// -D again = -2D
-            factors[ 6] = factors[ 6].plus(factor); 	// F
-            factors[ 6] = factors[ 6].plus(factor); 	// F again = 2F
-            factors[ 8] = factors[ 8].minus(factor); 	// -H
-            factors[ 8] = factors[ 8].minus(factor); 	// -H again = -2H
-            factors[10] = factors[10].plus(factor); 	// J
-            factors[10] = factors[10].plus(factor); 	// J again = 2J
-            factors[12] = factors[12].minus(factor); 	// -L
-            factors[12] = factors[12].minus(factor); 	// -L again = -2L
-            factors[14] = factors[14].plus(factor); 	// N
-            factors[14] = factors[14].plus(factor); 	// N again = 2N
-            // zero
-            factors[P] = BigRational.ZERO;
-        }
-        field.normalizerMatrix = new short[][] {
-        //    1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  
-        	{-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0}, // P = -2 +2B -2D +2F -2H +2 J -2L +2N
-        };
-    }
-    
-    private static void normalize35(ParameterizedField<?> field, BigRational[] factors) {
-        int P = 16; 
-    	BigRational factor = factors[P]; 	// P = J + I -C -B
-        if(!factor.isZero()) {
-            factors[ 2] = factors[ 2].minus(factor); 	// -B
-            factors[ 3] = factors[ 3].minus(factor); 	// -C
-            factors[ 9] = factors[ 9].plus(factor); 	// I
-            factors[10] = factors[10].plus(factor); 	// J
-            // zero
-            factors[P] = BigRational.ZERO;
-        }
-        int o = 15; 
-    	factor = factors[o]; 				// O = K + H -D -A
-        if(!factor.isZero()) {
-            factors[ 1] = factors[ 1].minus(factor); 	// -A
-            factors[ 4] = factors[ 4].minus(factor); 	// -D
-            factors[ 8] = factors[ 8].plus(factor); 	// H
-            factors[11] = factors[11].plus(factor); 	// K
-            // zero
-            factors[o] = BigRational.ZERO;
-        }
-        int N = 14; 
-    	factor = factors[N]; 				// N = -K +J +I +2G +F -E -C -2B -A -1
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].minus(factor); 	// -1
-            factors[ 1] = factors[ 1].minus(factor); 	// -A
-            factors[ 2] = factors[ 2].minus(factor); 	// -B
-            factors[ 2] = factors[ 2].minus(factor); 	// -B again 
-            factors[ 3] = factors[ 3].minus(factor); 	// -C
-            factors[ 5] = factors[ 5].minus(factor); 	// -E
-            factors[ 6] = factors[ 6].plus(factor); 	// F
-            factors[ 7] = factors[ 7].plus(factor); 	// G
-            factors[ 7] = factors[ 7].plus(factor); 	// G again
-            factors[ 9] = factors[ 9].plus(factor); 	// I
-            factors[10] = factors[10].plus(factor); 	// J
-            factors[11] = factors[11].minus(factor); 	// -K
-            // zero
-            factors[N] = BigRational.ZERO;
-        }
-        int M = 13;
-    	factor = factors[M]; 					// M = K -J +2H +E -D -C -A -1
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].minus(factor); 	// -1
-            factors[ 1] = factors[ 1].minus(factor); 	// -A
-            factors[ 3] = factors[ 3].minus(factor); 	// -C
-            factors[ 4] = factors[ 4].minus(factor); 	// -D
-            factors[ 5] = factors[ 5].plus(factor); 	// E
-            factors[ 8] = factors[ 8].plus(factor); 	// H
-            factors[ 8] = factors[ 8].plus(factor); 	// H again
-            factors[10] = factors[10].minus(factor); 	// -J
-            factors[11] = factors[11].plus(factor); 	// K
-            // zero
-            factors[M] = BigRational.ZERO;
-        }
-    	int L = 12; 
-    	factor = factors[L]; // L = -K +J +I +G +F -C -2B -A
-        if(!factor.isZero()) {
-            factors[ 1] = factors[ 1].minus(factor); 	// -A
-            factors[ 2] = factors[ 2].minus(factor); 	// -B
-            factors[ 2] = factors[ 2].minus(factor); 	// -B again
-            factors[ 3] = factors[ 3].minus(factor); 	// -C
-            factors[ 6] = factors[ 6].plus(factor); 	// F
-            factors[ 7] = factors[ 7].plus(factor); 	// G
-            factors[ 9] = factors[ 9].plus(factor); 	// I
-            factors[10] = factors[10].plus(factor); 	// J
-            factors[11] = factors[11].minus(factor); 	// -K
-            // zero
-            factors[L] = BigRational.ZERO;
-        }
-        field.normalizerMatrix = new short[][] {
-        //    1  A  B  C  D  E  F  G  H  I  J  K  
-        	{ 0, 0,-1,-1, 0, 0, 0, 0, 0, 1, 1, 0}, // P = -B -C + I + J
-        	{ 0,-1, 0, 0,-1, 0, 0, 0, 1, 0, 0, 1}, // O = -A -D + H + K
-        	{-1,-1,-2,-1, 0,-1, 1, 2, 0, 1, 1,-1}, // N = -1 -A -2B -C -E +F +2G +I +J -K
-        	{-1,-1, 0,-1,-1, 1, 0, 0, 2, 0,-1, 1}, // M = -1 -A -C -D +E +2H -J +K
-        	{ 0,-1,-2,-1, 0, 0, 1, 1, 0, 1, 1,-1}, // L = -A -2B -C +F +G +I +J -K
-        };
-    }
-    
-    // this pattern seems to work for 3 to any power times any even power of 2 (e.g. 3 * 3 * 4 = 36)
-    private static void normalize36(ParameterizedField<?> field, BigRational[] factors) {
-        normalizeFactor(factors, 12, 0, 10); // L = 1 + J
-        normalizeFactor(factors, 13, 1,  9); // M = A + I
-        normalizeFactor(factors, 14, 2,  8); // N = B + H
-        normalizeFactor(factors, 15, 3,  7); // O = C + G
-        normalizeFactor(factors, 16, 4,  6); // P = D + F
-        normalizeFactor(factors, 17, 5,  5); // Q = E + E
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C  D  E  F  G  H  I  J  K
-        	{0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0}, // Q = E + E = 2E 
-        	{0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0}, // P = D + F 
-        	{0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0}, // O = C + G 
-        	{0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0}, // N = B + H 
-        	{0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}, // M = A + I 
-        	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0}, // L = 1 + J 
-        };
-    }
-
-    private static void normalize38(ParameterizedField<?> field, BigRational[] factors) {
-    	int R = 18; 
-    	BigRational factor = factors[R]; // R = +2 -2B +2D -2F +2H -2J +2L -2N +2P
-        if(!factor.isZero()) {
-            factors[0] = factors[0].plus(factor); 	// -units
-            factors[0] = factors[0].plus(factor); 	// -units again = 2
-            factors[2] = factors[2].minus(factor); 	// -B
-            factors[2] = factors[2].minus(factor); 	// -B again - 2B
-            factors[4] = factors[4].plus(factor); 	// D
-            factors[4] = factors[4].plus(factor); 	// D again = 2D
-            factors[6] = factors[6].minus(factor); 	// -F
-            factors[6] = factors[6].minus(factor);	// -F again = -2F
-            factors[8] = factors[8].plus(factor); 	// H
-            factors[8] = factors[8].plus(factor); 	// H again = 2H
-            factors[10] = factors[10].minus(factor); 	// -J
-            factors[10] = factors[10].minus(factor); 	// -J again - 2J
-            factors[12] = factors[12].plus(factor); 	// L
-            factors[12] = factors[12].plus(factor); 	// L again = 2L
-            factors[14] = factors[14].minus(factor); 	// -N
-            factors[14] = factors[14].minus(factor);	// -N again = -2N
-            factors[16] = factors[16].plus(factor); 	// P
-            factors[16] = factors[16].plus(factor); 	// P again = 2P
-            // zero
-            factors[R] = BigRational.ZERO;
-        }	 
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  
-        	{2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0},	// R = +2 -2B +2D -2F +2H -2J +2L -2N +2P
-        };
-    }
-
-    private static void normalize39(ParameterizedField<?> field, BigRational[] factors) {
-        normalizeFactor(factors, 18, 5,  6); // R = E + F
-        normalizeFactor(factors, 17, 4,  7); // Q = D + G
-        normalizeFactor(factors, 16, 3,  8); // P = C + H
-        normalizeFactor(factors, 15, 2,  9); // O = B + I
-        normalizeFactor(factors, 14, 1, 10); // N = A + J
-        normalizeFactor(factors, 13, 0, 11); // M = 1 + K
-    	int L = 12; 
-    	BigRational factor = factors[L]; // L = -2 -A +B +2C +D -E -2F -G +H +2I +J -K
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].minus(factor); 	// -units
-            factors[ 0] = factors[ 0].minus(factor); 	// -units again
-            factors[ 1] = factors[ 1].minus(factor); 	// -A
-            factors[ 2] = factors[ 2].plus(factor); 	// B
-            factors[ 3] = factors[ 3].plus(factor); 	// C
-            factors[ 3] = factors[ 3].plus(factor); 	// C again
-            factors[ 4] = factors[ 4].plus(factor); 	// D
-            factors[ 5] = factors[ 5].minus(factor); 	// -E
-            factors[ 6] = factors[ 6].minus(factor); 	// -F
-            factors[ 6] = factors[ 6].minus(factor); 	// -F again
-            factors[ 7] = factors[ 7].minus(factor); 	// -G
-            factors[ 8] = factors[ 8].plus(factor); 	// H
-            factors[ 9] = factors[ 9].plus(factor); 	// I
-            factors[ 9] = factors[ 9].plus(factor); 	// I again
-            factors[10] = factors[10].plus(factor); 	// J
-            factors[11] = factors[11].minus(factor); 	// -K
-            // zero
-            factors[L] = BigRational.ZERO;
-        }
-        field.normalizerMatrix = new short[][] {
-        //    1  A  B  C  D  E  F  G  H  I  J  K  
-        	{ 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0}, // R = E + F
-        	{ 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0}, // Q = D + G
-        	{ 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0}, // P = C + H
-        	{ 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0}, // O = B + I
-        	{ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0}, // N = A + J
-        	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, // M = 1 + K
-        	{-2,-1, 1, 2, 1,-1,-2,-1, 1, 2, 1,-1}, // L = -2 -A +B +2C +D -E -2F -G +H +2I +J -K
-        };
-    }
-    
-    private static void normalize40(ParameterizedField<?> field, BigRational[] factors) {
-    	int P = 16; 
-    	BigRational factor = factors[P]; // P = -1 -F + H + N
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].minus(factor); 	// -units
-            factors[ 6] = factors[ 6].minus(factor); 	// -F
-            factors[ 8] = factors[ 8].plus(factor); 	// H
-            factors[14] = factors[14].plus(factor); 	// N
-            // zero
-            factors[P] = BigRational.ZERO;
-        }	 
-    	int Q = 17; 
-    	factor = factors[Q]; // Q = -A -E + I + M
-        if(!factor.isZero()) {
-            factors[ 1] = factors[ 1].minus(factor); 	// -A
-            factors[ 5] = factors[ 5].minus(factor); 	// -E
-            factors[ 9] = factors[ 9].plus(factor); 	// I
-            factors[13] = factors[13].plus(factor); 	// M
-            // zero
-            factors[Q] = BigRational.ZERO;
-        }	 
-    	int R = 18; 
-    	factor = factors[R]; // R = -B -D + J + L
-        if(!factor.isZero()) {
-            factors[ 2] = factors[ 2].minus(factor); 	// -B
-            factors[ 4] = factors[ 4].minus(factor); 	// -D
-            factors[10] = factors[10].plus(factor); 	// J
-            factors[12] = factors[12].plus(factor); 	// L
-            // zero
-            factors[R] = BigRational.ZERO;
-        }	 
-    	int S = 19; 
-    	factor = factors[S]; // S = -2C +2K
-        if(!factor.isZero()) {
-            factors[ 3] = factors[ 3].minus(factor); 	// -C
-            factors[ 3] = factors[ 3].minus(factor); 	// -C again
-            factors[11] = factors[11].plus(factor); 	// K
-            factors[11] = factors[11].plus(factor); 	// K again
-            // zero
-            factors[S] = BigRational.ZERO;
-        }	 
-        field.normalizerMatrix = new short[][] {
-        //    1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  
-        	{ 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0},	// S = -2C +2K
-        	{ 0, 0,-1, 0,-1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0},	// R = -B -D + J + L
-        	{ 0,-1, 0, 0, 0,-1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0},	// Q = -A -E + I + M
-        	{-1, 0, 0, 0, 0, 0,-1, 0, 1, 0, 0, 0, 0, 0, 1, 0},	// P = -1 -F + H + N
-        };
-    }
-
-    private static void normalize42(ParameterizedField<?> field, BigRational[] factors) {
-        normalizeFactor(factors, 20, 6,  6); // T = F + F = 2F
-        normalizeFactor(factors, 19, 5,  7); // S = E + G
-        normalizeFactor(factors, 18, 4,  8); // R = D + H
-        normalizeFactor(factors, 17, 3,  9); // Q = C + I
-        normalizeFactor(factors, 16, 2, 10); // P = B + J
-        normalizeFactor(factors, 15, 1, 11); // O = A + K
-    	int N = 14; 
-    	BigRational factor = factors[N]; // n =          -1b             +1f     +1h
-        if(!factor.isZero()) {
-            factors[2] = factors[2].minus(factor); 	// -B
-            factors[6] = factors[6].plus(factor); 	// F
-            factors[8] = factors[8].plus(factor); 	// H
-            // zero
-            factors[N] = BigRational.ZERO;
-        }	 
-    	int M = 13; 
-    	factor = factors[M]; // m =      -2a     -1c     +1e     +2g     +1i     -1k
-        if(!factor.isZero()) {
-            factors[ 1] = factors[ 1].minus(factor); 	// -A
-            factors[ 1] = factors[ 1].minus(factor); 	// -A again
-            factors[ 3] = factors[ 3].minus(factor); 	// -C
-            factors[ 5] = factors[ 5].plus(factor); 	// E
-            factors[ 7] = factors[ 7].plus(factor); 	// G
-            factors[ 7] = factors[ 7].plus(factor); 	// G again
-            factors[ 9] = factors[ 9].plus(factor); 	// I
-            factors[11] = factors[11].minus(factor); 	// -K
-            // zero
-            factors[M] = BigRational.ZERO;
-        }	 
-    	int L = 12; 
-    	factor = factors[L]; // L =  -1      -1b             +1f     +1h
-        if(!factor.isZero()) {
-            factors[0] = factors[0].minus(factor); 	// -1
-            factors[2] = factors[2].minus(factor); 	// -B
-            factors[6] = factors[6].plus(factor); 	// F
-            factors[8] = factors[8].plus(factor); 	// H
-            // zero
-            factors[L] = BigRational.ZERO;
-        }	 
-        field.normalizerMatrix = new short[][] {
-        //    1  A  B  C  D  E  F  G  H  I  J  K      
-	    	{ 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0},	// t =                          +2f
-	    	{ 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0},	// s =                      +1e     +1g
-	    	{ 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0},	// r =                  +1d             +1h
-	    	{ 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0},	// q =              +1c                     +1i
-	    	{ 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0},	// p =          +1b                             +1j
-	    	{ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},	// o =      +1a                                     +1k
-	    	{ 0, 0,-1, 0, 0, 0, 1, 0, 1, 0, 0, 0},	// n =          -1b             +1f     +1h
-	    	{ 0,-2, 0,-1, 0, 1, 0, 2, 0, 1, 0,-1},	// m =      -2a     -1c     +1e     +2g     +1i     -1k
-	    	{-1, 0,-1, 0, 0, 0, 1, 0, 1, 0, 0, 0},	// l =  -1      -1b             +1f     +1h
-        };
-    }
-	
-    private static void normalize44(ParameterizedField<?> field, BigRational[] factors) {
-    	int U = 21; 
-    	BigRational factor = factors[U]; // U = +2A -2E +2I -2M +2Q
-        if(!factor.isZero()) {
-            factors[ 1] = factors[ 1].plus(factor); 	// A
-            factors[ 1] = factors[ 1].plus(factor); 	// A
-            factors[ 5] = factors[ 5].minus(factor); 	// -E
-            factors[ 5] = factors[ 5].minus(factor); 	// -E
-            factors[ 9] = factors[ 9].plus(factor); 	// I
-            factors[ 9] = factors[ 9].plus(factor); 	// I
-            factors[13] = factors[13].minus(factor); 	// -M
-            factors[13] = factors[13].minus(factor); 	// -M
-            factors[17] = factors[17].plus(factor); 	// Q
-            factors[17] = factors[17].plus(factor); 	// Q
-            // zero
-            factors[U] = BigRational.ZERO;
-        }	 
-    	int T = 20; 
-    	factor = factors[T]; // T = +1 +B -D -F +H +J -L -N +P +R
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].plus(factor); 	// units
-            factors[ 2] = factors[ 2].plus(factor); 	// B
-            factors[ 4] = factors[ 4].minus(factor); 	// -D
-            factors[ 6] = factors[ 6].minus(factor); 	// -F
-            factors[ 8] = factors[ 8].plus(factor); 	// H
-            factors[10] = factors[10].plus(factor); 	// J
-            factors[12] = factors[12].minus(factor); 	// -L
-            factors[14] = factors[14].minus(factor); 	// -N
-            factors[16] = factors[16].plus(factor); 	// P
-            factors[18] = factors[18].plus(factor); 	// R
-            // zero
-            factors[T] = BigRational.ZERO;
-        }	 
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S    
-        	{0, 2, 0, 0, 0,-2, 0, 0, 0, 2, 0, 0, 0,-2, 0, 0, 0, 2, 0, 0},	// U = +2A -2E +2I -2M +2Q
-        	{1, 0, 1, 0,-1, 0,-1, 0, 1, 0, 1, 0,-1, 0,-1, 0, 1, 0, 1, 0},	// T = +1 +B -D -F +H +J -L -N +P +R
-        };
-    }
-    
-    private static void normalize45(ParameterizedField<?> field, BigRational[] factors) {
-        normalizeFactor(factors, 21, 6,  7); // U = F + G
-        normalizeFactor(factors, 20, 5,  8); // T = E + H
-        normalizeFactor(factors, 19, 4,  9); // S = D + I
-        normalizeFactor(factors, 18, 3, 10); // R = C + J
-        normalizeFactor(factors, 17, 2, 11); // Q = B + K
-    	int P = 16; 
-    	BigRational factor = factors[P]; // p =  +1         +1c             +1g     -1i +1j
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].plus(factor); 	// 1
-            factors[ 3] = factors[ 3].plus(factor); 	// C
-            factors[ 7] = factors[ 7].plus(factor); 	// G
-            factors[ 9] = factors[ 9].minus(factor); 	// -I
-            factors[10] = factors[10].plus(factor); 	// J
-            // zero
-            factors[P] = BigRational.ZERO;
-        }	 
-    	int o = 15; 
-    	factor = factors[o]; // o =      +1a         +1d     +1f         +1i -1j
-        if(!factor.isZero()) {
-            factors[ 1] = factors[ 1].plus(factor); 	// A 
-            factors[ 4] = factors[ 4].plus(factor); 	// D
-            factors[ 6] = factors[ 6].plus(factor); 	// F
-            factors[ 9] = factors[ 9].plus(factor); 	// I
-            factors[10] = factors[10].minus(factor); 	// -J
-            // zero
-            factors[o] = BigRational.ZERO;
-        }	 
-    	int N = 14; 
-    	factor = factors[N]; // n =          +1b         +2e         +1h         -1k
-        if(!factor.isZero()) {
-            factors[ 2] = factors[2].plus(factor); 	 // B
-            factors[ 5] = factors[5].plus(factor); 	 // E
-            factors[ 5] = factors[5].plus(factor); 	 // E again
-            factors[ 8] = factors[8].plus(factor); 	 // H
-            factors[11] = factors[11].minus(factor); // -K
-            // zero
-            factors[N] = BigRational.ZERO;
-        }	 
-    	int M = 13; 
-    	factor = factors[M]; // m =  -1 +1a         +1d     +1f         +1i -1j
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].minus(factor); 	// -1 
-            factors[ 1] = factors[ 1].plus(factor); 	// A 
-            factors[ 4] = factors[ 4].plus(factor); 	// D
-            factors[ 6] = factors[ 6].plus(factor); 	// F
-            factors[ 9] = factors[ 9].plus(factor); 	// I
-            factors[10] = factors[10].minus(factor); 	// -J
-            // zero
-            factors[M] = BigRational.ZERO;
-        }	 
-    	int L = 12; 
-    	factor = factors[L]; // L =  +1 -1a     +1c             +1g      -1i +1j
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].plus(factor); 	// 1
-            factors[ 1] = factors[ 1].minus(factor); 	// -A
-            factors[ 3] = factors[ 3].plus(factor); 	// C
-            factors[ 7] = factors[ 7].plus(factor); 	// G
-            factors[ 9] = factors[ 9].minus(factor); 	// -I
-            factors[10] = factors[10].plus(factor); 	// J
-            // zero
-            factors[L] = BigRational.ZERO;
-        }	 
-        field.normalizerMatrix = new short[][] {
-        //    1  A  B  C  D  E  F  G  H  I  J  K      
-	    	{ 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0},	// u =                          +1f +1g
-	    	{ 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0},	// t =                      +1e         +1h
-	    	{ 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0},	// s =                  +1d                 +1i
-	    	{ 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0},	// r =              +1c                         +1j
-	    	{ 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1},	// q =          +1b                                 +1k
-	    	{ 1, 0, 0, 1, 0, 0, 0, 1, 0,-1, 1, 0},	// p =  +1         +1c              +1g     -1i +1j
-	    	{ 0, 1, 0, 0, 1, 0, 1, 0, 0, 1,-1, 0},	// o =      +1a         +1d     +1f         +1i -1j
-	    	{ 0, 0, 1, 0, 0, 2, 0, 0, 1, 0, 0,-1},	// n =          +1b         +2e         +1h         -1k
-	    	{-1, 1, 0, 0, 1, 0, 1, 0, 0, 1,-1, 0},	// m =  -1 +1a         +1d     +1f          +1i -1j
-	    	{ 1,-1, 0, 1, 0, 0, 0, 1, 0,-1, 1, 0},	// l =  +1 -1a     +1c             +1g      -1i +1j
-        };
-    }
-    
-    private static void normalize46(ParameterizedField<?> field, BigRational[] factors) {
-    	int V = 22; 
-    	BigRational factor = factors[V]; // V = +2 -2B +2D -2F +2H -2J +2L -2N +2P -2R +2T
-        if(!factor.isZero()) {
-            factors[0] = factors[0].plus(factor); 	// -units
-            factors[0] = factors[0].plus(factor); 	// -units again = 2
-            factors[2] = factors[2].minus(factor); 	// -B
-            factors[2] = factors[2].minus(factor); 	// -B again - 2B
-            factors[4] = factors[4].plus(factor); 	// D
-            factors[4] = factors[4].plus(factor); 	// D again = 2D
-            factors[6] = factors[6].minus(factor); 	// -F
-            factors[6] = factors[6].minus(factor);	// -F again = -2F
-            factors[8] = factors[8].plus(factor); 	// H
-            factors[8] = factors[8].plus(factor); 	// H again = 2H
-            factors[10] = factors[10].minus(factor); 	// -J
-            factors[10] = factors[10].minus(factor); 	// -J again - 2J
-            factors[12] = factors[12].plus(factor); 	// L
-            factors[12] = factors[12].plus(factor); 	// L again = 2L
-            factors[14] = factors[14].minus(factor); 	// -N
-            factors[14] = factors[14].minus(factor);	// -N again = -2N
-            factors[16] = factors[16].plus(factor); 	// P
-            factors[16] = factors[16].plus(factor); 	// P again = 2P
-            factors[18] = factors[18].minus(factor); 	// -R
-            factors[18] = factors[18].minus(factor);	// -R again = -2R
-            factors[20] = factors[20].plus(factor); 	// T
-            factors[20] = factors[20].plus(factor); 	// T again = 2T
-            // zero
-            factors[V] = BigRational.ZERO;
-        }	 
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S  T  U
-        	{2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0},	// V = +2 -2B +2D -2F +2H -2J +2L -2N +2P -2R +2T
-        };
-    }
-
-    // this pattern seems to work for 3 times any even power of 2 (e.g. 3 * 16 = 48)
-    private static void normalize48(ParameterizedField<?> field, BigRational[] factors) {
-        normalizeFactor(factors, 16, 0, 14); // P = 1 + N
-        normalizeFactor(factors, 17, 1, 13); // Q = A + M
-        normalizeFactor(factors, 18, 2, 12); // R = B + L
-        normalizeFactor(factors, 19, 3, 11); // S = C + K
-        normalizeFactor(factors, 20, 4, 10); // T = D + J
-        normalizeFactor(factors, 21, 5,  9); // U = E + I
-        normalizeFactor(factors, 22, 6,  8); // V = F + H
-        normalizeFactor(factors, 23, 7,  7); // W = G + G
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O
-        	{0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0},	// W = G + G = 2G
-        	{0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0},	// V = F + H
-        	{0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},	// U = E + I
-        	{0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},	// T = D + J
-        	{0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},	// S = C + K
-        	{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},	// R = B + L
-        	{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},	// Q = A + M
-        	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},	// P = 1 + N
-        };
-    }
-
-    private static void normalize49(ParameterizedField<?> field, BigRational[] factors) {
-    	int W = 23; 
-    	BigRational factor = factors[W]; // // W = B + C - I - J + P + Q
-        if(!factor.isZero()) {
-            factors[ 2] = factors[ 2].plus(factor); 	// B
-            factors[ 3] = factors[ 3].plus(factor); 	// C
-            factors[ 9] = factors[ 9].minus(factor); 	// -I
-            factors[10] = factors[10].minus(factor); 	// -J
-            factors[16] = factors[16].plus(factor); 	// P
-            factors[17] = factors[17].plus(factor); 	// Q
-            // zero
-            factors[W] = BigRational.ZERO;
-        }	 
-    	int V = 22; 
-    	factor = factors[V]; // V = A + D - H - K + O + R
-        if(!factor.isZero()) {
-            factors[ 1] = factors[ 1].plus(factor); 	// A
-            factors[ 4] = factors[ 4].plus(factor); 	// D
-            factors[ 8] = factors[ 8].minus(factor); 	// -H
-            factors[11] = factors[11].minus(factor); 	// -K
-            factors[15] = factors[15].plus(factor); 	// O
-            factors[18] = factors[18].plus(factor); 	// R
-            // zero
-            factors[V] = BigRational.ZERO;
-        }	 
-    	int U= 21; 
-    	factor = factors[U]; // U = 1 + E - G - L + N + S
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].plus(factor); 	// 1
-            factors[ 5] = factors[ 5].plus(factor); 	// E
-            factors[ 7] = factors[ 7].minus(factor); 	// -G
-            factors[12] = factors[12].minus(factor); 	// -L
-            factors[14] = factors[14].plus(factor); 	// N
-            factors[19] = factors[19].plus(factor); 	// S
-            // zero
-            factors[U] = BigRational.ZERO;
-        }	 
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S  T
-        	{0, 0, 1, 1, 0, 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0},	// W = B + C - I - J + P + Q
-        	{0, 1, 0, 0, 1, 0, 0, 0,-1, 0, 0,-1, 0, 0, 0, 1, 0, 0, 1, 0, 0},	// V = A + D - H - K + O + R
-        	{1, 0, 0, 0, 0, 1, 0,-1, 0, 0, 0, 0,-1, 0, 1, 0, 0, 0, 0, 1, 0},	// U = 1 + E - G - L + N + S
-        };
-    }
-
-    private static void normalize50(ParameterizedField<?> field, BigRational[] factors) {
-    	int X = 24; 
-    	BigRational factor = factors[X];     // x =                  -2d                                     +2n
-        if(!factor.isZero()) {
-            factors[ 4] = factors[ 4].minus(factor); 	// -D
-            factors[ 4] = factors[ 4].minus(factor); 	// -D
-            factors[14] = factors[14].plus(factor); 	// N
-            factors[14] = factors[14].plus(factor); 	// N
-            // zero
-            factors[X] = BigRational.ZERO;
-        }	 
-    	int W = 23; 
-    	factor = factors[W];                 // w =              -1c     -1e                             +1m     +1o
-        if(!factor.isZero()) {
-            factors[ 3] = factors[ 3].minus(factor); 	// -C
-            factors[ 5] = factors[ 5].minus(factor); 	// -E
-            factors[13] = factors[13].plus(factor); 	// M
-            factors[15] = factors[15].plus(factor); 	// O
-            // zero
-            factors[W] = BigRational.ZERO;
-        }	 
-    	int V = 22; 
-    	factor = factors[V];                  // v =          -1b             -1f                     +1l             +1p
-        if(!factor.isZero()) {
-            factors[ 2] = factors[ 2].minus(factor); 	// -B
-            factors[ 6] = factors[ 6].minus(factor); 	// -F
-            factors[12] = factors[12].plus(factor); 	// L
-            factors[16] = factors[16].plus(factor); 	// P
-            // zero
-            factors[V] = BigRational.ZERO;
-        }	 
-    	int U = 21; 
-    	factor = factors[U];                  // u =      -1a                     -1g             +1k                     +1q
-        if(!factor.isZero()) {
-            factors[ 1] = factors[ 1].minus(factor); 	// -A
-            factors[ 7] = factors[ 7].minus(factor); 	// -G
-            factors[11] = factors[11].plus(factor); 	// K
-            factors[17] = factors[17].plus(factor); 	// Q
-            // zero
-            factors[U] = BigRational.ZERO;
-        }	 
-    	int T = 20; 
-    	factor = factors[T];                   // t =  -1                              -1h     +1j                             +1r
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].minus(factor); 	// -units
-            factors[ 8] = factors[ 8].minus(factor); 	// -H
-            factors[10] = factors[10].plus(factor); 	// J
-            factors[18] = factors[18].plus(factor); 	// R
-            // zero
-            factors[T] = BigRational.ZERO;
-        }	 
-        field.normalizerMatrix = new short[][] {
-        //    1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S
-        	{ 0, 0, 0, 0,-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0},	// x =                  -2d                                     +2n
-        	{ 0, 0, 0,-1, 0,-1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0},	// w =              -1c     -1e                             +1m     +1o
-        	{ 0, 0,-1, 0, 0, 0,-1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0},	// v =          -1b             -1f                     +1l             +1p
-        	{ 0,-1, 0, 0, 0, 0, 0,-1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0},	// u =      -1a                     -1g             +1k                     +1q
-        	{-1, 0, 0, 0, 0, 0, 0, 0,-1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0},	// t =  -1                              -1h     +1j                             +1r
-        };
-    }
-
-    private static void normalize51(ParameterizedField<?> field, BigRational[] factors) {
-    	int P = 16; 
-    	BigRational factor = factors[P]; // p =  -1  -2a -1b +1c +2d +1e -1f -2g -1h +1i +2j +1k -1l -2m -1n +1o  
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].plus(factor); 	// units
-            factors[ 1] = factors[ 1].plus(factor); 	// A
-            factors[ 1] = factors[ 1].plus(factor); 	// A again
-            factors[ 2] = factors[ 2].plus(factor); 	// B
-            factors[ 3] = factors[ 3].minus(factor); 	// -C
-            factors[ 4] = factors[ 4].minus(factor); 	// -D
-            factors[ 4] = factors[ 4].minus(factor); 	// -D again
-            factors[ 5] = factors[ 5].minus(factor); 	// -E
-            factors[ 6] = factors[ 6].plus(factor); 	// F
-            factors[ 7] = factors[ 7].plus(factor); 	// G
-            factors[ 7] = factors[ 7].plus(factor); 	// G again
-            factors[ 8] = factors[ 8].plus(factor); 	// H
-            factors[ 9] = factors[ 9].minus(factor); 	// -I
-            factors[10] = factors[10].minus(factor); 	// -J
-            factors[10] = factors[10].minus(factor); 	// -J again
-            factors[11] = factors[11].minus(factor); 	// -K            
-            factors[12] = factors[12].plus(factor); 	// L
-            factors[13] = factors[13].plus(factor); 	// M
-            factors[13] = factors[13].plus(factor); 	// M again
-            factors[14] = factors[14].plus(factor); 	// N
-            factors[15] = factors[15].minus(factor); 	// -O
-            // zero
-            factors[P] = BigRational.ZERO;
-        }
-
-        normalizeFactor(factors, 17, 0, 15); // Q = 1 + O
-        normalizeFactor(factors, 18, 1, 14); // R = A + N
-        normalizeFactor(factors, 19, 2, 13); // S = B + M
-        normalizeFactor(factors, 20, 3, 12); // T = C + L
-        normalizeFactor(factors, 21, 4, 11); // U = D + K
-        normalizeFactor(factors, 22, 5, 10); // V = E + J
-        normalizeFactor(factors, 23, 6,  9); // W = F + I
-        normalizeFactor(factors, 24, 7,  8); // X = G + H
-        field.normalizerMatrix = new short[][] {
-        //    1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O 
-        	{ 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0},	// X = G + H
-        	{ 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0},	// W = F + I
-        	{ 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},	// V = E + J
-        	{ 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},	// U = D + K
-        	{ 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},	// T = C + L
-        	{ 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},	// S = B + M
-        	{ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},	// R = A + N
-        	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},	// Q = 1 + O
-        	{ 1, 2, 1,-1,-2,-1, 1, 2, 1,-1,-2,-1, 1, 2, 1,-1},  // p =  +1  +2a +1b -1c -2d -1e +1f +2g +1h -1i -2j -1k +1l +2m +1n -1o
-        };
-    }
-
-    private static void normalize52(ParameterizedField<?> field, BigRational[] factors) {
-    	int Y = 25; 
-    	BigRational factor = factors[Y]; // y =      -2a             +2e             -2i             +2m             -2q             +2u
-        if(!factor.isZero()) {
-            factors[ 1] = factors[ 1].minus(factor); 	// -A
-            factors[ 1] = factors[ 1].minus(factor); 	// -A
-            factors[ 5] = factors[ 5].plus(factor); 	// E
-            factors[ 5] = factors[ 5].plus(factor); 	// E
-            factors[ 9] = factors[ 9].minus(factor); 	// -I
-            factors[ 9] = factors[ 9].minus(factor); 	// -I
-            factors[13] = factors[13].plus(factor); 	// M
-            factors[13] = factors[13].plus(factor); 	// M
-            factors[17] = factors[17].minus(factor); 	// -Q
-            factors[17] = factors[17].minus(factor); 	// -Q
-            factors[21] = factors[21].plus(factor); 	// U
-            factors[21] = factors[21].plus(factor); 	// U
-            // zero
-            factors[Y] = BigRational.ZERO;
-        }	 
-    	int X = 24; 
-    	factor = factors[X]; // x =  -1      -1b     +1d     +1f     -1h     -1j     +1l     +1n     -1p     -1r     +1t     +1v
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].minus(factor); 	// -units
-            factors[ 2] = factors[ 2].minus(factor); 	// -B
-            factors[ 4] = factors[ 4].plus(factor); 	// D
-            factors[ 6] = factors[ 6].plus(factor); 	// F
-            factors[ 8] = factors[ 8].minus(factor); 	// -H
-            factors[10] = factors[10].minus(factor); 	// -J
-            factors[12] = factors[12].plus(factor); 	// L
-            factors[14] = factors[14].plus(factor); 	// N
-            factors[16] = factors[16].minus(factor); 	// -P
-            factors[18] = factors[18].minus(factor); 	// -R
-            factors[20] = factors[20].plus(factor); 	// T
-            factors[22] = factors[22].plus(factor); 	// V
-            // zero
-            factors[X] = BigRational.ZERO;
-        }	 
-        field.normalizerMatrix = new short[][] {
-        //    1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S  T  U  V  W 
-        	{ 0,-2, 0, 0, 0, 2, 0, 0, 0,-2, 0, 0, 0, 2, 0, 0, 0,-2, 0, 0, 0, 2, 0, 0},	// y =      -2a             +2e             -2i             +2m             -2q             +2u
-        	{-1, 0,-1, 0, 1, 0, 1, 0,-1, 0,-1, 0, 1, 0, 1, 0,-1, 0,-1, 0, 1, 0, 1, 0},	// x =  -1      -1b     +1d     +1f     -1h     -1j     +1l     +1n     -1p     -1r     +1t     +1v
-        };
-    }
-    
-    // this pattern seems to work for 3 times any even power of 2 (e.g. 3 * 18 = 54)
-    private static void normalize54(ParameterizedField<?> field, BigRational[] factors) {
-        normalizeFactor(factors, 18, 0, 16); // R = 1 + P
-        normalizeFactor(factors, 19, 1, 15); // S = A + O
-        normalizeFactor(factors, 20, 2, 14); // T = B + N
-        normalizeFactor(factors, 21, 3, 13); // U = C + M
-        normalizeFactor(factors, 22, 4, 12); // V = D + L
-        normalizeFactor(factors, 23, 5, 11); // W = E + K
-        normalizeFactor(factors, 24, 6, 10); // X = F + J
-        normalizeFactor(factors, 25, 7,  9); // Y = G + I
-        normalizeFactor(factors, 26, 8,  8); // Z = H + H
-        field.normalizerMatrix = new short[][] {
-        //   1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q
-        	{0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0},	// Z = H + H = 2H
-        	{0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},	// Y = G + I
-        	{0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0},	// X = F + J
-        	{0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0},	// W = E + K
-        	{0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},	// V = D + L
-        	{0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0},	// U = C + M
-        	{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0},	// T = B + N
-        	{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},	// S = A + O
-        	{1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},	// R = 1 + P
-        };
-    }
-
-    private static void normalize55(ParameterizedField<?> field, BigRational[] factors) {
-    	int Z = 26; 
-    	BigRational factor = factors[Z];     // z =                  -1d -1e                                     +1o +1p            |
-        if(!factor.isZero()) {
-            factors[ 4] = factors[ 4].minus(factor); 	// -D
-            factors[ 5] = factors[ 5].minus(factor); 	// -E
-            factors[15] = factors[15].plus(factor); 	// O
-            factors[16] = factors[16].plus(factor); 	// P
-            // zero
-            factors[Z] = BigRational.ZERO;
-        }	 
-    	int Y = 25; 
-    	factor = factors[Y];                 // y =              -1c         -1f                             +1n         +1q        |
-        if(!factor.isZero()) {
-            factors[ 3] = factors[ 3].minus(factor); 	// -C
-            factors[ 6] = factors[ 6].minus(factor); 	// -F
-            factors[14] = factors[14].plus(factor); 	// N
-            factors[17] = factors[17].plus(factor); 	// Q
-            // zero
-            factors[Y] = BigRational.ZERO;
-        }	 
-    	int X = 24; 
-    	factor = factors[X];                  // x =          -1b                 -1g                     +1m                 +1r    |
-        if(!factor.isZero()) {
-            factors[ 2] = factors[ 2].minus(factor); 	// -B
-            factors[ 7] = factors[ 7].minus(factor); 	// -G
-            factors[13] = factors[13].plus(factor); 	// M
-            factors[18] = factors[18].plus(factor); 	// R
-            // zero
-            factors[X] = BigRational.ZERO;
-        }	 
-    	int W = 23; 
-    	factor = factors[W];                  // w =      -1a                         -1h             +1l                         +1s|
-        if(!factor.isZero()) {
-            factors[ 1] = factors[ 1].minus(factor); 	// -A
-            factors[ 8] = factors[ 8].minus(factor); 	// -H
-            factors[12] = factors[12].plus(factor); 	// L
-            factors[19] = factors[19].plus(factor); 	// S
-            // zero
-            factors[W] = BigRational.ZERO;
-        }	 
-    	int V = 22; 
-    	factor = factors[V];                   // v =  -2  +1a     -2c     +1e -1f     +2h -1i -1j +1k -1l -1m +1n +1o     +1q +1r -1s|
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].minus(factor); 	// -units
-            factors[ 0] = factors[ 0].minus(factor); 	// -units
-            factors[ 1] = factors[ 1].plus(factor); 	// A
-            factors[ 3] = factors[ 3].minus(factor); 	// -C
-            factors[ 3] = factors[ 3].minus(factor); 	// -C
-            factors[ 5] = factors[ 5].plus(factor); 	// E
-            factors[ 6] = factors[ 6].minus(factor); 	// -F
-            factors[ 8] = factors[ 8].plus(factor); 	// H
-            factors[ 8] = factors[ 8].plus(factor); 	// H
-            factors[ 9] = factors[ 9].minus(factor); 	// -I
-            factors[10] = factors[10].minus(factor); 	// -J
-            factors[11] = factors[11].plus(factor); 	// K
-            factors[12] = factors[12].minus(factor); 	// -L
-            factors[13] = factors[13].minus(factor); 	// -M
-            factors[14] = factors[14].plus(factor); 	// N
-            factors[15] = factors[15].plus(factor); 	// O
-            factors[17] = factors[17].plus(factor); 	// Q
-            factors[18] = factors[18].plus(factor); 	// R
-            factors[19] = factors[19].minus(factor); 	// -S
-            // zero
-            factors[V] = BigRational.ZERO;
-        }	 
-    	int U = 21;
-    	factor = factors[U];                   // u =   2  -2a -1b +2c -1d -2e +2f +1g -2h +1i +1j -2k     +1m -1n     +2p     -1r +1s|
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].plus(factor); 	// units
-            factors[ 0] = factors[ 0].plus(factor); 	// units
-            factors[ 1] = factors[ 1].minus(factor); 	// -A
-            factors[ 1] = factors[ 1].minus(factor); 	// -A
-            factors[ 2] = factors[ 2].minus(factor); 	// -B
-            factors[ 3] = factors[ 3].plus(factor); 	// C
-            factors[ 3] = factors[ 3].plus(factor); 	// C
-            factors[ 4] = factors[ 4].minus(factor); 	// -D
-            factors[ 5] = factors[ 5].minus(factor); 	// -E
-            factors[ 5] = factors[ 5].minus(factor); 	// -E
-            factors[ 6] = factors[ 6].plus(factor); 	// F
-            factors[ 6] = factors[ 6].plus(factor); 	// F
-            factors[ 7] = factors[ 7].plus(factor); 	// G
-            factors[ 8] = factors[ 8].minus(factor); 	// -H
-            factors[ 8] = factors[ 8].minus(factor); 	// -H
-            factors[ 9] = factors[ 9].plus(factor); 	// I
-            factors[10] = factors[10].plus(factor); 	// J
-            factors[11] = factors[11].minus(factor); 	// -K
-            factors[11] = factors[11].minus(factor); 	// -K
-            factors[13] = factors[13].plus(factor); 	// M
-            factors[14] = factors[14].minus(factor); 	// N
-            factors[16] = factors[16].plus(factor); 	// P
-            factors[16] = factors[16].plus(factor); 	// P
-            factors[18] = factors[18].minus(factor); 	// -R
-            factors[19] = factors[19].plus(factor); 	// S
-            // zero
-            factors[U] = BigRational.ZERO;
-        }	 
-    	int T = 20;
-    	factor = factors[T];                   // t =  -1  +1a     -2c     +1e -1f     +2h     -1j     -1l -1m +1n +1o     +1q +1r -1s|
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].minus(factor); 	// -units
-            factors[ 1] = factors[ 1].plus(factor); 	// A
-            factors[ 3] = factors[ 3].minus(factor); 	// -C
-            factors[ 3] = factors[ 3].minus(factor); 	// -C
-            factors[ 5] = factors[ 5].plus(factor); 	// E
-            factors[ 6] = factors[ 6].minus(factor); 	// -F
-            factors[ 8] = factors[ 8].plus(factor); 	// H
-            factors[ 8] = factors[ 8].plus(factor); 	// H
-            factors[10] = factors[10].minus(factor); 	// -J
-            factors[12] = factors[12].minus(factor); 	// -L
-            factors[13] = factors[13].minus(factor); 	// -M
-            factors[14] = factors[14].plus(factor); 	// N
-            factors[15] = factors[15].plus(factor); 	// O
-            factors[17] = factors[17].plus(factor); 	// Q
-            factors[18] = factors[18].plus(factor); 	// R
-            factors[19] = factors[19].minus(factor); 	// -S
-            // zero
-            factors[T] = BigRational.ZERO;
-        }	 
-        field.normalizerMatrix = new short[][] {
-        //    1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S
-        	{ 0, 0, 0, 0,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0},	// z =                  -1d -1e                                     +1o +1p            |
-        	{ 0, 0, 0,-1, 0, 0,-1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0},	// y =              -1c         -1f                             +1n         +1q        |
-        	{ 0, 0,-1, 0, 0, 0, 0,-1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0},	// x =          -1b                 -1g                     +1m                 +1r    |
-        	{ 0,-1, 0, 0, 0, 0, 0, 0,-1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1},	// w =      -1a                         -1h             +1l                         +1s|
-        	{-2, 1, 0,-2, 0, 1,-1, 0, 2,-1,-1, 1,-1,-1, 1, 1, 0, 1, 1,-1},	// v =  -2  +1a     -2c     +1e -1f     +2h -1i -1j +1k -1l -1m +1n +1o     +1q +1r -1s|
-        	{ 2,-2,-1, 2,-1,-2, 2, 1,-2, 1, 1,-2, 0, 1,-1, 0, 2, 0,-1, 1},	// u =   2  -2a -1b +2c -1d -2e +2f +1g -2h +1i +1j -2k     +1m -1n     +2p     -1r +1s|
-        	{-1, 1, 0,-2, 0, 1,-1, 0, 2, 0,-1, 0,-1,-1, 1, 1, 0, 1, 1,-1},	// t =  -1  +1a     -2c     +1e -1f     +2h     -1j     -1l -1m +1n +1o     +1q +1r -1s|
-        };
-    }
-
-    private static void normalize58(ParameterizedField<?> field, BigRational[] factors) {
-        int d28 = 28; 
-    	BigRational factor = factors[d28]; // d28 = -2 +2B -2D +2F -2H +2J -2L +2N -2P +2R -2T +2V -2X +2Z
-        if(!factor.isZero()) {
-            factors[ 0] = factors[ 0].minus(factor); 	// -units
-            factors[ 0] = factors[ 0].minus(factor); 	// -units again = -2
-            factors[ 2] = factors[ 2].plus(factor); 	// B
-            factors[ 2] = factors[ 2].plus(factor); 	// B again = 2B
-            factors[ 4] = factors[ 4].minus(factor); 	// -D
-            factors[ 4] = factors[ 4].minus(factor); 	// -D again = -2D
-            factors[ 6] = factors[ 6].plus(factor); 	// F
-            factors[ 6] = factors[ 6].plus(factor); 	// F again = 2F
-            factors[ 8] = factors[ 8].minus(factor); 	// -H
-            factors[ 8] = factors[ 8].minus(factor); 	// -H again = -2H
-            factors[10] = factors[10].plus(factor); 	// J
-            factors[10] = factors[10].plus(factor); 	// J again = 2J
-            factors[12] = factors[12].minus(factor); 	// -L
-            factors[12] = factors[12].minus(factor); 	// -L again = -2L
-            factors[14] = factors[14].plus(factor); 	// N
-            factors[14] = factors[14].plus(factor); 	// N again = 2N
-            factors[16] = factors[16].minus(factor); 	// -P
-            factors[16] = factors[16].minus(factor); 	// -P again = -2P
-            factors[18] = factors[18].plus(factor); 	// R
-            factors[18] = factors[18].plus(factor); 	// R again = 2R
-            factors[20] = factors[20].minus(factor); 	// -T
-            factors[20] = factors[20].minus(factor); 	// -T again = -2T
-            factors[22] = factors[22].plus(factor); 	// V
-            factors[22] = factors[22].plus(factor); 	// V again = 2V
-            factors[24] = factors[24].minus(factor); 	// -X
-            factors[24] = factors[24].minus(factor); 	// -X again = -2X
-            factors[26] = factors[26].plus(factor); 	// Z
-            factors[26] = factors[26].plus(factor); 	// Z again = 2Z
-            // zero
-            factors[d28] = BigRational.ZERO;
-        }
-        field.normalizerMatrix = new short[][] {
-       //     1  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S  T  U  V  W  X  Y  Z d27
-        	{-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0,-2, 0, 2, 0},	// d28 = -2 +2B -2D +2F -2H +2J -2L +2N -2P +2R -2T +2V -2X +2Z
-        };
-    }
-    
-    // TODO: Refactor this method into the base class, then use it in SqrtField.normalizePerfectSquare()
-    private static void normalizeFactor(BigRational[] factors, int i, int j, int k) {
-        BigRational factor = factors[i]; 
-        if(!factor.isZero()) {
-            factors[j] = factors[j].plus(factor);
-            factors[k] = factors[k].plus(factor);
-            factors[i] = BigRational.ZERO;
-        }        
-    }
-    
-    // TODO: Refactor this method into the base class, then use it in SqrtField.normalizePerfectSquare()
-    private static void normalizeFactor(BigRational[] factors, int i, long nj, int j, long nk, int k) {
-        BigRational factor = factors[i]; 
-        if(!factor.isZero()) {
-            factors[j] = factors[j].plus(factor.times(new BigRational(nj)));
-            factors[k] = factors[k].plus(factor.times(new BigRational(nk)));
-            factors[i] = BigRational.ZERO;
-        }        
-    }
-    
     public Integer polygonSides() {
         return operand;
     }
@@ -2258,20 +747,20 @@ public class PolygonField extends ParameterizedField<Integer> {
         return !isEven;
     }
     
-    @Override
-    protected BigRational[] reciprocal( BigRational[] terms )
-    {
-        BigRational[] reciprocalTerms = super.reciprocal( terms );
-        if(mayBeNonInvertable) {
-            AlgebraicNumber num = createAlgebraicNumber( terms ); 
-            AlgebraicNumber recip = createAlgebraicNumber( reciprocalTerms ); 
-            if(! num.times(recip) .isOne()) {
-                String msg = "The AlgebraicNumber '" + num.toString() + "' is non-invertable in the " + getName() + " field.";
-                throw new IllegalArgumentException(msg);
-            }
-        }
-        return reciprocalTerms;
-    }
+//    @Override
+//    protected BigRational[] reciprocal( BigRational[] terms )
+//    {
+//        BigRational[] reciprocalTerms = super.reciprocal( terms );
+//        if(mayBeNonInvertable) {
+//            AlgebraicNumber num = createAlgebraicNumber( terms ); 
+//            AlgebraicNumber recip = createAlgebraicNumber( reciprocalTerms ); 
+//            if(! num.times(recip) .isOne()) {
+//                String msg = "The AlgebraicNumber '" + num.toString() + "' is non-invertable in the " + getName() + " field.";
+//                throw new IllegalArgumentException(msg);
+//            }
+//        }
+//        return reciprocalTerms;
+//    }
 
     @Override
     public void defineMultiplier(StringBuffer buf, int i) {

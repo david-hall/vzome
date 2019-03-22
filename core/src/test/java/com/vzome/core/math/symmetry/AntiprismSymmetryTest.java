@@ -157,9 +157,6 @@ public class AntiprismSymmetryTest {
         for(int parity = 0; parity <=1; parity++ ) {
 //            System.out.println("\n" + (parity == 0 ? "Even" : "Odd") + "...");
             for (int nSides = PolygonField.MIN_SIDES + parity; nSides <= PolygonFieldApplication.MAX_SIDES; nSides+=2) {
-                if(nSides != 9 && PolygonField.mayBeNonInvertable(nSides)) {
-                    continue;
-                }
                 AntiprismSymmetry symm = getAntiprismSymmetry(nSides);
                 PolygonField field = symm.getField();
                 AlgebraicMatrix rotationMatrix = symm.getRotationMatrix();
@@ -174,10 +171,10 @@ public class AntiprismSymmetryTest {
                 int isY = 0;
                 int i = 0;
                 for (i = 0; i < nSides; i++) {
-//                    System.out.println(i + "\t: " + v);
+//                    System.out.print(i + "\t: " + v);
                     v = rotationMatrix.timesColumn(v);
+//                    System.out.println("\trotates to: " + v);
                     if (i % nSides == nSides - 1) {
-                        if(nSides != 9)
                         assertEquals(posX, v);
                     } else {
                         assertNotEquals(posX, v);
@@ -189,7 +186,6 @@ public class AntiprismSymmetryTest {
                     }
                 }
 //                System.out.println(i++ + "\t: " + v);
-                if(nSides != 9) {
                 assertEquals(posX, v);
                 if (field.isOdd()) {
                     assertEquals(1, isX);
@@ -197,7 +193,6 @@ public class AntiprismSymmetryTest {
                 } else {
                     assertEquals(2, isX);
                     assertEquals((nSides % 4 == 0) ? 2 : 0, isY);
-                }
                 }
             }
         }
@@ -222,9 +217,6 @@ public class AntiprismSymmetryTest {
         // System.out.println("embedInR3");
         final RealVector[] expected = { new RealVector(1, 0, 0), new RealVector(0, 1, 0), new RealVector(0, 0, 1) };
         for (int nSides = PolygonField.MIN_SIDES; nSides <= PolygonFieldApplication.MAX_SIDES; nSides++) {
-            if(nSides != 9 && PolygonField.mayBeNonInvertable(nSides)) {
-                continue;
-            }
             AntiprismSymmetry symm = getAntiprismSymmetry(nSides);
             PolygonField field = symm.getField();
             int dims = 3;

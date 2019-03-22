@@ -16,6 +16,7 @@ import com.vzome.core.algebra.AlgebraicVectors;
 import com.vzome.core.algebra.HeptagonField;
 import com.vzome.core.algebra.PolygonField;
 import com.vzome.core.algebra.SqrtField;
+import com.vzome.core.generic.Utilities;
 import com.vzome.core.kinds.PolygonFieldApplication;
 import com.vzome.core.math.Polyhedron;
 import com.vzome.core.math.Polyhedron.Face;
@@ -41,9 +42,20 @@ public class AntiprismShapesTest {
         AlgebraicNumber magnitudeSquared = null;
         AlgebraicVector topNormal = null;
         for (Face face : faces) {
-            AlgebraicVector normal = face.getNormal();
+            AlgebraicVector normal = computeMidpointNormal(face); // face.getNormal();
             assertFalse(normal.isOrigin());
             int vertexCount = face.size();
+            if(print) {
+                System.out.println(vertexCount + "-gon normal = " + normal);
+                for (int i = 0; i < vertexCount; i++) {
+                    int vert = face.getVertex(i);
+                    AlgebraicVector vector = vertexList.get(vert);
+                    String msg = String.format("%1$8d: %2$8d\t%3$-32s %4$-32s", i, vert,
+                            vector.getVectorExpression(AlgebraicField.DEFAULT_FORMAT),
+                            vector.getVectorExpression(AlgebraicField.VEF_FORMAT));
+                    System.out.println(msg);
+                }
+            }
             if(vertexCount == 3) {
                 triangles++;
                 if(isEven) {
@@ -63,25 +75,18 @@ public class AntiprismShapesTest {
             } else {
                 fail("N-gon antiprism should have two N-gon faces and 2*N triangular faces");
             }
-            if(print) {
-                System.out.println(vertexCount + "-gon normal = " + face.getNormal());
-                for (int i = 0; i < vertexCount; i++) {
-                    int vert = face.getVertex(i);
-                    AlgebraicVector vector = vertexList.get(vert);
-                    String msg = String.format("%1$8d: %2$8d\t%3$-32s %4$-32s", i, vert,
-                            vector.getVectorExpression(AlgebraicField.DEFAULT_FORMAT),
-                            vector.getVectorExpression(AlgebraicField.VEF_FORMAT));
-                    System.out.println(msg);
-                }
-            }
         }
         assertEquals("N-gon antiprism should have two N-gon faces", 2, polygons);
         assertEquals("N-gon antiprism should have 2*N triangular faces", 2*nSides, triangles);
     }
+    
+    private static AlgebraicVector computeMidpointNormal(Face face) {
+    	return face.getNormal();
+    }
 
     @Test
     public void testBuildConnectorShape() {
-//        System.out.println("buildConnectorShape");
+//    	System.out.println("buildConnectorShape " + Utilities.thisSourceCodeLine()
         String name = "polygon antiprism";
         for(int nSides = PolygonField.MIN_SIDES; nSides <= PolygonFieldApplication.MAX_SIDES; nSides++) {
             PolygonField field = new PolygonField(nSides);
@@ -89,10 +94,6 @@ public class AntiprismShapesTest {
             symm.createStandardOrbits( "blue" );
             AntiprismShapes antiprismShapes = new AntiprismShapes(name, symm);
             Polyhedron antiprism = antiprismShapes.buildConnectorShape(null);
-
-            if(nSides != 9 && PolygonField.mayBeNonInvertable(nSides)) {
-                continue;
-            }
             verifyAntiprism(antiprism, nSides, true);
         }
     }

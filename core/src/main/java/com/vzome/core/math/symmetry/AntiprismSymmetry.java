@@ -158,12 +158,12 @@ public class AntiprismSymmetry extends AbstractSymmetry {
 
     public AlgebraicMatrix getRotationMatrix() {
         final PolygonField field = getField();
-        final int order = field.getOrder();
+        final int diagCount = field.diagonalCount();
         // getUnitTerm() returns zero when its argument is negative 
-        final AlgebraicNumber p_x = field.getUnitTerm(order - 3);
-        final AlgebraicNumber q_y = field.getUnitTerm(order - (field.isEven() ? 3 : 2));
-        final AlgebraicNumber den = field.getUnitTerm(order - 1);
-        final AlgebraicNumber num = field.getUnitTerm(1);
+        final AlgebraicNumber p_x = field.getUnitDiagonal(diagCount - 3);
+        final AlgebraicNumber q_y = field.getUnitDiagonal(diagCount - (field.isEven() ? 3 : 2));
+        final AlgebraicNumber den = field.getUnitDiagonal(diagCount - 1);
+        final AlgebraicNumber num = field.getUnitDiagonal(1);
 
         final AlgebraicVector p = field.origin(3)
                 .setComponent(AlgebraicVector.X, p_x.dividedBy(den))

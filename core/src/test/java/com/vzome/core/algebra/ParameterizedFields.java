@@ -6,9 +6,11 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 
 import java.math.BigInteger;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.junit.Test;
+
+import com.vzome.core.generic.Utilities;
 
 /**
  * @author David Hall
@@ -51,6 +53,7 @@ public class ParameterizedFields {
 	}
 
     public static String coefficientsMultipliedToString(ParameterizedField<?> field) {
+    	System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
         StringBuffer buf = new StringBuffer();
         buf.append("{\n");
         for (Double c1 : field.coefficients) {
@@ -66,6 +69,7 @@ public class ParameterizedFields {
     }
 
     public static String coefficientsDividedToString(ParameterizedField<?> field) {
+    	System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
         StringBuffer buf = new StringBuffer();
         buf.append("{\n");
         for (Double c1 : field.coefficients) {
@@ -81,6 +85,7 @@ public class ParameterizedFields {
     }
 
     public static String coefficientsScaledToString(ParameterizedField<?> field) {
+    	System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
         StringBuffer buf = new StringBuffer();
         buf.append("{\n");
         for (Double c1 : field.coefficients) {
@@ -96,6 +101,7 @@ public class ParameterizedFields {
     }
 
     public static String coefficientsAddedToString(ParameterizedField<?> field) {
+    	System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
         StringBuffer buf = new StringBuffer();
         buf.append("{\n");
         for (Double c1 : field.coefficients) {
@@ -111,6 +117,7 @@ public class ParameterizedFields {
     }
 
     public static String coefficientsSubtractedToString(ParameterizedField<?> field) {
+    	System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
         StringBuffer buf = new StringBuffer();
         buf.append("{\n");
         for (Double c1 : field.coefficients) {
@@ -141,7 +148,7 @@ public class ParameterizedFields {
 	private static PolygonField field;
 	private static double candidate;
 	
-	public static void printNormalization(PolygonField inField) {
+	public static void printNormalization(PolygonField inField, int skip) {
 		field = inField;
 		final int sides = field.polygonSides();
 		// positive powers of two
@@ -157,13 +164,13 @@ public class ParameterizedFields {
 		}
 		final int order = field.getOrder();
 		if(order == sides/2) {
-			int normalizedOrder = getNormalizedOrder();
+			int normalizedOrder = PolygonField.primaryDiagonalCount(sides);
 			if(order > normalizedOrder) {
 				System.out.println("\n" + field.getName() + " is not normalized. order = " + order + " should be " + normalizedOrder + ". " + thisSourceCodeLine());
 				System.out.println(coefficientsToString(field));
 	
 				scalars = new int[normalizedOrder+1]; // native types are all initialized to 0.
-				for(int q = order-1; q >= normalizedOrder; q--) {
+				for(int q = order-1-skip; q >= normalizedOrder; q--) {
 					candidate = field.getCoefficient(q);
 					String sq = field.getIrrational(q);
 					System.out.println("\n try " + sq + " [" + q + "]: " + candidate);
@@ -223,15 +230,15 @@ public class ParameterizedFields {
 		return false;
 	}
 
-	final private static int[] testScalars = {0, 1, -1, 2, -2}; 
+	final private static int[] testScalars = {-1, 1, 0, -2, 2}; 
 	
 	private static boolean consider(int depth) {
 		if(depth == scalars.length) {
 			// evaluate
 			return testScalars();
 		} else {
-			if(depth == scalars.length - 20) {
-				System.out.println(LocalDate.now());
+			if(depth == scalars.length - 13) {
+				System.out.print(LocalDateTime.now() + "\t");
 				printScalars(); // just so I can be sure it's not hung and judge the time to complete
 			}
 			for(int scalar : testScalars) {
@@ -249,83 +256,6 @@ public class ParameterizedFields {
 		return Math.abs(d1 - d2) < delta;
 	}
 	
-	private static int getNormalizedOrder() {
-		switch(field.polygonSides()) {
-		case 22:
-			return (field.polygonSides() / 2) - 1;
-			
-		case 25:
-			return (field.polygonSides() / 2) - 2;
-			
-		case 26:
-			return (field.polygonSides() / 2) - 2;
-			
-		case 28:
-			return (field.polygonSides() / 2) - 3;
-			
-		case 34:
-			return (field.polygonSides() / 2) - 2;
-			
-		case 35:
-			return (field.polygonSides() / 2) - 5;
-			
-		case 38:
-			return (field.polygonSides() / 2) - 2;
-			
-		case 39:
-			return (field.polygonSides() / 2) - 7;
-
-		case 44:
-			return (field.polygonSides() / 2) - 3;
-
-		case 45:
-			return 12;
-
-		case 46:
-			return (field.polygonSides() / 2) - 2;
-			
-		case 49:
-			return (field.polygonSides() / 2) - 4;
-
-		case 50:
-			return 20;
-
-		case 51:
-			return 16;
-
-		case 52:
-			return 26 - 2;
-
-		case 54:
-			return 18;
-
-		}
-		return (field.polygonSides() / 4)+1;
-		// TODO: Optimize this using the number of non-invertible terms
-//		int order = field.getOrder();
-//		int normalizedOrder = field.getOrder();
-//		for(int i = order-1; i > 0; i--) {
-//			AlgebraicNumber n1 = field.getUnitTerm(i);
-//			BigRational[] factors = n1.getFactors();
-//            BigRational[][] representation = new BigRational[ order ][ order ];
-//            for ( int j = 0; j < order; j++ ) {
-//                BigRational[] column = field .scaleBy( factors, j );
-//                System.arraycopy(column, 0, representation[ j ], 0, order);
-//            }
-//            BigRational[][] reciprocal = new BigRational[ order ][ order ];
-//            for (int j = 0; j < order; j++) {
-//                for (int k = 0; k < order; k++) {
-//                    reciprocal[j][k] = j == k ? BigRational.ONE : BigRational.ZERO;
-//                }
-//            }
-//            int rank = Fields .gaussJordanReduction( representation, reciprocal );
-//            if(rank != order) {
-//				normalizedOrder--;
-//			}
-//		}
-//		return normalizedOrder;
-	}
-
     public static String wolframAlphaTestString(AlgebraicField field) {
         final int format = AlgebraicField.DEFAULT_FORMAT;
         StringBuffer buf1 = new StringBuffer();
@@ -382,6 +312,7 @@ public class ParameterizedFields {
     }
 
     public static String factorsDividedToString(AlgebraicField field, int format) {
+    	System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
         // int padLen = 0;
         // for( int n = 0; n < field.getOrder(); n++) {
         // padLen += (2 + field.getIrrational(n, format).length());
@@ -417,6 +348,7 @@ public class ParameterizedFields {
     }
 
     public static String factorsEvaluatedDividedToString(AlgebraicField field, int format) {
+    	System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
         // int padLen = 0;
         // for( int n = 0; n < field.getOrder(); n++) {
         // padLen += (2 + field.getIrrational(n, format).length());
@@ -452,9 +384,11 @@ public class ParameterizedFields {
     }
 
     public static String factorsReducedToString(AlgebraicField field, int format) {
+    	System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
         StringBuffer buf = new StringBuffer();
         buf.append("{ ");
         int order = field.getOrder();
+        int minRank = order;
         for (int i = 0; i < order; i++) {
             AlgebraicNumber n1 = field.getUnitTerm(i);
             BigRational[] factors = n1.getFactors();
@@ -478,9 +412,14 @@ public class ParameterizedFields {
                 buf.append("/");
                 buf.append(order);
                 buf.append(",  ");
+                minRank = Math.min(rank, minRank);
             }    
         }
         buf.append("}\n");
+        buf.append(field.getName());
+        buf.append(" order should equal minimum rank: ");
+        buf.append(minRank);
+        buf.append("\n");
         return buf.toString();
     }
 
@@ -590,14 +529,15 @@ public class ParameterizedFields {
 	}
 
 	public static void printMatrices(ParameterizedField<?> field) {
+		System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
         assertNotNull(field);
         String name = "( " + field.toString() + " ) = \n";
 //        System.out.println("coefficients" + name + coefficientsToString(field));
 //        System.out.println("coefficientsAdded" + name + coefficientsAddedToString(field));
 //        System.out.println("coefficientsSubtracted" + name + coefficientsSubtractedToString(field));
 //        System.out.println("coefficientsScaled" + name + coefficientsScaledToString(field));
-        System.out.println("coefficientsMultiplied" + name + coefficientsMultipliedToString(field));
-        System.out.println("coefficientsDivided" + name + coefficientsDividedToString(field));
+//        System.out.println("coefficientsMultiplied" + name + coefficientsMultipliedToString(field));
+//        System.out.println("coefficientsDivided" + name + coefficientsDividedToString(field));
 //        System.out.println("multiplierMatrix" + name + multiplierMatrixToString(field));
 //
 //        System.out.println( "wolfram alpha test query" + name + ParameterizedFields.wolframAlphaTestString( field ));
@@ -609,7 +549,7 @@ public class ParameterizedFields {
 //        System.out.println("factorsMultiplied" + name + factorsMultipliedToString(field, AlgebraicField.VEF_FORMAT));
 //		 
         System.out.println("factorsDivided" + name + factorsDividedToString(field, AlgebraicField.DEFAULT_FORMAT));
-        System.out.println("factorsEvaluatedDivided" + name + factorsEvaluatedDividedToString(field, AlgebraicField.DEFAULT_FORMAT));
+//        System.out.println("factorsEvaluatedDivided" + name + factorsEvaluatedDividedToString(field, AlgebraicField.DEFAULT_FORMAT));
         System.out.println("factorsReduced" + name + factorsReducedToString(field, AlgebraicField.DEFAULT_FORMAT));
 //		 
 //        System.out.println("VEF" + name + multiplierMatrixToVefString(field));

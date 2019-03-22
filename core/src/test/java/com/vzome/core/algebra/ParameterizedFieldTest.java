@@ -6,6 +6,8 @@ import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.List;
+
 import org.junit.Test;
 
 import com.vzome.core.generic.Utilities;
@@ -52,6 +54,149 @@ public class ParameterizedFieldTest {
             ParameterizedFields.printMatrices( new SqrtField(i) );
         }
     }
+    
+    @Test
+    public void testPrimeFactors() {
+    	System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
+    	for(int n=2; n<=60; n++) { 
+            System.out.print(n);
+            String delim = " = ";
+            int result = 1;
+            List<Integer> factors = Utilities.primeFactors(n);
+            for(Integer factor : factors) {
+    			System.out.print(delim + factor);
+    			delim = " * ";
+    			result *= factor;
+    		}
+//    		System.out.print("\t\t\t(" + factors.stream().distinct().count() + " distinct)");
+            System.out.println();
+    		assertEquals(n, result);
+    	}
+    }
+
+    @Test
+    public void testEulerTotient() {
+    	System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
+    	for(int n=PolygonField.MIN_SIDES; n<=64; n++) { 
+            System.out.println(n + "\t" + PolygonField.primaryDiagonalCount(n) + "\t+ " + PolygonField.secondaryDiagonalCount(n) + "\t= " + PolygonField.diagonalCount(n));
+        }
+    	for(int i=0; i<=20; i++ ) {
+    		int n = Integer.MAX_VALUE - i;
+    		System.out.println(n + "\t" + PolygonField.primaryDiagonalCount(n) + "\t+ " + PolygonField.secondaryDiagonalCount(n) + "\t= " + PolygonField.diagonalCount(n));
+    	}
+    }
+
+    @Test
+    public void testGetUnitDiagonal() {
+    	for(int nSides = PolygonField.MIN_SIDES; nSides <= 60; nSides++ ) {
+    		if(Utilities.isPowerOfTwo(nSides) || Utilities.isPrime(nSides) 
+	    			|| nSides == 56 // TODO:
+	    			|| nSides == 57 // TODO:
+	    			|| nSides == 60 // TODO:
+	    			) {
+    			continue;
+    		}
+    		PolygonField field = new PolygonField(nSides);
+    		System.out.println(field.getName());
+    		for(int i = field.getOrder(); i < field.diagonalCount(); i++) {
+    			System.out.print("  " + (i == 0 ? "1" : field.getIrrational(i)) + "\t= ");
+    			AlgebraicNumber n = field.getUnitDiagonal(i);
+    			System.out.println(n);
+    		}
+    	}    	
+    }
+
+    @Test
+    public void testNormalizedMultiplicationHolor() {
+    	for(int nSides = PolygonField.MIN_SIDES; nSides <= 60; nSides++ ) {
+    		if(Utilities.isPowerOfTwo(nSides) || Utilities.isPrime(nSides) 
+    				|| nSides == 56 // TODO:
+    				|| nSides == 57 // TODO:
+    				|| nSides == 60 // TODO:
+    				) {
+    			continue;
+    		}
+//        	System.out.println("/************************************************************************/");
+//	    	System.out.print("polygon" + nSides + ".extendedMultiplicationHolor = ");
+//	    	printMultiplierMatrix(PolygonField.getExtendedMultiplicationHolor(nSides));
+
+	    	System.out.print("\ncase " + nSides + ":\nreturn new short[][] ");
+	    	printNormalizerMatrix(PolygonField.getNormalizerMatrix(nSides));
+	
+//	    	System.out.println("\npolygon" + nSides + " should have an order " + PolygonField.primaryDiagonalCount(nSides) + " normalized multiplication holor.\n");
+//
+//	    	System.out.print("\npolygon" + nSides + ".normalizedMultiplicationHolor = ");
+//	    	printMultiplierMatrix(PolygonField.getNormalizedMultiplicationHolor(nSides));
+	    	
+	    	assertEquals(PolygonField.primaryDiagonalCount(nSides), PolygonField.getNormalizedMultiplicationHolor(nSides).length);
+    	}
+    }
+    
+    public void printMultiplierMatrix(short[][][] m3) {
+		System.out.println("{");
+		int i = 0;
+    	for(short[][] a2 : m3) {
+    		System.out.println("    { // " + (i == 0 ? "units" : getLabel(i)) );
+    		i++;
+        	for(short[] a1 : a2) {
+        		System.out.print("        {");
+            	for(short n : a1) {
+            		if(n >= 0) {
+            			System.out.print(" "); 
+            		}
+            		System.out.print(n + ",");
+            	}
+        		System.out.println(" },");
+        	}
+    		System.out.println("    },");
+    	}
+		System.out.println("};");
+    }
+
+    public void printNormalizerMatrix(short[][] m2) {
+    	if(m2 == null || m2.length == 0) {
+    		return;
+    	}
+    	int len = m2[0].length;
+		System.out.println("{");
+		System.out.print("    // 1");
+		for(int i = 1; i < len; i++) {
+			System.out.print("  " + getLabel(i));
+		}
+		System.out.println();
+		int i = len;
+    	for(short[] a1 : m2) {
+    		System.out.print("    { ");
+        	for(short n : a1) {
+        		if(n >= 0) {
+        			System.out.print(" "); 
+        		}
+        		System.out.print(n + ",");
+        	}
+    		System.out.print(" },    //  " + getLabel(i) + " = ");
+    		int j = 0; 
+        	for(short n : a1) {
+    			System.out.print(" "); 
+        		if(n > 0) {
+        			System.out.print("+"); 
+        		}
+        		if(n != 0) {
+        			System.out.print(n + getLabel(j)); 
+        		} else {
+        			System.out.print("   ");
+        		}
+        		System.out.print(" "); 
+        		j++;
+        	}
+    		System.out.println("|");
+    		i++;
+    	}
+		System.out.println("};");
+    }
+    
+    public String getLabel(int i) {
+    	return " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".substring(i, i+1);
+    }
 
 //    @Test
     public void printPolygonFieldNormalization() {
@@ -62,17 +207,33 @@ public class ParameterizedFieldTest {
     }
 
     @Test
+    public void testSecondaryDiagonalCount() {
+    	System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
+    	for(int nSides = PolygonField.MIN_SIDES; nSides <= 55; nSides++) {
+    		int count = PolygonField.secondaryDiagonalCount(nSides);
+//    		int order = PolygonField.getOrder(nSides);
+//    		System.out.println(nSides + "\t" + order + "\t" + ((count == 0) ? "" : count));
+    		if(count > 0) {
+	    		PolygonField field = new PolygonField(nSides);
+	    		System.out.print(field.getName());
+	            field.expandTerms(field.getUnitPolynomial().getFactors());
+	            System.out.println();
+    		}
+    	}
+    }
+    
+    @Test
     public void testMulDivEvaluate() {
     	System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
     	final double delta = 0.000000000001d; // eleven 0's between the decimal point and the 1
-    	for(int nSides = PolygonField.MIN_SIDES; nSides <= 60; nSides++) {
+    	for(int nSides = 6 /*PolygonField.MIN_SIDES*/; nSides <= 6; nSides++) {
     		// TODO: some non-primes from 56 to 57 are not normalized yet
         	if(nSides >= 56 && nSides != 58 && nSides != 59) {
         		System.out.println("Skipping " + nSides + " test at " + Utilities.thisSourceCodeLine());
         		continue; 
         	}
     		PolygonField field = new PolygonField(nSides);
-//    		System.out.println(field.getName());
+    		System.out.println(field.getName());
             int n = field.getOrder();
             for (int i = 0; i < n; i++) {
                 AlgebraicNumber n1 = field.getUnitTerm(i);
@@ -85,8 +246,8 @@ public class ParameterizedFieldTest {
                         AlgebraicNumber quotient = n1.dividedBy(n2);
                         double prod = product.evaluate();
                         double quot = quotient.evaluate();
-//                    	System.out.println(nSides + ": " + n1.toString() + " * " + n2.toString() + " = " + product.toString() + "\t: " + d1 + " * " + d2 + " = " + prod );
-//                    	System.out.println(nSides + ": " + n1.toString() + " / " + n2.toString() + " = " + quotient.toString() + "\t: " + d1 + " / " + d2 + " = "+ quot );
+                    	System.out.println(nSides + ": " + n1.toString() + " * " + n2.toString() + " = " + product.toString() + "\t: " + d1 + " * " + d2 + " = " + prod );
+                    	System.out.println(nSides + ": " + n1.toString() + " / " + n2.toString() + " = " + quotient.toString() + "\t: " + d1 + " / " + d2 + " = "+ quot );
                         assertEquals(d1 * d2, prod, delta);
                         assertEquals(d1 / d2, quot, delta);
                     }
@@ -153,100 +314,108 @@ public class ParameterizedFieldTest {
     
     @Test
     public void printPolygonFieldMatrices() {
-        int[] sides = {
-                // I have a pattern that seems to work for 3 times any integer power of 2
-                // but so far I have only hard coded it for specific cases:
-                // TODO: generalize for all applicable cases
-//                3 * 2,  // 6
-//                3 * 4,  // 12
-//                3 * 8,  // 24
-//                3 * 16, // 48
-                
-                // I have a normalizer that works for 10 too... TODO: generalize to other multiples of 5 or 10 
-                // or possibly 5 * any integer powers of 2? What's possible?
-//                5 * 2, // 10
-        		
-        		// another pattern for nSides = 2 * any odd prime:
-//				2 *  1 =  2 @  0:~ = -already normalized units only
-//				2 *  3 =  6 @  2:B = +2
-//				2 *  5 = 10 @  4:D = -2 +2B
-//				2 *  7 = 14 @  6:F = +2 -2B +2D
-//				2 *  9 = 18 @  8:H = -
-//				2 * 11 = 22 @ 10:J = +2 -2B +2D -2F +2H
-//				2 * 13 = 26 @ 12:L = -2 +2B -2D +2F -2H +2J
-//				2 * 15 = 30 @ 14:N = +
-//				2 * 17 = 34 @ 16:P = -2 +2B -2D +2F -2H +2J -2L +2N
-//				2 * 19 = 38 @ 18:R = +2 -2B +2D -2F +2H -2J +2L -2N +2P
-//				2 * 21 = 42 @ 20:T = -
-//				2 * 23 = 46 @ 22:V = +2 -2B +2D -2F +2H -2J +2L -2N +2P -2R +2T
-//				2 * 25 = 50 @ 24:X = -
-//				2 * 27 = 54 @ 26:Z = +
-//				2 * 29 = 58 @ 28:_ = -2 +2B -2D +2F -2H +2J -2L +2N -2P +2R -2T +2V -2X +2Z
-        		
-//        		I think that if nSides = a prime * 2 to any integer power (e.g. 2^1=2, 2^2=4 2^3=8), 
-//        		then the number of diags removed by normalization is 2 to that power.
-//        		The number replaced when the exponent is 1 seems to be the order/2.
-//        		TODO: The numbers replaced when the exponent > 1 should be explored.
-        		
-//        		3 * (2^1) =  6-gon removes 1 replaced by 3/2 = 1 term
-//        		3 * (2^2) = 12-gon removes 2
-//        		3 * (2^3) = 24-gon removes 4
-//        		3 * (2^4) = 48-gon removes 8
-        		
-//        		5 * (2^1) = 10-gon removes 1 replaced by 5/2 = 2 terms
-//        		5 * (2^2) = 20-gon removes 2
-        		
-//        		7 * (2^1) = 14-gon removes 1 replaced by 7/2 = 3 terms
-//        		7 * (2^2) = 28-gon removes 2
-        		
-//        		11 * (2^1) = 22-gon removes 1 replaced by 11/2 = 5 terms
-        		
-//        		13 * (2^1) = 26-gon removes 1 replaced by 13/2 = 6 terms
-        		
-//        		17 * (2^1) = 34-gon removes 1 replaced by 17/2 = 8 terms
-        		
-//        		19 * (2^1) = 38-gon removes 1 replaced by 19/2 = 8 terms
- 
-//				9, 
-//				10,
-//				12,
-//				14, 
-//				15, 
-//				18, 
-//				20,         		
-//				21, 
-//				22, 
-//				24,
-//				25,
-//				26,
-//				27,
-//				28,
-//				30,
-//				32,
-//				33,
-//				34,
-//				35,
-//				36,
-//				38,
-//				39,
-//				40,
-//				42,
-//				44,
-//				45,
-//				46,
-//				48,
-//				49,
-//				50,
-//				51,
-//				52,
-//				54,
-				55,
-                // TODO: Confirm that up thru 55 are all working
-//				58,
-                }; 
+//        int[] sides = {
+//                // I have a pattern that seems to work for 3 times any integer power of 2
+//                // but so far I have only hard coded it for specific cases:
+//                // TODO: generalize for all applicable cases
+////                3 * 2,  // 6
+////                3 * 4,  // 12
+////                3 * 8,  // 24
+////                3 * 16, // 48
+//                
+//                // I have a normalizer that works for 10 too... TODO: generalize to other multiples of 5 or 10 
+//                // or possibly 5 * any integer powers of 2? What's possible?
+////                5 * 2, // 10
+//        		
+//        		// another pattern for nSides = 2 * any odd prime:
+////				2 *  1 =  2 @  0:~ = -already normalized units only
+////				2 *  3 =  6 @  2:B = +2
+////				2 *  5 = 10 @  4:D = -2 +2B
+////				2 *  7 = 14 @  6:F = +2 -2B +2D
+////				2 *  9 = 18 @  8:H = -
+////				2 * 11 = 22 @ 10:J = +2 -2B +2D -2F +2H
+////				2 * 13 = 26 @ 12:L = -2 +2B -2D +2F -2H +2J
+////				2 * 15 = 30 @ 14:N = +
+////				2 * 17 = 34 @ 16:P = -2 +2B -2D +2F -2H +2J -2L +2N
+////				2 * 19 = 38 @ 18:R = +2 -2B +2D -2F +2H -2J +2L -2N +2P
+////				2 * 21 = 42 @ 20:T = -
+////				2 * 23 = 46 @ 22:V = +2 -2B +2D -2F +2H -2J +2L -2N +2P -2R +2T
+////				2 * 25 = 50 @ 24:X = -
+////				2 * 27 = 54 @ 26:Z = +
+////				2 * 29 = 58 @ 28:_ = -2 +2B -2D +2F -2H +2J -2L +2N -2P +2R -2T +2V -2X +2Z
+//        		
+////        		I think that if nSides = a prime * 2 to any integer power (e.g. 2^1=2, 2^2=4 2^3=8), 
+////        		then the number of diags removed by normalization is 2 to that power.
+////        		The number replaced when the exponent is 1 seems to be the order/2.
+////        		TODO: The numbers replaced when the exponent > 1 should be explored.
+//        		
+////        		3 * (2^1) =  6-gon removes 1 replaced by 3/2 = 1 term
+////        		3 * (2^2) = 12-gon removes 2
+////        		3 * (2^3) = 24-gon removes 4
+////        		3 * (2^4) = 48-gon removes 8
+//        		
+////        		5 * (2^1) = 10-gon removes 1 replaced by 5/2 = 2 terms
+////        		5 * (2^2) = 20-gon removes 2
+//        		
+////        		7 * (2^1) = 14-gon removes 1 replaced by 7/2 = 3 terms
+////        		7 * (2^2) = 28-gon removes 2
+//        		
+////        		11 * (2^1) = 22-gon removes 1 replaced by 11/2 = 5 terms
+//        		
+////        		13 * (2^1) = 26-gon removes 1 replaced by 13/2 = 6 terms
+//        		
+////        		17 * (2^1) = 34-gon removes 1 replaced by 17/2 = 8 terms
+//        		
+////        		19 * (2^1) = 38-gon removes 1 replaced by 19/2 = 8 terms
+// 
+////				9, 
+////				10,
+////				12,
+////				14, 
+////				15, 
+////				18, 
+////				20,         		
+////				21, 
+////				22, 
+////				24,
+////				25,
+////				26,
+////				27,
+////				28,
+////				30,
+////				32,
+////				33,
+////				34,
+////				35,
+////				36,
+////				38,
+////				39,
+////				40,
+////				42,
+////				44,
+////				45,
+////				46,
+////				48,
+////				49,
+////				50,
+////				51,
+////				52,
+////				54,
+//				55,
+//                // TODO: Confirm that up thru 55 are all working
+////				58,
+//                }; 
         System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
-        for (int i : sides) {
-            ParameterizedFields.printMatrices( new PolygonField(i) );
+//    	for (int nSides : sides) {
+        for(int nSides = PolygonField.MIN_SIDES; nSides <= 60; nSides++ ) {
+    		if(nSides == 56 // TODO:
+    				|| nSides == 57 // TODO:
+    				|| nSides == 60 // TODO:
+    				) {
+    			System.out.println("Skipping " + nSides + " test at " + Utilities.thisSourceCodeLine());
+    			continue;
+    		}
+            ParameterizedFields.printMatrices( new PolygonField(nSides) );
         }
         
 //        ParameterizedFields.printMatrices( new PlasticNumberField() );
