@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  *   -  unless either numerator or denominator equals Long.MIN_VALUE in which case they will both be big.
  *   -  A denominator of 0 will throw an IllegalArgumentException. 
  */
-public class BigRational implements Comparable<BigRational>, AlgebraicStructures.BigRationalElement<BigInteger, BigRational>
+public class BigRational implements Comparable<BigRational>, AlgebraicStructures.RationalFieldElement<BigInteger, BigRational>
 {
     // indices into arrays used by reduce() and various c'tors 
     private final static int NUM = 0;
@@ -693,9 +693,7 @@ public class BigRational implements Comparable<BigRational>, AlgebraicStructures
     @Override
     public boolean isOne()      { return this.isOne; }
     public boolean isWhole()    { return this.isWhole; }
-    @Override
     public boolean isBig()      { return bigNum != null; }
-    @Override
     public boolean notBig()     { return bigNum == null; }
 
     public int signum()     { return signum; }
@@ -1126,4 +1124,13 @@ public class BigRational implements Comparable<BigRational>, AlgebraicStructures
                 .divide(new BigDecimal(that.getDenominator()), MathContext.DECIMAL64);
     }
 
+    @Override
+    public BigRational zero() {
+        return ZERO;
+    }
+
+    @Override
+    public BigRational one() {
+        return ONE;
+    }
 }

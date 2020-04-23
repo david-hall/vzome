@@ -3,6 +3,7 @@ package com.vzome.core.algebra;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -13,13 +14,15 @@ import java.util.function.BinaryOperator;
 
 import org.junit.Test;
 
+import com.vzome.core.algebra.AlgebraicStructures.RingElement;
+
 /**
  * @author David Hall
  */
 public class FibonacciTest {
     @SafeVarargs
     @SuppressWarnings("varargs")
-    public final <T extends AlgebraicStructures.Element<T>> T varableFibonacci(int reps, T... args) {
+    public final <T extends RingElement<T>> T varableFibonacci(int reps, T... args) {
         List<T> fibs = varableFibonacci(T::plus, reps, args);
         assertEquals(args.length, fibs.size());
         // return the last element in the list
@@ -32,7 +35,7 @@ public class FibonacciTest {
     // The list will contain the same number of elements as the number of seed values provided
     @SafeVarargs
     @SuppressWarnings("varargs")
-    public final <T extends AlgebraicStructures.Element<T>> List<T> varableFibonacci(BinaryOperator<T> op, int reps, T... args) {
+    public final <T extends RingElement<T>> List<T> varableFibonacci(BinaryOperator<T> op, int reps, T... args) {
         int nArgs = args.length;
         List<T> terms = Arrays.asList(args);
         List<T> seriesTail = new ArrayList<>(terms);
@@ -50,7 +53,11 @@ public class FibonacciTest {
             for (int n = 1; n < nArgs; n++) {
                 idx = (idx + 1) % nArgs;
                 T term = terms.get(idx);
-                accumulator = op.apply(accumulator, term);
+                try {
+                    accumulator = op.apply(accumulator, term);
+                } catch (ArithmeticException ex) {
+                    fail("too may reps: " + (rep + 1));
+                }
             }
             last = accumulator;
             terms.set(next, accumulator);
@@ -63,22 +70,17 @@ public class FibonacciTest {
         return seriesTail;
     }
 
-    // This works with a variety of seed values including BigRational fractions and AlgebraicNumbers
-    public final <T extends AlgebraicStructures.Element<T> & Comparable<T>> void testReverseableFibonacciSeries(Class<T> clazz, int reps, T first, T second)
+    public final <T extends RingElement<T>> void testReverseableFibonacciSeries(Class<T> clazz, int reps, T first, T second)
     {
-        assertTrue(first.negate().compareTo(first) <= 0); // not negative
-        assertTrue(second.negate().compareTo(second) <= 0); // not negative
-        assertTrue(first.compareTo(second) <= 0);
-
         List<T> fibs = varableFibonacci(T::plus, reps, first, second);
         Collections.reverse(fibs);
         @SuppressWarnings("unchecked")
-		T[] checked = (T[]) Array.newInstance(clazz, fibs.size());
-		T[] reversed = checked;
+        T[] checked = (T[]) Array.newInstance(clazz, fibs.size());
+        T[] reversed = checked;
         fibs.toArray(reversed);
         System.out.println("reversed...");
         fibs = varableFibonacci(T::minus, reps, reversed);
-        assertEquals(first, fibs.get(fibs.size()-1));
+        assertEquals(reps + " is too may reps", first, fibs.get(fibs.size()-1));
     }
 
     @Test
@@ -87,6 +89,9 @@ public class FibonacciTest {
         AlgebraicField field = new HeptagonField();
         AlgebraicNumber n1 = field.parseNumber("0 2 1");
         AlgebraicNumber n2 = field.parseNumber("1 3 5");
+        assertTrue(n1.negate().compareTo(n1) <= 0); // not negative
+        assertTrue(n2.negate().compareTo(n2) <= 0); // not negative
+        assertTrue(n1.compareTo(n2) <= 0);
         testReverseableFibonacciSeries(AlgebraicNumber.class, reps, n1, n2);
     }
 
@@ -95,11 +100,65 @@ public class FibonacciTest {
         int reps = 1000;
         BigRational n1 = new BigRational(17);
         BigRational n2 = new BigRational(29);
+        assertTrue(n1.negate().compareTo(n1) <= 0); // not negative
+        assertTrue(n2.negate().compareTo(n2) <= 0); // not negative
+        assertTrue(n1.compareTo(n2) <= 0);
         testReverseableFibonacciSeries(BigRational.class, reps, n1, n2);
 
         n1 = new BigRational(3, 19);
         n2 = new BigRational(7, 13);
+        assertTrue(n1.negate().compareTo(n1) <= 0); // not negative
+        assertTrue(n2.negate().compareTo(n2) <= 0); // not negative
+        assertTrue(n1.compareTo(n2) <= 0);
         testReverseableFibonacciSeries(BigRational.class, reps, n1, n2);
+    }
+
+    @Test
+    public void testLongRingElementReverseableFibonacci() {
+        // The 92nd Fibonacci number is the largest that will fit in a Long
+        int reps = 92;
+        LongRingElement n1 = new LongRingElement(1L);
+        LongRingElement n2 = new LongRingElement(1L);
+        assertTrue(n1.negate().compareTo(n1) <= 0); // not negative
+        assertTrue(n2.negate().compareTo(n2) <= 0); // not negative
+        assertTrue(n1.compareTo(n2) <= 0);
+        testReverseableFibonacciSeries(LongRingElement.class, reps, n1, n2);
+    }
+
+    @Test
+    public void testIntegerRingElementReverseableFibonacci() {
+        // The 46th Fibonacci number is the largest that will fit in an Integer
+        int reps = 46;
+        IntegerRingElement n1 = new IntegerRingElement(1);
+        IntegerRingElement n2 = new IntegerRingElement(1);
+        assertTrue(n1.negate().compareTo(n1) <= 0); // not negative
+        assertTrue(n2.negate().compareTo(n2) <= 0); // not negative
+        assertTrue(n1.compareTo(n2) <= 0);
+        testReverseableFibonacciSeries(IntegerRingElement.class, reps, n1, n2);
+    }
+
+    @Test
+    public void testDoubleFieldElementReverseableFibonacci() {
+        // The 78th Fibonacci number is the largest that will fit in a Double with no rounding error
+        int reps = 78;
+        DoubleFieldElement n1 = new DoubleFieldElement(1d);
+        DoubleFieldElement n2 = new DoubleFieldElement(1d);
+        assertTrue(n1.negate().compareTo(n1) <= 0); // not negative
+        assertTrue(n2.negate().compareTo(n2) <= 0); // not negative
+        assertTrue(n1.compareTo(n2) <= 0);
+        testReverseableFibonacciSeries(DoubleFieldElement.class, reps, n1, n2);
+    }
+
+    @Test
+    public void testFloatFieldElementReverseableFibonacci() {
+        // The 36th Fibonacci number is the largest that will fit in a Float with no rounding error
+        int reps = 36;
+        FloatFieldElement n1 = new FloatFieldElement(1f);
+        FloatFieldElement n2 = new FloatFieldElement(1f);
+        assertTrue(n1.negate().compareTo(n1) <= 0); // not negative
+        assertTrue(n2.negate().compareTo(n2) <= 0); // not negative
+        assertTrue(n1.compareTo(n2) <= 0);
+        testReverseableFibonacciSeries(FloatFieldElement.class, reps, n1, n2);
     }
 
     @Test
@@ -109,7 +168,7 @@ public class FibonacciTest {
             BigRational fib = varableFibonacci(92, BigRational.ONE, BigRational.ONE);
             assertEquals("7540113804746346429", fib.toString());
             assertTrue(fib.fitsInLong());
-            // The 95th negative Fibonacci number is the largest that will fit in a Long
+            // The 95th negative Fibonacci number is the largest negative value that will fit in a Long
             fib = varableFibonacci(95, BigRational.ONE, BigRational.ONE.negate());
             assertEquals("-7540113804746346429", fib.toString());
             assertTrue(fib.fitsInLong());

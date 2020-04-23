@@ -1,41 +1,76 @@
-
-//(c) Copyright 2011, Scott Vorthmann.
-
 package com.vzome.core.algebra;
 
 import java.util.Arrays;
 
+/**
+ * See http://mathonline.wikidot.com/algebraic-structures-fields-rings-and-groups#toc10
+ */
 public class AlgebraicStructures {
-    public interface BigRationalElement<R, T> extends RationalElement<R, T> {
-        boolean isBig();
 
-        boolean notBig();
-    }
-
-    public interface RationalElement<R, T> extends Element<T> {
-        R getNumerator();
-
-        R getDenominator();
-
-        T dividedBy(T that);
-
+    public interface AdditiveGroupElement<T> {
         double evaluate();
-    }
-
-    public interface Element<T> {
-        T times(T that);
 
         T plus(T that);
 
         T minus(T that);
 
-        T reciprocal();
-
         T negate();
 
-        boolean isZero();
+        T zero();
 
-        boolean isOne();
+        default boolean isZero() {
+            return this.equals(zero());
+        }
+
+        default boolean isAdditiveIdentity() {
+            return this.equals(getAdditiveIdentity());
+        }
+
+        default T getAdditiveIdentity() {
+            return zero();
+        }
+    }
+
+    public interface MultiplicativeGroupElement<T> {
+        double evaluate();
+
+        T times(T that);
+
+        T one();
+
+        default boolean isOne() {
+            return this.equals(one());
+        }
+
+        default boolean isMultiplicativeIdentity() {
+            return this.equals(getMultiplicativeIdentity());
+        }
+
+        default T getMultiplicativeIdentity() {
+            return one();
+        }
+    }
+
+    public interface RingElement<T> extends AdditiveGroupElement<T>, MultiplicativeGroupElement<T> {
+        // no new methods...
+        // just combining AdditiveGroupElement and MultiplicativeGroupElement
+    }
+
+    public interface FieldElement<T extends FieldElement<T>> extends RingElement<T> {
+        T reciprocal();
+        
+        default T dividedBy(T that) {
+            if(that.isZero()) { 
+                throw new IllegalArgumentException("Denominator is zero");
+            }
+            return(this.times(that.reciprocal()));
+        }
+    }
+
+    public interface RationalFieldElement<R, T extends FieldElement<T>> extends FieldElement<T> {
+        R getNumerator();
+
+        R getDenominator();
     }
 
     public static final int rows(Object[][] matrix) {
@@ -46,7 +81,7 @@ public class AlgebraicStructures {
         return matrix[0].length;
     }
 
-    public static <T extends Element<T>> void matrixMultiplication(T[][] left, T[][] right, T[][] product) {
+    public static <T extends RingElement<T>> void matrixMultiplication(T[][] left, T[][] right, T[][] product) {
         if (rows(right) != columns(left))
             throw new IllegalArgumentException("matrices cannot be multiplied");
         if (rows(product) != rows(left))
@@ -69,13 +104,13 @@ public class AlgebraicStructures {
         }
     }
 
-    public static <T extends Element<T>> int gaussJordanReduction(T[][] matrix) {
+    public static <T extends FieldElement<T>> int gaussJordanReduction(T[][] matrix) {
         // Here, the matrix is modified in place so it will be accessible to the caller.
         return gaussJordanReduction(matrix, matrix);
     }
 
     @SuppressWarnings("unchecked")
-    public static <T extends Element<T>> int gaussJordanReduction(T[][] immutableMatrix, T[][] adjoined) {
+    public static <T extends FieldElement<T>> int gaussJordanReduction(T[][] immutableMatrix, T[][] adjoined) {
         // matrices "immutableMatrix" and "adjoined" must have the same number of rows,
         // but do necessarily have the same number of columns and are not necessarily square.
         final int nRows = rows(immutableMatrix);
@@ -134,7 +169,7 @@ public class AlgebraicStructures {
 
     // Elementary matrix operations used in Gauss Jordan Reduction are implemented as individual functions
     
-    private static <T extends Element<T>> Object[][] copyOf(T[][] matrix) {
+    private static <T extends RingElement<T>> Object[][] copyOf(T[][] matrix) {
         final int nRows = rows(matrix);
         final int nCols = columns(matrix);
         final Object[][] copy = new Object[nRows][];
@@ -162,14 +197,14 @@ public class AlgebraicStructures {
         array[s] = temp;
     }
 
-    private static <T extends Element<T>> void scale(T[] array, T scalar) {
+    private static <T extends RingElement<T>> void scale(T[] array, T scalar) {
         for (int col = 0; col < array.length; col++) {
             array[col] = scalar.times(array[col]);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private static <T extends Element<T>> void pivot(Object[][] matrix, int row, T scalar, int rank) {
+    private static <T extends RingElement<T>> void pivot(Object[][] matrix, int row, T scalar, int rank) {
         for (int col = 0; col < columns(matrix); col++) {
             matrix[row][col] = ((T) matrix[row][col]).plus(((T) matrix[rank][col]).times(scalar));
         }
