@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
  *
  */
 @JsonSerialize( using = AlgebraicNumber.Serializer.class )
-public class AlgebraicNumber implements Fields.Element<AlgebraicNumber>, Comparable<AlgebraicNumber>
+public class AlgebraicNumber implements AlgebraicStructures.Element<AlgebraicNumber>, Comparable<AlgebraicNumber>
 {
     private final AlgebraicField field;
     private final BigRational[] factors;

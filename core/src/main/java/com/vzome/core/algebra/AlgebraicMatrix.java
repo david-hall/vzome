@@ -118,7 +118,7 @@ public class AlgebraicMatrix
         AlgebraicField field = this .matrix[ 0 ][ 0 ] .getField();
         AlgebraicMatrix result = new AlgebraicMatrix( field, this .matrix .length );
 
-        int rank = Fields .gaussJordanReduction( this .matrix, result .matrix );
+        int rank = AlgebraicStructures .gaussJordanReduction( this .matrix, result .matrix );
         if(rank != matrix.length) {
             // TODO: What should we do here?
             System.err.println((new Throwable()).getStackTrace()[0].getMethodName() 
@@ -145,7 +145,7 @@ public class AlgebraicMatrix
         AlgebraicField field = this .matrix[ 0 ][ 0 ] .getField();
         AlgebraicMatrix result = new AlgebraicMatrix( field, this .matrix .length, that.matrix[0].length );
 
-        Fields .matrixMultiplication( this .matrix, that .matrix, result .matrix );
+        AlgebraicStructures .matrixMultiplication( this .matrix, that .matrix, result .matrix );
         return result;
 	}
 

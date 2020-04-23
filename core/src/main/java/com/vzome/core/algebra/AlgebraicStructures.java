@@ -5,7 +5,7 @@ package com.vzome.core.algebra;
 
 import java.util.Arrays;
 
-public class Fields {
+public class AlgebraicStructures {
     public interface BigRationalElement<R, T> extends RationalElement<R, T> {
         boolean isBig();
 

@@ -19,7 +19,7 @@ import org.junit.Test;
 public class FibonacciTest {
     @SafeVarargs
     @SuppressWarnings("varargs")
-    public final <T extends Fields.Element<T>> T varableFibonacci(int reps, T... args) {
+    public final <T extends AlgebraicStructures.Element<T>> T varableFibonacci(int reps, T... args) {
         List<T> fibs = varableFibonacci(T::plus, reps, args);
         assertEquals(args.length, fibs.size());
         // return the last element in the list
@@ -32,7 +32,7 @@ public class FibonacciTest {
     // The list will contain the same number of elements as the number of seed values provided
     @SafeVarargs
     @SuppressWarnings("varargs")
-    public final <T extends Fields.Element<T>> List<T> varableFibonacci(BinaryOperator<T> op, int reps, T... args) {
+    public final <T extends AlgebraicStructures.Element<T>> List<T> varableFibonacci(BinaryOperator<T> op, int reps, T... args) {
         int nArgs = args.length;
         List<T> terms = Arrays.asList(args);
         List<T> seriesTail = new ArrayList<>(terms);
@@ -64,7 +64,7 @@ public class FibonacciTest {
     }
 
     // This works with a variety of seed values including BigRational fractions and AlgebraicNumbers
-    public final <T extends Fields.Element<T> & Comparable<T>> void testReverseableFibonacciSeries(Class<T> clazz, int reps, T first, T second)
+    public final <T extends AlgebraicStructures.Element<T> & Comparable<T>> void testReverseableFibonacciSeries(Class<T> clazz, int reps, T first, T second)
     {
         assertTrue(first.negate().compareTo(first) <= 0); // not negative
         assertTrue(second.negate().compareTo(second) <= 0); // not negative

@@ -340,7 +340,7 @@ public class AlgebraicFieldTest {
         System.out.println(getSourceCodeLine(2));
         System.out.println("Initial Augmented Matrices:");
         showMatrices(matrix, adjoined);
-        int rank = Fields.gaussJordanReduction(matrix, adjoined);
+        int rank = AlgebraicStructures.gaussJordanReduction(matrix, adjoined);
         System.out.println("Rank = " + rank);
         System.out.println("Adjoined matrix reduced:");
         showMatrix(adjoined);

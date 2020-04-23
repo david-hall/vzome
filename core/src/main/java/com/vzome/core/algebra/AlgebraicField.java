@@ -488,7 +488,7 @@ public abstract class AlgebraicField
                 reciprocal[ j ][ i ] = ( i == j ) ? BigRational.ONE : BigRational.ZERO;
             }
         }
-        int rank = Fields .gaussJordanReduction( representation, reciprocal );
+        int rank = AlgebraicStructures .gaussJordanReduction( representation, reciprocal );
         if(rank != length) {
             // TODO: What should we do here?
             System.err.println((new Throwable()).getStackTrace()[0].getMethodName() 

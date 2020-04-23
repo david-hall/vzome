@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  *   -  unless either numerator or denominator equals Long.MIN_VALUE in which case they will both be big.
  *   -  A denominator of 0 will throw an IllegalArgumentException. 
  */
-public class BigRational implements Comparable<BigRational>, Fields.BigRationalElement<BigInteger, BigRational>
+public class BigRational implements Comparable<BigRational>, AlgebraicStructures.BigRationalElement<BigInteger, BigRational>
 {
     // indices into arrays used by reduce() and various c'tors 
     private final static int NUM = 0;
