@@ -3,8 +3,10 @@ package com.vzome.core.algebra;
 import com.vzome.core.algebra.AlgebraicStructures.FieldElement;
 
 @SuppressWarnings("serial")
-public class FloatFieldElement extends NumericRingElement<Float, FloatFieldElement>
-        implements FieldElement<FloatFieldElement> {
+public class FloatFieldElement 
+    extends NumericRingElement<Float, FloatFieldElement>
+    implements FieldElement<FloatFieldElement>
+{
     public static final FloatFieldElement ZERO = new FloatFieldElement(0f);
     public static final FloatFieldElement ONE = new FloatFieldElement(1f);
 
@@ -73,4 +75,12 @@ public class FloatFieldElement extends NumericRingElement<Float, FloatFieldEleme
             return false;
         return (obj instanceof FloatFieldElement) ? compareTo((FloatFieldElement) obj) == 0 : false;
     }
+
+    public FloatFieldElement create(Float value) {
+        return this.value == value ? this : new FloatFieldElement(value);
+    }
+
+    @Override
+    public FloatFieldElement create(Integer value) {
+        return create(Float.parseFloat(value.toString()));    }
 }

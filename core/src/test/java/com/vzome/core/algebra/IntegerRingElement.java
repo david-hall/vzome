@@ -1,7 +1,9 @@
 package com.vzome.core.algebra;
 
 @SuppressWarnings("serial")
-public class IntegerRingElement extends NumericRingElement<Integer, IntegerRingElement> {
+public class IntegerRingElement 
+    extends NumericRingElement<Integer, IntegerRingElement>
+{
     public static final IntegerRingElement ZERO = new IntegerRingElement(0);
     public static final IntegerRingElement ONE = new IntegerRingElement(1);
 
@@ -52,4 +54,10 @@ public class IntegerRingElement extends NumericRingElement<Integer, IntegerRingE
             return false;
         return (obj instanceof IntegerRingElement) ? compareTo((IntegerRingElement) obj) == 0 : false;
     }
+
+    @Override
+    public IntegerRingElement create(Integer value) {
+        return this.value == value ? this : new IntegerRingElement(value);
+    }
+
 }

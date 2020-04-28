@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.vzome.core.algebra.AlgebraicStructures.RationalFieldExtension;
 
 /**
  * 
@@ -19,7 +20,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
  *
  */
 @JsonSerialize( using = AlgebraicNumber.Serializer.class )
-public class AlgebraicNumber implements AlgebraicStructures.FieldElement<AlgebraicNumber>, Comparable<AlgebraicNumber>
+public class AlgebraicNumber implements RationalFieldExtension<AlgebraicNumber>
 {
     private final AlgebraicField field;
     private final BigRational[] factors;
@@ -363,6 +364,7 @@ public class AlgebraicNumber implements AlgebraicStructures.FieldElement<Algebra
         return this.dividedBy(field.createRational(divisor));
     }
 
+    @Override
     public AlgebraicNumber dividedBy( AlgebraicNumber that )
     {
         // Division is not commutative so don't be tempted to optimize for the case when this.isOne()
@@ -371,6 +373,7 @@ public class AlgebraicNumber implements AlgebraicStructures.FieldElement<Algebra
         return this .times( that .reciprocal() );
     }
 
+    @Override
     public double evaluate()
     {
         if(doubleValue == null) {
@@ -538,6 +541,16 @@ public class AlgebraicNumber implements AlgebraicStructures.FieldElement<Algebra
     @Override
     public AlgebraicNumber one() {
         return field.one();
+    }
+
+    @Override
+    public AlgebraicNumber create(Integer num) {
+        return field.createRational( num );
+    }
+
+    @Override
+    public AlgebraicNumber create(Integer num, Integer den) {
+        return field.createRational(num, den);
     }
 
 }

@@ -6,6 +6,7 @@ import java.math.MathContext;
 import java.util.Collection;
 
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.vzome.core.algebra.AlgebraicStructures.RationalFieldExtension;
 
 /**
  * Immutable Abstract Data Type for arbitrarily large rational numbers. 
@@ -21,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  *   -  unless either numerator or denominator equals Long.MIN_VALUE in which case they will both be big.
  *   -  A denominator of 0 will throw an IllegalArgumentException. 
  */
-public class BigRational implements Comparable<BigRational>, AlgebraicStructures.RationalFieldElement<BigInteger, BigRational>
+public class BigRational implements RationalFieldExtension<BigRational>
 {
     // indices into arrays used by reduce() and various c'tors 
     private final static int NUM = 0;
@@ -983,7 +984,6 @@ public class BigRational implements Comparable<BigRational>, AlgebraicStructures
     /**
      * @return numerator as BigInteger even if it can be held in a long.
      */
-    @Override
     public BigInteger getNumerator()
     {
         return bigNum == null 
@@ -994,7 +994,6 @@ public class BigRational implements Comparable<BigRational>, AlgebraicStructures
     /**
      * @return denominator as BigInteger even if it can be held in a long.
      */
-    @Override
     public BigInteger getDenominator()
     {
         return bigDen == null 
@@ -1132,5 +1131,15 @@ public class BigRational implements Comparable<BigRational>, AlgebraicStructures
     @Override
     public BigRational one() {
         return ONE;
+    }
+
+    @Override
+    public BigRational create(Integer value) {
+        return new BigRational(value);
+    }
+
+    @Override
+    public BigRational create(Integer num, Integer den) {
+        return new BigRational(num, den);
     }
 }

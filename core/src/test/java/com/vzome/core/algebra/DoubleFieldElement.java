@@ -3,8 +3,10 @@ package com.vzome.core.algebra;
 import com.vzome.core.algebra.AlgebraicStructures.FieldElement;
 
 @SuppressWarnings("serial")
-public class DoubleFieldElement extends NumericRingElement<Double, DoubleFieldElement>
-        implements FieldElement<DoubleFieldElement> {
+public class DoubleFieldElement 
+    extends NumericRingElement<Double, DoubleFieldElement>
+    implements FieldElement<DoubleFieldElement>
+{
     public static final DoubleFieldElement ZERO = new DoubleFieldElement(0d);
     public static final DoubleFieldElement ONE = new DoubleFieldElement(1d);
 
@@ -63,4 +65,14 @@ public class DoubleFieldElement extends NumericRingElement<Double, DoubleFieldEl
             return false;
         return (obj instanceof DoubleFieldElement) ? compareTo((DoubleFieldElement) obj) == 0 : false;
     }
+
+    public DoubleFieldElement create(Double value) {
+        return this.value == value ? this : new DoubleFieldElement(value);
+    }
+
+    @Override
+    public DoubleFieldElement create(Integer value) {
+        return create(Double.parseDouble(value.toString()));
+    }
+
 }

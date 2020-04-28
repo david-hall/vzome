@@ -52,8 +52,8 @@ public class AlgebraicStructures {
     }
 
     public interface RingElement<T> extends AdditiveGroupElement<T>, MultiplicativeGroupElement<T> {
-        // no new methods...
-        // just combining AdditiveGroupElement and MultiplicativeGroupElement
+        // combine AdditiveGroupElement and MultiplicativeGroupElement 
+        // to define an algebraic ring
     }
 
     public interface FieldElement<T extends FieldElement<T>> extends RingElement<T> {
@@ -67,10 +67,26 @@ public class AlgebraicStructures {
         }
     }
 
-    public interface RationalFieldElement<R, T extends FieldElement<T>> extends FieldElement<T> {
-        R getNumerator();
+    public interface UnaryConstructor<V, T> {
+        T create(V value);
+    }
+    
+    public interface BinaryConstructor<V, T> {
+        T create(V num, V den);
+    }
+    
+    public interface RingExtension<T extends RingExtension<T>>
+        extends Comparable<T>, RingElement<T>, UnaryConstructor<Integer, T>
+    {
+        // combine the individual interfaces 
+        // to be implemented by NumericRingElement, BigRational and AlgebraicNumber
+    }
 
-        R getDenominator();
+    public interface RationalFieldExtension<T extends RationalFieldExtension<T>>
+        extends RingExtension<T>, FieldElement<T>, BinaryConstructor<Integer, T>
+    {
+        // combine the individual interfaces 
+        // to be implemented by BigRational and AlgebraicNumber
     }
 
     public static final int rows(Object[][] matrix) {

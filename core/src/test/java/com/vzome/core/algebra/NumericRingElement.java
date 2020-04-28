@@ -1,10 +1,11 @@
 package com.vzome.core.algebra;
 
-import com.vzome.core.algebra.AlgebraicStructures.RingElement;
+import com.vzome.core.algebra.AlgebraicStructures.RingExtension;
 
 @SuppressWarnings("serial")
-public abstract class NumericRingElement<N extends Number, E extends RingElement<E>> extends Number
-        implements RingElement<E>, Comparable<E> {
+public abstract class NumericRingElement<N extends Number, E extends NumericRingElement<N, E>> 
+    extends Number implements RingExtension<E>
+{
     
     protected final N value;
     
