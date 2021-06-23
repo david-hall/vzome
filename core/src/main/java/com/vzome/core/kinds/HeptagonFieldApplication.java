@@ -16,6 +16,7 @@ import com.vzome.core.tools.LinearMapTool;
 import com.vzome.core.tools.MirrorTool;
 import com.vzome.core.tools.RotationTool;
 import com.vzome.core.tools.ScalingTool;
+import com.vzome.core.tools.StrutDivisionTool;
 import com.vzome.core.tools.SymmetryTool;
 import com.vzome.core.tools.TranslationTool;
 import com.vzome.core.viewing.AbstractShapes;
@@ -74,6 +75,7 @@ public class HeptagonFieldApplication extends DefaultFieldApplication
                 result .add( new ScalingTool.Factory( tools, this .symmetry ) );
                 result .add( new RotationTool.Factory( tools, this .symmetry ) );
                 result .add( new TranslationTool.Factory( tools ) );
+                result .add( new StrutDivisionTool.Factory(tools, this .symmetry ));
                 break;
 
             case LINEAR_MAP:
@@ -89,7 +91,7 @@ public class HeptagonFieldApplication extends DefaultFieldApplication
         @Override
         public List<Tool> predefineTools( Tool.Kind kind, ToolsModel tools )
         {
-            List<Tool> result = new ArrayList<>();
+            List<Tool> result = super.predefineTools( kind, tools );
             switch ( kind ) {
 
             case SYMMETRY:

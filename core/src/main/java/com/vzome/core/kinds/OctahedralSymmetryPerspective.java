@@ -15,6 +15,7 @@ import com.vzome.core.tools.OctahedralToolFactory;
 import com.vzome.core.tools.ProjectionTool;
 import com.vzome.core.tools.RotationTool;
 import com.vzome.core.tools.ScalingTool;
+import com.vzome.core.tools.StrutDivisionTool;
 import com.vzome.core.tools.TetrahedralToolFactory;
 import com.vzome.core.tools.TranslationTool;
 import com.vzome.core.viewing.OctahedralShapes;
@@ -50,6 +51,7 @@ public final class OctahedralSymmetryPerspective extends AbstractSymmetryPerspec
 			result .add( new RotationTool.Factory( tools, this .symmetry ) );
             result .add( new TranslationTool.Factory( tools ) );
             result .add( new ProjectionTool.Factory( tools ) );
+            result .add( new StrutDivisionTool.Factory(tools, this .symmetry ));
 			break;
 
 		case LINEAR_MAP:
@@ -65,9 +67,8 @@ public final class OctahedralSymmetryPerspective extends AbstractSymmetryPerspec
 	@Override
 	public List<Tool> predefineTools( Tool.Kind kind, ToolsModel tools )
 	{
-		List<Tool> result = new ArrayList<>();
+		List<Tool> result = super.predefineTools( kind, tools );
 		switch ( kind ) {
-
 		case SYMMETRY:
 			result .add( new OctahedralToolFactory( tools, this .symmetry ) .createPredefinedTool( "octahedral around origin" ) );
 			result .add( new TetrahedralToolFactory( tools, this .symmetry ) .createPredefinedTool( "tetrahedral around origin" ) );

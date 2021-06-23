@@ -541,7 +541,9 @@ public class FieldApplicationTest
             break;
             
         case TRANSFORM:
-            assertEquals(msg, transformCount, toolFactoryList.size());
+            assertEquals(msg, 
+                    transformCount + 1, // add 1 common tool from the base class 
+                    toolFactoryList.size());
             break;
             
         case LINEAR_MAP:
