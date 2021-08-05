@@ -178,6 +178,13 @@ public class FieldApplicationTest
         }
     }
     
+    private void removeFrom(Set<String> stringSet, String... stringArray) {
+        for(String string : stringArray) {
+            if(string != null)
+                stringSet.remove(string);
+        }
+    }
+    
     private void testSymmetryPerspective(SymmetryPerspective perspective, String appName) 
     {
         final String symmName = perspective.getSymmetry().getName();
@@ -188,9 +195,14 @@ public class FieldApplicationTest
         final Set<String> testNames = new HashSet<>();
         switch(name) {
         case "octahedral":
-            addTo(testNames, "blue", "yellow", "green");
+            addTo(testNames, "blue", "yellow", "green", 
+                    "salmon", "purple", "sulfur");
             switch(appName) {
             case "golden":
+                removeFrom(testNames,
+                        "salmon",
+                        "purple"
+                );
                 addTo(testNames,
                         "lavender",
                         "olive",
@@ -212,6 +224,10 @@ public class FieldApplicationTest
                 break;
                 
             case "snubCube":
+                removeFrom(testNames,
+                        "purple",
+                        "sulfur"
+                );
                 addTo(testNames, 
                         "snubSquare",
                         "snubTriangle",
@@ -224,6 +240,9 @@ public class FieldApplicationTest
                 break;
 
             case "sqrtPhi":
+                removeFrom(testNames,
+                        "salmon"
+                );
                 addTo(testNames,"slate", "mauve", "ivory");
                 break;
             }

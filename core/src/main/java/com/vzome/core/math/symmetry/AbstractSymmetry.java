@@ -179,9 +179,29 @@ public abstract class AbstractSymmetry implements Symmetry
         Direction existingDir = this .mDirectionMap .get( name );
         if ( existingDir != null ) {
             // Probably overriding the default octahedral yellow or green.  See GoldenFieldApplication.
+            logDirectionChange(existingDir, name, unitLength);
             this .mDirectionMap .remove( name );
             this .orbitSet .remove( existingDir );
             this .mDirectionList .remove( existingDir );
+        }
+        for (Direction existing : mDirectionList) {
+            // checking for parallel vectors won't necessarily catch all conflicts
+            // unless all prototypes adhere to the rule as stated in Direction.java
+            // which says that the prototype should have normal vector =~ (1,e,e), for 0 < e << 1.
+            // If in fact they hold to the stricter requirement that their
+            // normal vector =~ (1,y,z), with 0 < y <= 1 and 0 <= z <= y,
+            // this this simpler test should catch any directions being replaced.
+            // In practice, it is correctly replacing all of the newly added 
+            // Octahedral directions with the comparable original directions.
+            if (AlgebraicVectors.areParallel(existing.getPrototype(), norm)) {
+                // Probably overriding the default octahedral purple, sulfur or salmon.
+                // See Golden, SnubCube and SqrtPhi FieldApplications.
+                logDirectionChange(existing, name, unitLength);
+                this.mDirectionMap.remove(existing.getName());
+                this.orbitSet.remove(existing);
+                this.mDirectionList.remove(existing);
+                break;
+            }
         }
         Direction orbit = new Direction( name, this, prototype, rotatedPrototype, norm, standard );
         if ( halfSizes )
@@ -195,6 +215,14 @@ public abstract class AbstractSymmetry implements Symmetry
             this .dotLocator .locateOrbitDot( orbit );
 
         return orbit;
+    }
+
+    private static void logDirectionChange(Direction existing, String newName, AlgebraicNumber unitLength) {
+        // TODO: Write this to LOGGER instead of stdout
+//        System.out.println("Replacing " + unitLength.getField().getName() + ":" + existing + " with " + newName);
+//        if(!existing.getUnitLength().equals(unitLength)) {
+//            System.out.println(" Unit length is changing from " + existing.getUnitLength() + " to " + unitLength);
+//        }
     }
 
     @Override

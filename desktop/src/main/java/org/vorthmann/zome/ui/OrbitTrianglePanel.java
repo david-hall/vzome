@@ -18,8 +18,8 @@ import com.vzome.core.construction.Color;
 import com.vzome.core.editor.Application;
 import com.vzome.core.editor.FieldApplication;
 import com.vzome.core.editor.SymmetryPerspective;
-import com.vzome.core.editor.api.OrbitSource;
 import com.vzome.core.editor.SymmetrySystem;
+import com.vzome.core.editor.api.OrbitSource;
 import com.vzome.core.math.symmetry.Direction;
 import com.vzome.core.math.symmetry.Symmetry;
 import com.vzome.core.render.Colors;
@@ -115,23 +115,25 @@ public class OrbitTrianglePanel extends JPanel
             FieldApplication kind = app .getDocumentKind( fieldName );
             for (SymmetryPerspective symmPer : kind .getSymmetryPerspectives()) {
                 String symmName = symmPer .getName();
-                
+//                if(!"octahedral".equals(symmName)) {
+//                    continue;
+//                }
                 //Create and set up the window.
                 JFrame frame = new JFrame( fieldName + " : " + symmName );
                 x += 20;
-                y += 20;
+                y += 24;
                 frame .setLocation( x, y );
          
                 JPanel trianglePanel = new OrbitTrianglePanel( symmPer );
-                trianglePanel .setPreferredSize( new Dimension( 500, 300 ) );
+                trianglePanel .setPreferredSize( new Dimension( 320, 200 ) );
          
                 frame.getContentPane().add( trianglePanel, BorderLayout.CENTER );
+                frame.setMinimumSize(trianglePanel .getPreferredSize());
          
                 //Display the window.
                 frame.pack();
                 frame.setVisible(true);
             }
-            
         }
     }
  
@@ -140,6 +142,7 @@ public class OrbitTrianglePanel extends JPanel
         //Schedule a job for the event-dispatching thread:
         //creating and showing this application's GUI.
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
                 createAndShowGUI();
             }

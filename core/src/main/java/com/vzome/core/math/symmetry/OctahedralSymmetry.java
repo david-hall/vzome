@@ -3,6 +3,7 @@ package com.vzome.core.math.symmetry;
 
 import com.vzome.core.algebra.AlgebraicField;
 import com.vzome.core.algebra.AlgebraicMatrix;
+import com.vzome.core.algebra.AlgebraicNumber;
 import com.vzome.core.algebra.AlgebraicVector;
 
 /**
@@ -45,6 +46,9 @@ public class OctahedralSymmetry extends AbstractSymmetry
             return this .getDirection( "yellow" );
 
         default:
+            // DJH: I thiink we should be able to return this .getDirection( "sulfur" );
+            // but the OrbitTrianglePanel and/or OrbitSetController 
+            // don't position the dots correctly if do. TODO: See why that's happening 
             return null; // TODO pick/define a chiral orbit with no index correction (0 means 0)
         }
     }
@@ -108,6 +112,19 @@ public class OctahedralSymmetry extends AbstractSymmetry
         createZoneOrbit( "green", 1, 8, green, true );
         AlgebraicVector yellow = green .plus( zAxis );
         createZoneOrbit( "yellow", 0, 4, yellow, true );
+        // As stated in Direction.java, the prototype should have 
+        //  normal vector =~ (1,e,e), for 0 < e << 1
+        // actual colors are assigned in /core/src/main/resources/com/vzome/core/editor/defaultPrefs.properties
+        AlgebraicNumber power1 = mField.getUnitTerm(1);
+        AlgebraicVector salmon = xAxis .plus( yAxis.scale(power1.reciprocal()) );
+        createZoneOrbit( "salmon", 0, Symmetry .NO_ROTATION, salmon);
+
+        AlgebraicNumber power2 = power1.times(power1);
+        AlgebraicVector purple = xAxis .plus( yAxis.scale(power2.reciprocal()) );
+        createZoneOrbit( "purple", 0, Symmetry .NO_ROTATION, purple);
+ 
+        AlgebraicVector sulfur = xAxis .plus( yAxis.scale(power1.reciprocal()) ) .plus( zAxis.scale(power2.reciprocal()));
+        createZoneOrbit( "sulfur", 0, Symmetry .NO_ROTATION, sulfur);
     }
 
     @Override
