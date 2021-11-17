@@ -85,6 +85,79 @@ public class ParameterizedFieldTest {
     }
     
     @Test
+    public void testSqrtGoldenNumber() {
+        System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
+        for(AlgebraicField field : TEST_FIELDS) {
+            final AlgebraicNumber zero = field.zero();
+            final AlgebraicNumber phi = field.getGoldenRatio();
+            if(phi == null) {
+                boolean thrown = false;
+                try {
+                    SqrtGoldenNumber.solve(field.createRational(42));
+                    fail( field.getName() + " expected an Exception");
+                }
+                catch(IllegalArgumentException ex) {
+                    // success
+                    thrown = true;
+                }
+                assertTrue("thrown ", thrown);
+                continue;
+            }
+            System.out.println();
+            System.out.println(field.getName() + ": phi = " + phi);
+            // be sure to test some denominators that are multiples of 5 since phi involves sqrt(5)
+            for(int i = 0; i < 25; i++) { 
+                int range = 100;
+                int a = Double.valueOf((0.5d - Math.random()) * range).intValue();
+                int b = Double.valueOf((0.5d - Math.random()) * range).intValue();
+                int den = i+1;
+                String alias = "(" + a + (b < 0 ? " " : " +") + b + "φ)" + "/" + den;
+                AlgebraicNumber units = field.createRational(a);
+                AlgebraicNumber phis = field.createRational(b).times(phi);
+                AlgebraicNumber denom = field.createRational(den);
+                AlgebraicNumber number = units.plus(phis).dividedBy(denom);
+                if(number.signum() < 0) {
+                    number = number.negate();
+                }
+
+                AlgebraicNumber numSquared = number.times(number); // numSquared will always be positive or 0
+                assertTrue("numSquared is not negative", ((AlgebraicNumberImpl)numSquared).greaterThanOrEqualTo(zero));
+                System.out.print("( " + alias + " )  =\t" + number + "\t\t");
+                System.out.print("( " + number + " )² =\t" + numSquared + "\t\t√( " + numSquared + " ) =\t");
+                AlgebraicNumber sqrt = SqrtGoldenNumber.solve(numSquared);
+                System.out.println(sqrt);
+                assertTrue("sqrt(numSquared) is not negative", ((AlgebraicNumberImpl)sqrt).greaterThanOrEqualTo(zero));
+                assertEquals("sqrt(numSquared)", number, sqrt);
+                testNonPerfectSquareRoot(numSquared);
+                testNegativeSquareRoot(numSquared);
+            }
+        }
+    }
+    
+    private static void testNonPerfectSquareRoot(AlgebraicNumber numSquared) {
+        AlgebraicField field = numSquared.getField();
+        AlgebraicNumber test = numSquared.plus(field.createRational(1,2)); 
+        AlgebraicNumber sqrt = SqrtGoldenNumber.solve(test);
+        String msg = "sqrt( " + test + " )=" + sqrt + ": Expected null.";
+        // normally null but a few perfect squares may get to this point
+        if(sqrt != null && !sqrt.times(sqrt).equals(test)) {
+            System.out.println(msg);
+            fail(msg);
+        }
+    }
+    
+    private static void testNegativeSquareRoot(AlgebraicNumber numSquared) {
+        if(numSquared.isZero()) 
+            return;
+        AlgebraicNumber sqrt = SqrtGoldenNumber.solve(numSquared.negate());
+        String msg = "sqrt(" + numSquared + ")=" + sqrt + ": sqrt of any negative number should return null.";
+        if(sqrt != null) {
+            System.out.println(msg);
+            fail(msg);
+        }
+    }
+    
+    @Test
     public void printMathTables() {
         System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
         for(AlgebraicField field : TEST_FIELDS) {
