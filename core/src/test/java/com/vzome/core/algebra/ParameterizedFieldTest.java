@@ -83,7 +83,68 @@ public class ParameterizedFieldTest {
             }
         }
     }
-    
+
+    @Test
+    public void testSqrtSubFields() {
+//        AlgebraicField field = new PolygonField(30, AlgebraicNumberImpl.FACTORY);
+        for(AlgebraicField field : TEST_FIELDS) {
+            System.out.println(field.getName() + " is of order " + field.getOrder());
+            if(field.getOrder() <= 18) { // p60 is 16
+                testSqrtSubField(field);
+                System.out.println();
+            }
+        }
+    }
+
+    public void testSqrtSubField(AlgebraicField field) {
+        List<Integer> termList = new ArrayList<>(field.getOrder());
+        qty = 0;
+        testSqrtTerms(field, termList);
+    }
+
+    public void testSqrtTerms(AlgebraicField field, List<Integer> termList) {
+        int nTerms = termList.size(); 
+        if(nTerms < field.getOrder()) {
+            termList.add(0);
+            testSqrtTerms(field, termList);
+            termList.set(nTerms, 1);
+            testSqrtTerms(field, termList);
+            termList.remove(nTerms);
+        } else {
+            int[] terms = new int[nTerms];
+            for(int i = 0; i < nTerms; i++) {
+                terms[i] = termList.get(i);
+            }
+            AlgebraicNumberImpl n1 = (AlgebraicNumberImpl) field.createAlgebraicNumber(terms);
+            testSqrtTerms(n1);
+        }
+    }
+
+    static int qty = 0;
+    public void testSqrtTerms(AlgebraicNumberImpl n1) {
+        qty++;
+        if(!n1.isRational()) {
+            AlgebraicNumberImpl n2 = (AlgebraicNumberImpl) n1.times(n1);
+            BigRational[] terms1 = n1.getFactors();
+            BigRational[] terms2 = n2.getFactors();
+            boolean match = true;
+            boolean last = true;
+            for(int i = 0; i < terms1.length; i++) {
+                if(terms1[i].isZero()) {
+                    last = false;
+                    if(!terms2[i].isZero()) {
+                        match = false;
+                        break;
+                    }
+                }
+            }
+            if(match && !last) {
+                System.out.println((last ? " *" : "  ") + qty + "\t" + n1 + "\t===>\t" + n2);
+//                System.out.println(qty + "\t" + n1.evaluate() + "\t===>\t" + n2.evaluate());
+            }
+        }
+    }
+
     @Test
     public void testSqrtGoldenNumber() {
         System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
