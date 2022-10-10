@@ -8,31 +8,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import com.vzome.core.algebra.AlgebraicStructures.RationalFieldExtension;
-
 @SuppressWarnings("serial")
 public class ContinuedFraction extends Number implements Comparable<ContinuedFraction>, Iterable<Integer> {
 
-    private final RationalFieldExtension<?> value;
+    private final AlgebraicNumber value;
     // value is broken up into these parts:
     private final int signum;
     // everything after this point must be positive
     private final int wholePart;
     private final List<Integer> initialSeries = new ArrayList<>();
     private final List<Integer> periodicSeries = new ArrayList<>();
-    private final RationalFieldExtension<?> remainder;
+    private final AlgebraicNumber remainder;
 
     public static void main(String[] args) {
         int max = 9;
+        AlgebraicField field = new PentagonField();
         for (int d = 1; d < max; d++) {
             System.out.println();
             for (int n = 1; n < max; n++) {
-                ContinuedFraction cf2 = new ContinuedFraction(n, d);
+                ContinuedFraction cf2 = new ContinuedFraction(field, n, d);
                 System.out.println(cf2.getValue() + " = " + cf2);
             }
         }
 
-        AlgebraicField field = new RootTwoField();
+        field = new RootTwoField();
         max = 35;
         // for(int i5 = 0; i5 <= max; i5++) {
         // for(int i4 = 0; i4 <= max; i4++) {
@@ -113,13 +112,13 @@ public class ContinuedFraction extends Number implements Comparable<ContinuedFra
         }
 
         {
-        ContinuedFraction cf = new ContinuedFraction(72, 19);
+        ContinuedFraction cf = new ContinuedFraction(field, 72, 19);
         System.out.println(cf.getValue() + " = " + cf);
-        cf = new ContinuedFraction(89, 37);
+        cf = new ContinuedFraction(field, 89, 37);
         System.out.println(cf.getValue() + " = " + cf);
-        cf = new ContinuedFraction(2, 3);
+        cf = new ContinuedFraction(field, 2, 3);
         System.out.println(cf.getValue() + " = " + cf);
-        cf = new ContinuedFraction(13, 21);
+        cf = new ContinuedFraction(field, 13, 21);
         System.out.println(cf.getValue() + " = " + cf);
 
         System.out.println();
@@ -131,9 +130,9 @@ public class ContinuedFraction extends Number implements Comparable<ContinuedFra
         int bits = 31;
         int nn = BigInteger.probablePrime(bits, random).intValueExact();
         int dd = BigInteger.probablePrime(bits, random).intValueExact();
-        ContinuedFraction cf1 = new ContinuedFraction(nn, dd);
+        ContinuedFraction cf1 = new ContinuedFraction(field, nn, dd);
         System.out.println(cf1.getValue() + " = " + cf1);
-        ContinuedFraction cf2 = new ContinuedFraction(dd, nn);
+        ContinuedFraction cf2 = new ContinuedFraction(field, dd, nn);
         System.out.println(cf2.getValue() + " = " + cf2);
 
         System.out.println("n : 1/n cf1.compareTo(cf2) = " + cf1.compareTo(cf2));
@@ -147,7 +146,7 @@ public class ContinuedFraction extends Number implements Comparable<ContinuedFra
         int bits = 31;
         int nn = BigInteger.probablePrime(bits, random).intValueExact();
         int dd = BigInteger.probablePrime(bits, random).intValueExact();
-        ContinuedFraction cf1 = new ContinuedFraction(new BigRational(nn, dd));
+        ContinuedFraction cf1 = new ContinuedFraction(field, nn, dd);
         System.out.println(cf1.getValue() + " = " + cf1);
         ContinuedFraction cf2 = new ContinuedFraction(field.createRational(nn, dd));
         System.out.println(cf2.getValue() + " = " + cf2);
@@ -185,15 +184,16 @@ public class ContinuedFraction extends Number implements Comparable<ContinuedFra
     // // TODO:
     // }
 
-    public ContinuedFraction(int n) {
-        this(new BigRational(n));
+    public ContinuedFraction(AlgebraicField field, int n) {
+    	this(field.createRational(n));
     }
 
-    public ContinuedFraction(int numerator, int denominator) {
-        this(new BigRational(numerator, denominator));
+    public ContinuedFraction(AlgebraicField field, int numerator, int denominator) {
+        this(field.createRational(numerator, denominator));
     }
 
-    public ContinuedFraction(BigRational n) {
+    public ContinuedFraction(AlgebraicField field, BigRational br) {
+    	AlgebraicNumber n = new AlgebraicNumberImpl(field, br);
         value = n;
         signum = n.signum();
         // everything internally is kept positive
@@ -202,7 +202,7 @@ public class ContinuedFraction extends Number implements Comparable<ContinuedFra
         }
         if (signum == 0) {
             wholePart = 0;
-            remainder = n.zero();
+            remainder = field.zero();
         } else {
             // TODO: Deal with the case when we have BigInteger terms
 //            wholePart = Double.valueOf(n.evaluate()).intValue();
@@ -225,7 +225,7 @@ public class ContinuedFraction extends Number implements Comparable<ContinuedFra
         }
         if (signum == 0) {
             wholePart = 0;
-            remainder = n.zero();
+            remainder = n.getField().zero();
         } else {
             // TODO: Deal with the case when we have BigInteger terms
 //            wholePart = Double.valueOf(n.evaluate()).intValue();
@@ -239,7 +239,7 @@ public class ContinuedFraction extends Number implements Comparable<ContinuedFra
         }
     }
 
-    protected <T extends RationalFieldExtension<T>> T generateSeries(T n, int maxReps, int[] whole) {
+    protected AlgebraicNumber generateSeries(AlgebraicNumber n, int maxReps, int[] whole) {
         // According to https://crypto.stanford.edu/pbc/notes/contfrac/periodic.html
         // Any periodic continued fraction 
         //    represents a root of a quadratic equation with integer coefficients.
@@ -248,12 +248,13 @@ public class ContinuedFraction extends Number implements Comparable<ContinuedFra
         //    has a periodic continued fraction expansion.
         // That means that an AlgebraicField of order > 2 will not be periodic; 
         //    that is, it will not repeat, and any AlgebraicField of order 2 will repeat.
-        List<RationalFieldExtension<?>> remainders = new ArrayList<>();
+        List<AlgebraicNumber> remainders = new ArrayList<>();
+        final AlgebraicField field = n.getField();
         while (!n.isZero() && (0 < maxReps--)) {
             // TODO: Deal with the case when we have BigInteger terms
             int intPart = Double.valueOf(n.evaluate()).intValue();
             initialSeries.add(intPart);
-            n = n.minus(n.create(intPart)); // this is the remainder
+            n = n.minus(field.createRational(intPart)); // this is the remainder
             if (n.isZero()) {
                 break; // no remainder
             }
@@ -280,7 +281,7 @@ public class ContinuedFraction extends Number implements Comparable<ContinuedFra
         return n; // as remainder
     }
     
-    public RationalFieldExtension<?> getValue() {
+    public AlgebraicNumber getValue() {
         return value;
     }
 
@@ -288,7 +289,7 @@ public class ContinuedFraction extends Number implements Comparable<ContinuedFra
         return wholePart;
     }
 
-    public RationalFieldExtension<?> getRemainder() {
+    public AlgebraicNumber getRemainder() {
         return remainder;
     }
 
