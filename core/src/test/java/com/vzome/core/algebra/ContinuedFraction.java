@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import com.vzome.core.generic.Utilities;
+
 @SuppressWarnings("serial")
 public class ContinuedFraction extends Number implements Comparable<ContinuedFraction>, Iterable<Integer> {
 
@@ -21,6 +23,7 @@ public class ContinuedFraction extends Number implements Comparable<ContinuedFra
     private final AlgebraicNumber remainder;
 
     public static void main(String[] args) {
+    	System.out.println(new Throwable().getStackTrace()[0].getMethodName() + " " + Utilities.thisSourceCodeLine());
         int max = 9;
         AlgebraicField field = new PentagonField();
         for (int d = 1; d < max; d++) {
@@ -267,9 +270,7 @@ public class ContinuedFraction extends Number implements Comparable<ContinuedFra
                 break;
             }
             remainders.add(n);
-            if (!n.isZero()) {
-                n = n.reciprocal();
-            }
+            n = n.reciprocal(); // or we could use a fixed numerator other than one.
         }
         if(!initialSeries.isEmpty()) {
             whole[0] = initialSeries.remove(0);
@@ -338,7 +339,6 @@ public class ContinuedFraction extends Number implements Comparable<ContinuedFra
 
     @Override
     public String toString() {
-        if (signum == 0) {}
         StringBuilder buf = new StringBuilder();
         buf.append("[");
         buf.append(signum == -1 ? "-" : " ");
@@ -350,7 +350,7 @@ public class ContinuedFraction extends Number implements Comparable<ContinuedFra
         String delim = appendSeries(buf, initialSeries, "; ", padding);
         if(!periodicSeries.isEmpty()) {
             delim = appendSeries(buf, periodicSeries, delim + "{ ", padding);
-            buf.append(" }");
+            buf.append(" },");
         }
         if(isInfinite()) {
             buf.append(" ...");
