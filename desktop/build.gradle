@@ -218,12 +218,12 @@ jpackage {
         additionalParameters << "--mac-signing-keychain"
         additionalParameters << "$keychain"
     }
-    linux {
-        jLinkOptions = [
-            "--compress=0",
-            "--no-man-pages"
-        ]
-    }
+//    linux {
+//        jLinkOptions = [
+//            "--compress=0",
+//            "--no-man-pages"
+//        ]
+//    }
     windows {
         icon = "platform/windows/resources/icons/vZomeLogo.ico"
 
