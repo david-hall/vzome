@@ -134,7 +134,7 @@ jobs:
         distribution: 'temurin'
     - name: Build with Gradle
       run: |
-        ./gradlew clean jpackage
+        ./gradlew -i clean jpackage
         ls desktop/build/jpackage
     - name: Archive Windows build
       uses: actions/upload-artifact@v2
@@ -145,6 +145,7 @@ jobs:
       run: |
         mkdir -p $env:USERPROFILE/.ssh/
         echo "$SSH_KEY" > $env:USERPROFILE/.ssh/dreamhost.key
+        echo "" >> $env:USERPROFILE/.ssh/dreamhost.key
         echo 'Host dreamhost' > $env:USERPROFILE/.ssh/config
         echo '  HostName sandy.dreamhost.com' >> $env:USERPROFILE/.ssh/config
         echo '  User scottvorthmann' >> $env:USERPROFILE/.ssh/config
