@@ -30,7 +30,7 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
     - name: Control Timezone
-      uses: szenius/set-timezone@v1.0
+      uses: szenius/set-timezone@v1.1
       with:
         timezoneMacos: "America/Los_Angeles"
     - name: Get current date
