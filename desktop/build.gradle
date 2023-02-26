@@ -175,7 +175,7 @@ gradle.projectsEvaluated {
 jpackage {
     dependsOn( "installDist" )
 
-    // verbose = true
+    verbose = true
 
     input = "$buildDir/install/desktop/lib"
     destination = "$buildDir/jpackage"
