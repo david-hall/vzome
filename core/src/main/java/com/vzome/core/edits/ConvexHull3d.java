@@ -1,12 +1,15 @@
 package com.vzome.core.edits;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
 import org.w3c.dom.Element;
 
+import com.vzome.core.algebra.AlgebraicNumber;
 import com.vzome.core.algebra.AlgebraicVector;
+import com.vzome.core.algebra.AlgebraicVectors;
 import com.vzome.core.commands.Command;
 import com.vzome.core.commands.Command.Failure;
 import com.vzome.core.commands.XmlSaveFormat;
@@ -85,11 +88,27 @@ public class ConvexHull3d extends ConvexHull {
     @Override
     public void perform() throws Failure {
         QuickHull3D hull3d = new QuickHull3D();
-        hull3d.build( getSelectedVertexSet(true) );
+        Collection<AlgebraicVector> selectedVertices = getSelectedVertexSet(true);
+        AlgebraicVector centroid = AlgebraicVectors.calculateCentroid(selectedVertices);
+        // for now, I'm going to use the centroid as the reference point, 
+        // but eventually could be specified by another mechanism and may be a line or lines or a plane. 
+        selectedVertices.remove(centroid); // doesn't hurt if it's not in the set because it's not on the hull.
+        Map<AlgebraicVector, AlgebraicVector> invertedVertices = new HashMap<>(selectedVertices.size());
+        for(AlgebraicVector vector : selectedVertices) {
+        	AlgebraicVector offset = vector.minus(centroid); // will be non-zero
+        	invertedVertices.put(offset.scale(offset.dot(offset).reciprocal()), vector);
+        }
+        
+        hull3d.build( invertedVertices.keySet() );
         
         redo();  // no validation failures, so commit the initial unselect operations
 
         AlgebraicVector[] vertices = hull3d.getVertices();
+        // map vertices back to their non-inverted values
+        for(int i = 0; i < vertices.length; i++) {
+        	vertices[i] = invertedVertices.get(vertices[i]);
+        }
+        
         Map<AlgebraicVector, Point> pointMap = new HashMap<>(vertices.length);
         
         for (AlgebraicVector vertex : vertices) {
