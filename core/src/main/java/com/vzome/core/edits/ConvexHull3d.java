@@ -9,7 +9,6 @@ import org.w3c.dom.Element;
 
 import com.vzome.core.algebra.AlgebraicNumber;
 import com.vzome.core.algebra.AlgebraicVector;
-import com.vzome.core.algebra.AlgebraicVectors;
 import com.vzome.core.commands.Command;
 import com.vzome.core.commands.Command.Failure;
 import com.vzome.core.commands.XmlSaveFormat;
@@ -19,6 +18,7 @@ import com.vzome.core.construction.PolygonFromVertices;
 import com.vzome.core.construction.SegmentJoiningPoints;
 import com.vzome.core.editor.api.EditorModel;
 import com.vzome.core.math.convexhull.QuickHull3D;
+import com.vzome.core.model.Manifestation;
 
 public class ConvexHull3d extends ConvexHull {
     public static final String NAME = "ConvexHull3d";
@@ -87,18 +87,43 @@ public class ConvexHull3d extends ConvexHull {
 
     @Override
     public void perform() throws Failure {
-        QuickHull3D hull3d = new QuickHull3D();
+        Manifestation lastBall = this.getLastSelectedConnector();
+        AlgebraicVector inversionPoint = lastBall == null ? mManifestations.getField().origin(3) : lastBall.getLocation();
         Collection<AlgebraicVector> selectedVertices = getSelectedVertexSet(true);
-        AlgebraicVector centroid = AlgebraicVectors.calculateCentroid(selectedVertices);
-        // for now, I'm going to use the centroid as the reference point, 
-        // but eventually could be specified by another mechanism and may be a line or lines or a plane. 
-        selectedVertices.remove(centroid); // doesn't hurt if it's not in the set because it's not on the hull.
+        selectedVertices.remove(inversionPoint); // doesn't hurt if it's not in the set because it's not on the hull.
+
+        Map<AlgebraicVector, AlgebraicVector> offsets = new HashMap<>(selectedVertices.size());
+        AlgebraicNumber mostDistantQuadrance = mManifestations.getField().zero();
+        for(AlgebraicVector vector : selectedVertices) {
+        	AlgebraicVector offset = vector.minus(inversionPoint); // will be non-zero
+        	offsets.put(vector, offset); // cache the offsets hoping that subsequent lookups are faster than recalculating
+        	// find the longest quadrance
+        	AlgebraicNumber quadrance = offset.dot(offset);
+        	if(mostDistantQuadrance.lessThan(quadrance )) {
+            	mostDistantQuadrance = quadrance;
+        	}
+        }
+        
+        // Ensure that mostDistantQuadrance is not zero before we take its reciprocal.
+        if(mostDistantQuadrance.isZero()) {
+        	// selectedVertices is probably empty, but give a useful warning anyway.
+            throw new Failure("At least four input points are required for a 3d convex kernel.\n\n" + selectedVertices.size() + " specified.");
+        }
+        AlgebraicNumber inversionRadius = mostDistantQuadrance.reciprocal();
+
         Map<AlgebraicVector, AlgebraicVector> invertedVertices = new HashMap<>(selectedVertices.size());
         for(AlgebraicVector vector : selectedVertices) {
-        	AlgebraicVector offset = vector.minus(centroid); // will be non-zero
+        	// lookup should be faster than recalculating, especially in high order fields
+        	AlgebraicVector offset = offsets.get(vector);
+        	// The scaled offsets should all be inside or outside of inversionRadius, 
+        	// depending on whether it's more or less than one,
+        	// but we should no longer have some with radius > 1 which growing 
+        	// and others with radius < 1 which shrink. 
+        	offset = offset.scale(inversionRadius);
         	invertedVertices.put(offset.scale(offset.dot(offset).reciprocal()), vector);
         }
         
+        QuickHull3D hull3d = new QuickHull3D();
         hull3d.build( invertedVertices.keySet() );
         
         redo();  // no validation failures, so commit the initial unselect operations
@@ -109,6 +134,9 @@ public class ConvexHull3d extends ConvexHull {
         	vertices[i] = invertedVertices.get(vertices[i]);
         }
         
+        // we don't want the inverted faces so recalculate the hull with the uninverted vertices
+        hull3d.build( vertices );
+
         Map<AlgebraicVector, Point> pointMap = new HashMap<>(vertices.length);
         
         for (AlgebraicVector vertex : vertices) {
