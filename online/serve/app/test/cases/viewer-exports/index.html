@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf8">
+    <link rel="stylesheet" href="../../vzome-viewer.css">
+    <title>Viewer Export Test Case</title>
+    <script type="module" src="/modules/vzome-viewer.js"></script>
+    <script>
+      window.addEventListener("load", e => {
+        const viaSrc = document.getElementById("via-src")
+        const viaTxt = document.getElementById("via-txt")
+        viaSrc.addEventListener( "vzome-scenes-discovered", (e) => scenesDiscovered() )
+        
+        const logDetail = (e) => console.debug(e.target.id, e.detail)
+        viaSrc.addEventListener( "vzome-design-rendered", (e) => logDetail(e) )
+        viaSrc.addEventListener( "vzome-scenes-discovered", (e) => logDetail(e) )
+        viaTxt.addEventListener( "vzome-design-rendered", (e) => logDetail(e) )
+        viaTxt.addEventListener( "vzome-scenes-discovered", (e) => logDetail(e) )
+      })
+
+      async function logDetail(event) {
+
+      }
+      async function scenesDiscovered() {
+        try {
+          const src = document.getElementById("via-src").src
+          console.log(`Loaded first viewer from src: ${src}`)
+
+          const response = await fetch(src)
+          if (!response.ok) {
+            throw new Error(`Response status: ${response.status}`)
+          }
+          console.log(`Fetching text from ${src}`)
+          const text = await response.text()
+          console.log(` Fetched text from ${src}`)
+          const txtViewer = document.getElementById("via-txt")
+          txtViewer.addEventListener( "vzome-scenes-discovered", () => {
+            console.groupCollapsed("Loaded second viewer from fetched text: ")
+            console.log(text)
+            console.groupEnd()
+          })
+          await txtViewer.loadFromText("loadFromText.vZome", text)
+          const style  = 'font-size: 1em; font-weight: bold; background-color: rgb(140,194,231); color:black;'
+          console.log("Synced viewers.\n%cNow click the two buttons to verify the export from each viewer.", style)
+
+          document.getElementById("btn-test-src").addEventListener("click", e => {testExport(e)})
+          document.getElementById("btn-test-txt").addEventListener("click", e => {testExport(e)})
+          disableTestButtons(false)
+        } catch(ex) {
+          console.error("Error loading second viewer from text:", ex)
+        }
+      }
+
+      async function testExport(event) {
+        disableTestButtons(true)
+        const viewerId = event.target.id.replace("btn-test", "via")
+        console.group(`Exporting mesh from viewer '${viewerId}'...`)
+        const viewer = document.getElementById(viewerId)
+        try {
+          const meshText = await viewer.exportText("cmesh")
+          const mesh = JSON.parse(meshText)
+          console.dir(mesh)
+        } catch(ex) {
+          console.error(`Error loading mesh from viewer '${viewerId}'`, ex)
+        }
+        console.groupEnd()
+        disableTestButtons(false)
+      }
+
+      function disableTestButtons( state ) {
+        state = !!state // ensure boolean
+        document.getElementById("btn-test-src").disabled = state
+        document.getElementById("btn-test-txt").disabled = state
+      }
+    </script>
+    <style>
+      body {
+        font-size: large;
+      }
+      section {
+        width: 400px;
+        height: 350px;
+      }
+      p {
+        background-color: white;
+        padding: 3ch;
+      }
+      .controls {
+        display: flex;
+        flex-direction: row;
+      }
+    </style>
+  </head>
+  <body>
+    <article>
+      <ul>
+        <li>This test loads 2 viewers; the first via 'src' followed by the second using loadFromText().</li>
+        <li></li>
+        <li>You can monitor the progression of the loading sequence in the browser's console.</li>
+        <li></li>
+        <li>When instructed in the console, click each of the buttons to export cmesh from that viewer.</li>
+        <li>The viewer using loadFromText() exports reliably.</li>
+        <li>The viewer using 'src' throws an error saying 'No design loaded; cannot export...'.</li>
+        <li></li>
+        <li>I expect that either viewer should be able to export any supported format.</li>
+        <li>The Prev and Next buttons do not appear to be related to the issue.</li>
+      </ul>
+      <p>
+        At some point, I was able to get both of them to work. 
+        I think it may have been using a design with no scenes so the viewer was not indexed, 
+        but I don't remember exactly how I got it to work for both cases.
+      </p>
+      <div class="controls">
+        <section>
+          <vzome-viewer id="via-src" indexed='true' src="https://vorth.github.io/vzome-sharing/2024/06/17/20-17-17-835Z-H4-1100-instructions/H4-1100-instructions.vZome"></vzome-viewer>
+          <div class="controls">
+            <vzome-viewer-previous viewer="via-src" label='prev step'></vzome-viewer-previous>
+            <vzome-viewer-next     viewer="via-src" label='next step'></vzome-viewer-next>
+            <button id="btn-test-src" disabled='true'>
+              Verify export from viewer using viewer.src
+            </button>
+          </div>
+        </section>
+        <section>
+          <vzome-viewer id="via-txt" indexed='true'></vzome-viewer>
+          <div class="controls">
+            <vzome-viewer-previous viewer="via-txt" label='prev step'></vzome-viewer-previous>
+            <vzome-viewer-next     viewer="via-txt" label='next step'></vzome-viewer-next>
+            <button id="btn-test-txt" disabled='true'>
+              Verify export from viewer using viewer.loadFromText()
+            </button>
+          </div>
+        </section>
+      </div>
+    </article>
+  </body>
+</html>
